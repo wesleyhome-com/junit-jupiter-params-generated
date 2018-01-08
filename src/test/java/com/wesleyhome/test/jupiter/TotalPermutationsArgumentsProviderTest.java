@@ -1,10 +1,7 @@
 package com.wesleyhome.test.jupiter;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import static com.wesleyhome.test.jupiter.ArgumentsBuilder.create;
 import static com.wesleyhome.test.jupiter.ArgumentsBuilderAssert.assertThat;
@@ -17,26 +14,6 @@ class TotalPermutationsArgumentsProviderTest {
     private final Arguments trueArr = of(true);
     private final Arguments falseArr = of(false);
     private final Arguments nullArr = of(new Object[]{null});
-
-    @Test
-    void provideArguments_multiple_arguments() {
-        ArgumentsBuilder builder1 = create(true).arg(true).arg(TestEnum.values());
-        ArgumentsBuilder builder2 = create(true).arg(true).arg(TestEnum.class);
-        assertThat(builder1).isEqualTo(builder2);
-    }
-
-    @Test
-    void provideArguments_object_arr() {
-        ArgumentsBuilder builder = create(TestEnum.values());
-        assertTestEnum(builder);
-    }
-
-    @ParameterizedTest
-    @EnumSource(TestEnum.class)
-    void provideArguments_enum_const(TestEnum testEnum) {
-        ArgumentsBuilder builder = create(testEnum);
-        assertTestEnum(builder);
-    }
 
     @Test
     void provideArguments_enum_class() {
@@ -55,13 +32,6 @@ class TotalPermutationsArgumentsProviderTest {
                 of(TestEnum.SMART),
                 of(TestEnum.WEIRD)
         );
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"true", "false"})
-    void provideArguments_boolean(String value) {
-        ArgumentsBuilder builder = create(Boolean.valueOf(value));
-        assertThat(builder).hasSize(2).containsExactlyInAnyOrder(trueArr, falseArr);
     }
 
     @Test

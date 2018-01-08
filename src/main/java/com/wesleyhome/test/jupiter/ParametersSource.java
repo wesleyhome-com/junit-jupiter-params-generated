@@ -36,6 +36,11 @@ import java.lang.annotation.*;
 @ArgumentsSource(MethodArgumentsProvider.class)
 public @interface ParametersSource {
 
-//	String[] value();
+    /**
+     * Defines Classes that contain methods for providing arrays of data.
+     *
+     * @return the declared provider classes
+     */
+    Class<?>[] value() default {};
 
 }
