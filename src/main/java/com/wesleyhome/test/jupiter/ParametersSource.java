@@ -16,7 +16,6 @@ import java.lang.annotation.*;
 
 /**
  * {@code @ParametersSource} is an {@link ArgumentsSource} which provides access
- * to values returned by {@linkplain #value() methods} of the class in
  * which this annotation is declared.
  * <p>
  * <p>By default such methods must be {@code static} unless the test class is
@@ -30,16 +29,13 @@ import java.lang.annotation.*;
  * @see org.junit.jupiter.params.ParameterizedTest
  * @since 5.0
  */
+@SuppressWarnings("WeakerAccess")
 @Target({ElementType.ANNOTATION_TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @ArgumentsSource(MethodArgumentsProvider.class)
 public @interface ParametersSource {
 
-    /**
-     * The names of the test class methods to use as sources for arguments; must
-     * not be empty.
-     */
 //	String[] value();
 
 }

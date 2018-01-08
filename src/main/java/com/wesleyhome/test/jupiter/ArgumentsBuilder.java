@@ -1,19 +1,33 @@
 package com.wesleyhome.test.jupiter;
 
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.ArgumentsProvider;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class ArgumentsBuilder {
 
     private final List<Object> arguments;
 
-    public static ArgumentsBuilder create(Object firstArgument) {
+    static ArgumentsBuilder create(Object firstArgument) {
         return new ArgumentsBuilder(firstArgument);
+    }
+
+    public static ArgumentsBuilder create(ExtensionContext extensionContext) {
+        Method requiredTestMethod = extensionContext.getRequiredTestMethod();
+        Class<?>[] parameterTypes = requiredTestMethod.getParameterTypes();
+        ArgumentsBuilder builder = new ArgumentsBuilder();
+        Stream.of(parameterTypes)
+            .forEach(builder::arg);
+        return builder;
+    }
+
+    private ArgumentsBuilder() {
+        arguments = new ArrayList<>();
     }
 
     private ArgumentsBuilder(Object firstArgument) {
@@ -26,11 +40,8 @@ public class ArgumentsBuilder {
         return this;
     }
 
-    public ArgumentsProvider build() {
+    public Stream<? extends Arguments> build() {
 
-        return extensionContext -> {
-            Method requiredTestMethod = extensionContext.getRequiredTestMethod();
-            return StreamSupport.stream(((Iterable<Arguments>) () -> new ParameterPermutationsIterator(arguments)).spliterator(), false);
-        };
+        return StreamSupport.stream(((Iterable<Arguments>) () -> new ParameterPermutationsIterator(arguments)).spliterator(), false);
     }
 }

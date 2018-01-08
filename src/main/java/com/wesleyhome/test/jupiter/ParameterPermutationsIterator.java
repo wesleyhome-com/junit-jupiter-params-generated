@@ -12,11 +12,6 @@ class ParameterPermutationsIterator implements Iterator<Arguments> {
     private long totalPermutations;
     private int currentPermutation = 0;
 
-    ParameterPermutationsIterator(Object[][] argumentsParametersArray) {
-        this.argumentsParametersArray = argumentsParametersArray;
-        init();
-    }
-
     ParameterPermutationsIterator(List<Object> parameterOptions) {
         if (parameterOptions != null && !parameterOptions.isEmpty()) {
             List<Object[]> options = new ArrayList<>();
@@ -45,6 +40,9 @@ class ParameterPermutationsIterator implements Iterator<Arguments> {
                     if (optionClass.isArray()) {
                         Object[] arr = (Object[]) parameterOption;
                         options.add(arr);
+                    } else if (optionClass.isEnum()) {
+                        EnumSet<?> enumSet = allOf(optionClass);
+                        options.add(enumSet.toArray());
                     } else {
                         // can't figure out the class information
                         options.add(new Object[]{null});
@@ -64,12 +62,13 @@ class ParameterPermutationsIterator implements Iterator<Arguments> {
         Arrays.fill(argumentIndexPointers, 0);
         totalPermutations = Arrays.stream(argumentsParametersArray)
                 .map(arr -> arr.length)
-                .mapToLong(integer -> integer.longValue())
+            .mapToLong(Integer::longValue)
                 .reduce((a1, a2) -> a1 * a2)
-                .getAsLong();
+            .orElse(0L);
     }
 
     private static <E extends Enum<E>> EnumSet<E> allOf(Class<?> enumClass) {
+        //noinspection unchecked
         return EnumSet.allOf((Class<E>) enumClass);
     }
 
