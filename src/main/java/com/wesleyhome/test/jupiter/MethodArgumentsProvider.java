@@ -10,6 +10,6 @@ class MethodArgumentsProvider implements ArgumentsProvider {
 
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
-        return ArgumentsBuilder.create(context).build();
+        return ArgumentsBuilder.create(context);
     }
 }

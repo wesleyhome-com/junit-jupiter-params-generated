@@ -3,11 +3,11 @@ package com.wesleyhome.test.jupiter;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.stream.Stream;
+
+import static com.wesleyhome.test.jupiter.ReflectionHelper.invoke;
 
 class ParameterPermutationsIterator implements Iterator<Arguments> {
 
@@ -17,7 +17,7 @@ class ParameterPermutationsIterator implements Iterator<Arguments> {
     private long totalPermutations;
     private int currentPermutation = 0;
 
-    ParameterPermutationsIterator(List<Class<?>> parameterOptions, List<Class<?>> dataProviderClasses) {
+    ParameterPermutationsIterator(List<Class<?>> parameterOptions, Object testObject, List<Class<?>> dataProviderClasses) {
         if (parameterOptions != null && !parameterOptions.isEmpty()) {
             List<Object[]> options = new ArrayList<>();
             for (Class<?> optionClass : parameterOptions) {
@@ -33,7 +33,7 @@ class ParameterPermutationsIterator implements Iterator<Arguments> {
                     options.add(new Object[]{true, false, null});
                 } else {
                     // can't figure out the class information
-                    Object[] optionsFromProviders = getOptionsFromProviders(dataProviderClasses, optionClass);
+                    Object[] optionsFromProviders = getOptionsFromProviders(dataProviderClasses, testObject, optionClass);
                     if (optionsFromProviders == null) {
                         throw new InvalidParameterException(optionClass, dataProviderClasses);
                     }
@@ -48,26 +48,28 @@ class ParameterPermutationsIterator implements Iterator<Arguments> {
         }
     }
 
-    private Object[] getOptionsFromProviders(List<Class<?>> dataProviderClasses, Class<?> optionClass) {
+    private Object[] getOptionsFromProviders(List<Class<?>> dataProviderClasses, Object testObject, Class<?> optionClass) {
         return dataProviderClasses.stream()
-            .map(providerClass -> this.getOptionsFromProvider(providerClass, optionClass))
+            .map(providerClass -> this.getOptionsFromProvider(providerClass, testObject, optionClass))
             .filter(Objects::nonNull)
             .findFirst()
             .orElse(null);
     }
 
-    private Object[] getOptionsFromProvider(Class<?> providerClass, Class<?> optionClass) {
-        Method[] declaredMethods = providerClass.getDeclaredMethods();
-        Method[] methods = providerClass.getMethods();
-        return Stream.concat(Stream.of(declaredMethods), Stream.of(methods))
-            .filter(this::isStatic)
+    private Object[] getOptionsFromProvider(Class<?> providerClass, Object testObject, Class<?> optionClass) {
+        return ReflectionHelper.getMethodStream(providerClass)
+            .filter(method -> isStaticOrTestInstanceMethod(method, testObject))
             .filter(method -> isArrayMethodForClass(method, optionClass))
-            .map(this::invokeMethod)
+            .map(method -> invokeMethod(method, testObject))
             .findFirst()
             .orElse(null);
     }
 
     private boolean isArrayMethodForClass(Method method, Class<?> optionClass) {
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        if (parameterTypes.length > 0) {
+            return false;
+        }
         Class<?> returnType = method.getReturnType();
         boolean isArray = returnType.isArray();
         if (isArray) {
@@ -77,12 +79,23 @@ class ParameterPermutationsIterator implements Iterator<Arguments> {
         return false;
     }
 
-    private Object[] invokeMethod(Method method) {
-        try {
-            return unpack(method.invoke(null));
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
+    private boolean isStaticOrTestInstanceMethod(Method method, Object testInstance) {
+        boolean aStatic = isStaticMethod(method);
+        boolean testInstanceMethod = isTestInstanceMethod(method, testInstance);
+        return aStatic || testInstanceMethod;
+    }
+
+    private boolean isTestInstanceMethod(Method method, Object testInstance) {
+        return method.getDeclaringClass().isAssignableFrom(testInstance.getClass());
+    }
+
+    private boolean isStaticMethod(Method method) {
+        return Modifier.isStatic(method.getModifiers());
+    }
+
+    private Object[] invokeMethod(Method method, Object testObject) {
+        Object invokeOn = isStaticMethod(method) ? null : testObject;
+        return unpack(invoke(method, invokeOn));
     }
 
     private static Object[] unpack(Object array) {
@@ -92,9 +105,6 @@ class ParameterPermutationsIterator implements Iterator<Arguments> {
         return array2;
     }
 
-    private boolean isStatic(Method method) {
-        return Modifier.isStatic(method.getModifiers());
-    }
     private void init() {
         argumentIndexPointers = new int[argumentsParametersArray.length];
         Arrays.fill(argumentIndexPointers, 0);

@@ -13,31 +13,35 @@ import java.util.stream.StreamSupport;
 public class ArgumentsBuilder {
 
     private final List<Class<?>> arguments;
+    private final Object testInstance;
     private final List<Class<?>> dataProviderClasses;
 
-    static ArgumentsBuilder create(Class<?> firstArgument) {
-        return new ArgumentsBuilder(firstArgument, new ArrayList<>());
+    static ArgumentsBuilder create(Object testInstance, Class<?> firstArgument) {
+        return new ArgumentsBuilder(testInstance, firstArgument, new ArrayList<>());
     }
 
-    public static ArgumentsBuilder create(ExtensionContext extensionContext) {
+    static Stream<? extends Arguments> create(ExtensionContext extensionContext) {
         Method requiredTestMethod = extensionContext.getRequiredTestMethod();
         Class<?> requiredTestClass = extensionContext.getRequiredTestClass();
+        Object testInstance = ReflectionHelper.invokeConstructor(requiredTestClass);
         Class<?>[] dataProviderClasses = requiredTestMethod.getAnnotation(ParametersSource.class).value();
         Class<?>[] parameterTypes = requiredTestMethod.getParameterTypes();
         List<Class<?>> dataProviderList = Stream.concat(Stream.of(requiredTestClass), Stream.of(dataProviderClasses))
             .collect(Collectors.toList());
-        ArgumentsBuilder builder = new ArgumentsBuilder(dataProviderList);
+        ArgumentsBuilder builder = new ArgumentsBuilder(testInstance, dataProviderList);
         Stream.of(parameterTypes)
             .forEach(builder::arg);
-        return builder;
+        return builder.build();
     }
 
-    private ArgumentsBuilder(final List<Class<?>> dataProviderClasses) {
+    private ArgumentsBuilder(Object testInstance, final List<Class<?>> dataProviderClasses) {
+        this.testInstance = testInstance;
         this.dataProviderClasses = dataProviderClasses;
         this.arguments = new ArrayList<>();
     }
 
-    private ArgumentsBuilder(Class<?> firstArgument, final List<Class<?>> dataProviderClasses) {
+    private ArgumentsBuilder(Object testInstance, Class<?> firstArgument, final List<Class<?>> dataProviderClasses) {
+        this.testInstance = testInstance;
         this.dataProviderClasses = dataProviderClasses;
         this.arguments = new ArrayList<>();
         this.arguments.add(firstArgument);
@@ -49,6 +53,6 @@ public class ArgumentsBuilder {
     }
 
     public Stream<? extends Arguments> build() {
-        return StreamSupport.stream(((Iterable<Arguments>) () -> new ParameterPermutationsIterator(arguments, dataProviderClasses)).spliterator(), false);
+        return StreamSupport.stream(((Iterable<Arguments>) () -> new ParameterPermutationsIterator(arguments, testInstance, dataProviderClasses)).spliterator(), false);
     }
 }

@@ -17,7 +17,7 @@ class TotalPermutationsArgumentsProviderTest {
 
     @Test
     void provideArguments_enum_class() {
-        ArgumentsBuilder builder = create(TestEnum.class);
+        ArgumentsBuilder builder = create(this, TestEnum.class);
         assertTestEnum(builder);
     }
 
@@ -36,14 +36,14 @@ class TotalPermutationsArgumentsProviderTest {
 
     @Test
     void provideArguments_boolean_class() {
-        ArgumentsBuilder builder = create(Boolean.class);
+        ArgumentsBuilder builder = create(this, Boolean.class);
 
         assertThat(builder).hasSize(3).containsExactlyInAnyOrder(trueArr, falseArr, nullArr);
     }
 
     @Test
     void provideArguments_boolean_type() {
-        ArgumentsBuilder builder = create(Boolean.TYPE);
+        ArgumentsBuilder builder = create(this, Boolean.TYPE);
         assertThat(builder).hasSize(2).containsExactlyInAnyOrder(trueArr, falseArr);
     }
 

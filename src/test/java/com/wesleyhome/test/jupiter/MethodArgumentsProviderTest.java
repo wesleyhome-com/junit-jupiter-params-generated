@@ -42,7 +42,7 @@ class MethodArgumentsProviderTest {
     }
 
     @SuppressWarnings("WeakerAccess")
-    public static double[] doubles() {
+    public double[] doubles() {
         return new double[]{2.0, 3.2, 5.6};
     }
 }
