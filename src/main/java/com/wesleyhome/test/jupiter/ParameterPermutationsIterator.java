@@ -1,5 +1,6 @@
 package com.wesleyhome.test.jupiter;
 
+import com.wesleyhome.common.utilities.ReflectionHelper;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.lang.reflect.Array;
@@ -7,7 +8,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
-import static com.wesleyhome.test.jupiter.ReflectionHelper.invoke;
+import static com.wesleyhome.common.utilities.ReflectionHelper.invoke;
 
 class ParameterPermutationsIterator implements Iterator<Arguments> {
 
