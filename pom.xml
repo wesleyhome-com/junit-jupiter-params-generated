@@ -6,10 +6,10 @@
     <parent>
         <groupId>com.wesleyhome</groupId>
         <artifactId>parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.1</version>
     </parent>
     <groupId>com.wesleyhome.test</groupId>
-    <artifactId>test-utilities</artifactId>
+    <artifactId>generated-junit-jupiter-params</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <properties>
         <common-utilities.version>1.0.0-SNAPSHOT</common-utilities.version>

@@ -116,8 +116,8 @@ class ParameterPermutationsIterator implements Iterator<Arguments> {
             .orElse(0L);
     }
 
+    @SuppressWarnings("unchecked")
     private static <E extends Enum<E>> EnumSet<E> allOf(Class<?> enumClass) {
-        //noinspection unchecked
         return EnumSet.allOf((Class<E>) enumClass);
     }
 
