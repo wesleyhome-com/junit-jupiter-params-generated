@@ -1,0 +1,84 @@
+# Java Maven CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-java/ for more details
+#
+version: 2
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build:
+          context: org-global
+#      - release:
+#          context: org-global
+#          requires:
+#            - hold
+jobs:
+  build:
+    docker:
+      # specify the version you desire here
+      - image: circleci/openjdk:8-jdk
+
+
+    working_directory: ~/junit-jupiter-params-generated
+
+    environment:
+      # Customize the JVM maximum heap limit
+      MAVEN_OPTS: -Xmx3200m
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - junit-jupiter-params-generated-{{ checksum "pom.xml" }}
+          # fallback to using the latest cache if no exact match is found
+          - junit-jupiter-params-generated-
+
+      - run: mvn -s .circleci.settings.xml dependency:go-offline
+
+      - save_cache:
+          paths:
+            - ./repo
+          key: common-utilities-{{ checksum "pom.xml" }}
+
+      - run: mvn -s .circleci.settings.xml deploy
+
+      - save_cache:
+          paths:
+            - ./repo
+          key: common-utilities-{{ checksum "pom.xml" }}
+  release:
+    docker:
+      # specify the version you desire here
+      - image: circleci/openjdk:8-jdk
+
+
+    working_directory: ~/junit-jupiter-params-generated
+
+    environment:
+      # Customize the JVM maximum heap limit
+      MAVEN_OPTS: -Xmx3200m
+
+    steps:
+      - checkout
+      - run: git config user.email "justin@wesleyhome.com"
+      - run: git config user.name "Justin Wesley"
+      - run: git config --global credential.helper cache
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - junit-jupiter-params-generated-release-{{ checksum "pom.xml" }}
+          # fallback to using the latest cache if no exact match is found
+          - junit-jupiter-params-generated-release-
+
+      - run: mvn -s .circleci.settings.xml dependency:go-offline
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: junit-jupiter-params-generated-{{ checksum "pom.xml" }}
+
+      - run: mvn -s .circleci.settings.xml -B release:prepare release:perform
