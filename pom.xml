@@ -15,6 +15,18 @@
         <common-utilities.version>1.0.0</common-utilities.version>
         <module.name>com.wesleyhome.junit.params.generated</module.name>
     </properties>
+    <scm>
+        <connection>scm:git:https://github.com/justin-wesley/junit-jupiter-params-generated.git</connection>
+        <developerConnection>scm:git:https://github.com/justin-wesley/junit-jupiter-params-generated.git</developerConnection>
+        <url>https://github.com/justin-wesley/junit-jupiter-params-generated</url>
+    </scm>
+    <distributionManagement>
+        <repository>
+            <id>bintray-justin-wesley-maven</id>
+            <name>justin-wesley-maven</name>
+            <url>https://api.bintray.com/maven/justin-wesley/maven/junit-jupiter-params-generated/</url>
+        </repository>
+    </distributionManagement>
 
     <dependencies>
         <dependency>
