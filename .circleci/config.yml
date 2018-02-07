@@ -11,8 +11,6 @@ workflows:
           context: org-global
 #      - release:
 #          context: org-global
-#          requires:
-#            - hold
 jobs:
   build:
     docker:
