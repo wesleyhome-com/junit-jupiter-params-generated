@@ -17,6 +17,7 @@ import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolver;
 import org.junit.jupiter.api.extension.TestInstancePostProcessor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.lang.reflect.Parameter;
@@ -54,10 +55,10 @@ public class MockitoExtension implements TestInstancePostProcessor, ParameterRes
         String mockName = getMockName(parameter);
 
         if (mockName != null) {
-            return mocks.getOrComputeIfAbsent(mockName, key -> Mockito.mock(mockType, mockName));
+            return mocks.getOrComputeIfAbsent(mockName, key -> mock(mockType, mockName));
         }
         else {
-            return mocks.getOrComputeIfAbsent(mockType.getCanonicalName(), key -> Mockito.mock(mockType));
+            return mocks.getOrComputeIfAbsent(mockType.getCanonicalName(), key -> mock(mockType));
         }
     }
 
