@@ -1,14 +1,14 @@
 package com.wesleyhome.test.jupiter;
 
-import com.wesleyhome.common.utilities.ReflectionHelper;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.*;
 
-import static com.wesleyhome.common.utilities.ReflectionHelper.invoke;
+import static com.wesleyhome.test.jupiter.ReflectionHelper.invoke;
+import static java.lang.reflect.Modifier.isStatic;
+
 
 class ParameterPermutationsIterator implements Iterator<Arguments> {
 
@@ -91,7 +91,7 @@ class ParameterPermutationsIterator implements Iterator<Arguments> {
     }
 
     private boolean isStaticMethod(Method method) {
-        return Modifier.isStatic(method.getModifiers());
+        return isStatic(method.getModifiers());
     }
 
     private Object[] invokeMethod(Method method, Object testObject) {
