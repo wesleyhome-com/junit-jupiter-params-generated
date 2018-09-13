@@ -8,7 +8,7 @@
     </parent>
     <groupId>com.wesleyhome.test</groupId>
     <artifactId>junit-jupiter-params-generated</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4-SNAPSHOT</version>
     <properties>
         <common-utilities.version>1.0.0</common-utilities.version>
         <module.name>junit.params.generated</module.name>
@@ -21,7 +21,7 @@
         <connection>scm:git:https://github.com/justin-wesley/junit-jupiter-params-generated.git</connection>
         <developerConnection>scm:git:https://github.com/justin-wesley/junit-jupiter-params-generated.git</developerConnection>
         <url>https://github.com/justin-wesley/junit-jupiter-params-generated</url>
-      <tag>junit-jupiter-params-generated-1.0.3</tag>
+      <tag>HEAD</tag>
   </scm>
     <distributionManagement>
         <repository>
