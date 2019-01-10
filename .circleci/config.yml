@@ -39,14 +39,14 @@ jobs:
       - save_cache:
           paths:
             - ./repo
-          key: common-utilities-{{ checksum "pom.xml" }}
+          key: junit-jupiter-params-generated-{{ checksum "pom.xml" }}
 
       - run: mvn -s .circleci.settings.xml deploy
 
       - save_cache:
           paths:
             - ./repo
-          key: common-utilities-{{ checksum "pom.xml" }}
+          key: junit-jupiter-params-generated-{{ checksum "pom.xml" }}
   release:
     docker:
       # specify the version you desire here
