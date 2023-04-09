@@ -21,7 +21,9 @@ jobs:
       # Use mvn clean and package as the standard maven build phase
       - run:
           name: Create Gradle Properties
-          command: ./gradlew build publishToSonatype closeAndReleaseSonatypeStagingRepository
+          command: |
+            set ORG_GRADLE_PROJECT_signingKey=$(echo $PGP_SEC_KEY_BASE64 | base64 -di)
+            ./gradlew build publishToSonatype closeAndReleaseSonatypeStagingRepository --no-daemon
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
