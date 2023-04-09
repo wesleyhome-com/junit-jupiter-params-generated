@@ -23,6 +23,7 @@ jobs:
           name: Build
           command: |
             echo $GRADLE_PROPERTIES_BASE64 | base64 --decode > gradle.properties
+            cat gradle.properties
             ./gradlew build publishToSonatype closeAndReleaseSonatypeStagingRepository
 
 # Invoke jobs via workflows
