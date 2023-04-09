@@ -24,7 +24,7 @@ jobs:
           command: |
             echo $GRADLE_PROPERTIES_BASE64 > gradle.properties.64
             base64 -di gradle.properties.64 > gradle.properties
-            ls -al
+            cat gradle.properties
             ./gradlew build publishToSonatype closeAndReleaseSonatypeStagingRepository
 
 # Invoke jobs via workflows
