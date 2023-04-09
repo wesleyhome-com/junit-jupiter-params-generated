@@ -22,10 +22,8 @@ jobs:
       - run:
           name: Create Gradle Properties
           command: |
-            echo $GRADLE_PROPERTIES_BASE64
             echo $GRADLE_PROPERTIES_BASE64 > gradle.properties.64
-            ls -al
-            base64 --decode gradle.properties.64 > gradle.properties
+            base64 -di gradle.properties.64 > gradle.properties
             ls -al
             ./gradlew build publishToSonatype closeAndReleaseSonatypeStagingRepository
 

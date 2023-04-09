@@ -8,3 +8,4 @@ build/
 /mvnw
 /mvnw.cmd
 /.mvn/**
+/*.64
