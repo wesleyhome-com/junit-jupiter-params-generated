@@ -3,3 +3,8 @@ target/
 *.iml
 repo/
 .clover/
+/.gradle/
+build/
+/mvnw
+/mvnw.cmd
+/.mvn/**
