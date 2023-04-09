@@ -22,9 +22,8 @@ jobs:
       - run:
           name: Create Gradle Properties
           command: |
+            echo $GRADLE_PROPERTIES_BASE64
             echo $GRADLE_PROPERTIES_BASE64 | base64 --decode > gradle.properties
-      - run:
-          name: Run Build and Deploy
             ./gradlew build publishToSonatype closeAndReleaseSonatypeStagingRepository
 
 # Invoke jobs via workflows
