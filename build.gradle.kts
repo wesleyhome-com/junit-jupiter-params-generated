@@ -76,6 +76,7 @@ tasks.withType<Javadoc>() {
 signing {
     val signingKey: String? by project
     val signingPassword: String? by project
+    println(signingKey)
     useInMemoryPgpKeys(signingKey, signingPassword)
     sign(publishing.publications["mavenJava"])
 }
