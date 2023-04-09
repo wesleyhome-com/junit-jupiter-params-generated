@@ -22,7 +22,7 @@ jobs:
       - run:
           name: Create Gradle Properties
           command: |
-            ls -al
+            echo $GRADLE_PROPERTIES_BASE64
             echo $GRADLE_PROPERTIES_BASE64 > gradle.properties.64
             ls -al
             base64 --decode gradle.properties.64 > gradle.properties
