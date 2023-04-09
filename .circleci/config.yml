@@ -21,7 +21,7 @@ jobs:
       # Use mvn clean and package as the standard maven build phase
       - run:
           name: Create Gradle Properties
-          command:
+          command: |
             echo $GRADLE_PROPERTIES_BASE64 | base64 --decode > gradle.properties
       - run:
           name: Run Build and Deploy
