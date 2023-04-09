@@ -19,9 +19,7 @@ jobs:
       # Checkout the code as the first step.
       - checkout
       # Use mvn clean and package as the standard maven build phase
-      - run:
-          name: Build
-          command: |
+      - run: |
             echo $GRADLE_PROPERTIES_BASE64 | base64 --decode > gradle.properties
             cat gradle.properties
             ./gradlew build publishToSonatype closeAndReleaseSonatypeStagingRepository
