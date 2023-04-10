@@ -74,9 +74,11 @@ tasks.withType<Javadoc>() {
 }
 
 signing {
-    val key = findProperty("signingKey").toString()
+    val signingKeyId: String? by project
+    val signingKey: String? by project
     val signingPassword: String? by project
-    useInMemoryPgpKeys(key, signingPassword)
+    project.properties.toSortedMap().forEach { (key, value) -> println("$key: $value") }
+    useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
     sign(publishing.publications["mavenJava"])
 }
 
