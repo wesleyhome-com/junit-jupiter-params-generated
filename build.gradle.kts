@@ -77,7 +77,12 @@ signing {
     val signingKeyId: String? by project
     val signingKey: String? by project
     val signingPassword: String? by project
-    project.properties.toSortedMap().forEach { (key, value) -> println("$key: $value") }
+//    project.properties.toSortedMap().forEach { (key, value) -> println("$key: $value") }
+    mapOf(
+        "keyId" to signingKeyId,
+        "key" to signingKey,
+        "password" to signingPassword,
+    ).toSortedMap().forEach { (key, value) -> println("$key: $value") }
     useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
     sign(publishing.publications["mavenJava"])
 }
