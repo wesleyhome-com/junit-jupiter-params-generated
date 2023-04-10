@@ -23,7 +23,7 @@ jobs:
       - run:
           name: Create Gradle Properties
           command: |
-            ./gradlew build publishToSonatype closeAndReleaseSonatypeStagingRepository --no-daemon
+            ./gradlew build publishToSonatype closeAndReleaseSonatypeStagingRepository --no-daemon --debug
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
