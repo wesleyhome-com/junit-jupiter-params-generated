@@ -1,13 +1,14 @@
 plugins {
   `java-library`
   `maven-publish`
+  kotlin("jvm") version "1.8.20"
   signing
   id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
   id("net.researchgate.release") version "3.0.2"
 }
 
 group = "com.wesleyhome.test"
-version = "1.2.0-SNAPSHOT"
+version = "2.0.0-SNAPSHOT"
 description = "junit-jupiter-params-generated"
 java.sourceCompatibility = JavaVersion.VERSION_11
 extra["isReleaseVersion"] = !version.toString().endsWith("SNAPSHOT")
@@ -28,6 +29,10 @@ dependencies {
 java {
   withSourcesJar()
   withJavadocJar()
+}
+
+kotlin {
+  jvmToolchain(11)
 }
 
 publishing {
