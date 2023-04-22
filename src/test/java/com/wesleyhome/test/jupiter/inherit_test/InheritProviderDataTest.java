@@ -5,11 +5,11 @@ import org.junit.jupiter.params.ParameterizedTest;
 
 public abstract class InheritProviderDataTest {
 
-    @ParameterizedTest
-    @ParametersSource
-    void findImplementedAbstractMethod(double doubles) {
-        System.out.println(doubles);
-    }
+  @ParameterizedTest
+  @ParametersSource
+  void findImplementedAbstractMethod(double doubles) {
+    System.out.println(doubles);
+  }
 
-    abstract double[] data();
+  abstract double[] data();
 }
