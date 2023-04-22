@@ -40,6 +40,9 @@ public class ParameterPermutationsIterator implements Iterator<Arguments> {
         final boolean containsFilterMethodName = methodName.equals(testMethodName + "_filter");
         return parametersEqual && returnBoolean && containsFilterMethodName;
       }).findFirst().orElse(null);
+    if (filterMethod != null) {
+      filterMethod.setAccessible(true);
+    }
     if (parameterOptions != null && !parameterOptions.isEmpty()) {
       List<Object[]> options = new ArrayList<>();
       for (int i = 0; i < parameterOptions.size(); i++) {
@@ -89,16 +92,17 @@ public class ParameterPermutationsIterator implements Iterator<Arguments> {
 
   @Override
   public boolean hasNext() {
-    if (currentPermutation < totalPermutations) {
+    if (filterMethod == null) {
+      return currentPermutation < totalPermutations;
+    }
+    while (currentPermutation < totalPermutations) {
       Arguments args = createArgument();
       if (shouldFilter(args)) {
         return true;
-      } else {
-        increment();
-        return hasNext();
       }
+      increment();
     }
-    return currentPermutation < totalPermutations;
+    return false;
   }
 
   private void increment() {
@@ -214,10 +218,6 @@ public class ParameterPermutationsIterator implements Iterator<Arguments> {
   }
 
   private boolean shouldFilter(Arguments arguments) {
-    if (filterMethod == null) {
-      return true;
-    }
-    filterMethod.setAccessible(true);
     try {
       return (boolean) filterMethod.invoke(testObject, arguments.get());
     } catch (Exception e) {
