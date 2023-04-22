@@ -10,7 +10,7 @@ group = "com.wesleyhome.test"
 version = "1.2.0-SNAPSHOT"
 description = "junit-jupiter-params-generated"
 java.sourceCompatibility = JavaVersion.VERSION_11
-
+extra["isReleaseVersion"] = !version.toString().endsWith("SNAPSHOT")
 repositories {
   mavenLocal()
   mavenCentral()
