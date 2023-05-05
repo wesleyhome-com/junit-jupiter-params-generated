@@ -1,6 +1,7 @@
 package com.wesleyhome.test.jupiter.inherit_test;
 
 import com.wesleyhome.test.jupiter.ParametersSource;
+import java.util.List;
 import org.junit.jupiter.params.ParameterizedTest;
 
 public abstract class InheritProviderDataTest {
@@ -11,5 +12,5 @@ public abstract class InheritProviderDataTest {
     System.out.println(doubles);
   }
 
-  abstract double[] data();
+  abstract List<Double> data();
 }

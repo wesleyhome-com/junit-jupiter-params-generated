@@ -1,5 +1,6 @@
 package com.wesleyhome.test.jupiter;
 
+import java.util.List;
 import org.junit.jupiter.params.ParameterizedTest;
 
 class MethodArgumentsProviderTest {
@@ -41,7 +42,7 @@ class MethodArgumentsProviderTest {
   }
 
   @SuppressWarnings("WeakerAccess")
-  public double[] doubles() {
-    return new double[] {2.0, 3.2, 5.6};
+  public List<Double> doubles() {
+    return List.of(2.0, 3.2, 5.6);
   }
 }
