@@ -106,8 +106,9 @@ nexusPublishing {
 }
 
 release {
-  buildTasks.set(listOf("publishToSonatype", "closeAndReleaseSonatypeStagingRepository"))
-  git {
+  tagTemplate.set("junit-jupiter-params-generated-$version")
+  buildTasks.set(listOf("build", "publishToSonatype", "closeAndReleaseSonatypeStagingRepository"))
+  with(git) {
     requireBranch.set("master")
   }
 }
