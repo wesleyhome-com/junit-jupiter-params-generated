@@ -9,9 +9,8 @@ plugins {
 }
 
 group = "com.wesleyhome.test"
-version = "2.0.0"
+version = "2.0.0-SNAPSHOT"
 description = "junit-jupiter-params-generated"
-java.sourceCompatibility = JavaVersion.VERSION_11
 extra["isReleaseVersion"] = !version.toString().endsWith("SNAPSHOT")
 repositories {
   mavenLocal()
@@ -32,6 +31,7 @@ dependencies {
 java {
   withSourcesJar()
   withJavadocJar()
+  sourceCompatibility = JavaVersion.VERSION_11
 }
 
 tasks.named<Test>("test") {
@@ -53,6 +53,8 @@ publishing {
       from(components["java"])
       pom {
         this.description.set(description)
+        this.name.set("Generated JUnit Jupiter Parameters")
+        this.url.set("https://github.com/justin-wesley/junit-jupiter-params-generated")
         scm {
           connection.set("scm:git:https://github.com/justin-wesley/junit-jupiter-params-generated.git")
           developerConnection.set("scm:git:https://github.com/justin-wesley/junit-jupiter-params-generated.git")
