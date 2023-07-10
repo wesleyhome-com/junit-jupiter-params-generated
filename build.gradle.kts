@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.wesleyhome.test"
-version = "2.0.0-SNAPSHOT"
+version = "2.0.0"
 description = "junit-jupiter-params-generated"
 extra["isReleaseVersion"] = !version.toString().endsWith("SNAPSHOT")
 repositories {
