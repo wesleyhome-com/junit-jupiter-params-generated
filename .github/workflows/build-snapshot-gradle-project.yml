@@ -9,6 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: default
+    env:
+      ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPE_USERNAME }}
+      ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
     steps:
       - name: Checkout project sources
         uses: actions/checkout@v3
