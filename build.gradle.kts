@@ -88,11 +88,8 @@ tasks.withType<Javadoc>() {
 }
 
 signing {
+  setRequired({ project.extra["isReleaseVersion"] as Boolean})
   sign(publishing.publications["mavenJava"])
-}
-
-tasks.withType<Sign>().configureEach {
-  onlyIf("isReleaseVersion is set") { (project.extra["isReleaseVersion"] as Boolean) }
 }
 
 tasks.javadoc {
