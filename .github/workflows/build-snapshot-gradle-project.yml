@@ -2,8 +2,7 @@ name: Build Gradle project
 
 on:
   push:
-    tags-ignore:
-      - junit*
+
 
 jobs:
   build-snapshot-gradle-project:
