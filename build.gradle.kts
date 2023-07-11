@@ -108,7 +108,6 @@ nexusPublishing {
 }
 
 release {
-  buildTasks.set(listOf("build", "publishToSonatype", "closeAndReleaseSonatypeStagingRepository"))
   with(git) {
     requireBranch.set("master")
   }
