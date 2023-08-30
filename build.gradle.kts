@@ -22,6 +22,7 @@ dependencies {
   api("org.junit.jupiter:junit-jupiter-engine:5.9.2")
   api("org.junit.jupiter:junit-jupiter-api:5.9.2")
   implementation(kotlin("reflect"))
+  implementation(kotlin("stdlib"))
   testImplementation("org.mockito:mockito-core:5.3.1")
   testImplementation("org.mockito:mockito-junit-jupiter:5.3.1")
   testImplementation("io.mockk:mockk:1.13.5")

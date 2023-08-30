@@ -46,6 +46,7 @@ import kotlin.reflect.KClass
 @ArgumentsSource(
   MethodArgumentsProvider::class
 )
+@Deprecated(message = "", replaceWith = ReplaceWith("com.wesleyhome.test.jupiter.annotations.ParametersSource"))
 annotation class ParametersSource(
   /**
    * Defines Classes that contain methods for providing arrays of data.
