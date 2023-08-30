@@ -5,7 +5,6 @@ plugins {
   kotlin("jvm") version "1.8.20"
   signing
   id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
-  id("net.researchgate.release") version "3.0.2"
 }
 
 group = "com.wesleyhome.test"
@@ -103,12 +102,6 @@ tasks.javadoc {
 nexusPublishing {
   this.repositories {
     sonatype()
-  }
-}
-
-release {
-  with(git) {
-    requireBranch.set("master")
   }
 }
 
