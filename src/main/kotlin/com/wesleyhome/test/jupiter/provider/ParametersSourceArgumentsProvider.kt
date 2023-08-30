@@ -4,22 +4,25 @@ import com.wesleyhome.test.jupiter.generator.ParametersGenerator
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.ArgumentsProvider
-import java.util.Spliterator
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
-import kotlin.streams.toList
+import kotlin.reflect.KClass
+import kotlin.reflect.jvm.kotlinFunction
 
 class ParametersSourceArgumentsProvider : ArgumentsProvider {
   override fun provideArguments(context: ExtensionContext): Stream<out Arguments> {
+    val requiredTestMethod = context.requiredTestMethod.kotlinFunction!!
+    val parameters = requiredTestMethod.parameters.toMutableList().also { it.removeFirst() }.toList()
     val generator = ParametersGenerator(
-      testMethodName = context.requiredTestMethod.name,
+      testMethodName = requiredTestMethod.name,
       testObject = context.requiredTestInstance,
       testModel = TestModel(
-        name = context.requiredTestMethod.name,
-        testParameters = context.requiredTestMethod.parameters.map {
+        name = requiredTestMethod.name,
+        testParameters = parameters.map {
           TestParameter(
-            name = it.name,
-            type = it.type.kotlin,
+            name = it.name ?: "param${it.index}",
+            type = it.type.classifier as KClass<*>,
+            isNullable = it.type.isMarkedNullable,
             annotations = it.annotations.toList()
           )
         }

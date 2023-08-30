@@ -5,7 +5,6 @@ import com.wesleyhome.test.jupiter.annotations.LocalDateRangeSource
 import com.wesleyhome.test.jupiter.kotlin.TestKotlinEnum
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
-import io.mockk.impl.recording.WasNotCalled.method
 import io.mockk.junit5.MockKExtension
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.extension.ExtendWith
@@ -25,6 +24,7 @@ class ParametersSourceArgumentsProviderTest {
     "testBooleanMethod,2",
     "testEnumMethod,7",
     "testBooleanEnumMethod,14",
+    "testNullBooleanEnumMethod,21",
     "testLocalDateRangeMethod,366",
     "testIntMethod, 11"
   )
@@ -42,6 +42,7 @@ class ParametersSourceArgumentsProviderTest {
   private fun testBooleanMethod(enabled: Boolean){}
   private fun testEnumMethod(values: TestKotlinEnum){}
   private fun testBooleanEnumMethod(enabled: Boolean, values: TestKotlinEnum){}
+  private fun testNullBooleanEnumMethod(enabled: Boolean?, values: TestKotlinEnum){}
   private fun testIntMethod(@IntRangeSource(min = 10, max = 20) size: Int){}
   private fun testLocalDateRangeMethod(@LocalDateRangeSource(min = "2022-01-01", max = "2023-01-01") date: LocalDate){}
 

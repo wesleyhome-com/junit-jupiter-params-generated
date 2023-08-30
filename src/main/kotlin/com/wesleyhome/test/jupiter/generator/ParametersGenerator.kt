@@ -3,7 +3,6 @@ package com.wesleyhome.test.jupiter.generator
 import com.wesleyhome.test.jupiter.InvalidParameterException
 import com.wesleyhome.test.jupiter.provider.*
 import org.junit.jupiter.params.provider.Arguments
-import java.util.stream.Stream
 
 class ParametersGenerator(
   private val testMethodName: String,
@@ -28,7 +27,9 @@ class ParametersGenerator(
     LocalDateTimeRangeDataProvider
   )
   private val options: List<List<Any?>> = testModel.testParameters.map {
-    dataProviders.firstOrNull { dp -> dp.providesDataFor(it) }?.createParameterOptionsData(it)
+    dataProviders.firstOrNull { dp ->
+      dp.providesDataFor(it)
+    }?.createParameterOptionsData(it)
       ?: throw InvalidParameterException(it.type)
   }
 
