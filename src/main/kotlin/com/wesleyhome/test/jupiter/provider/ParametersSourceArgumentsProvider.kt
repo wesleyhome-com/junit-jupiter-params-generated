@@ -14,8 +14,6 @@ class ParametersSourceArgumentsProvider : ArgumentsProvider {
     val requiredTestMethod = context.requiredTestMethod.kotlinFunction!!
     val parameters = requiredTestMethod.parameters.toMutableList().also { it.removeFirst() }.toList()
     val generator = ParametersGenerator(
-      testMethodName = requiredTestMethod.name,
-      testObject = context.requiredTestInstance,
       testModel = TestModel(
         name = requiredTestMethod.name,
         testParameters = parameters.map {

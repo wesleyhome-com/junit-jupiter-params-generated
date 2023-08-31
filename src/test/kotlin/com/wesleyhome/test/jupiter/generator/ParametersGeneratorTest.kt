@@ -379,8 +379,6 @@ class ParametersGeneratorTest {
     vararg parameters: TestParameter
   ) {
     val generator = ParametersGenerator(
-      testMethodName = methodName,
-      testObject = Unit,
       testModel = TestModel(
         name = methodName,
         testParameters = parameters.toList()

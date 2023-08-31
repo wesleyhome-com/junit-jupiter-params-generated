@@ -5,8 +5,6 @@ import com.wesleyhome.test.jupiter.provider.*
 import org.junit.jupiter.params.provider.Arguments
 
 class ParametersGenerator(
-  private val testMethodName: String,
-  private val testObject: Any,
   testModel: TestModel
 ) {
 

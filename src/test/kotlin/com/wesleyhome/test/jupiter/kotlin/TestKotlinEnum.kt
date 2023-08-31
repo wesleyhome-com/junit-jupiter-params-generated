@@ -1,6 +1,6 @@
 package com.wesleyhome.test.jupiter.kotlin
 
-internal enum class TestKotlinEnum {
+enum class TestKotlinEnum {
   GOOD,
   BAD,
   UGLY,

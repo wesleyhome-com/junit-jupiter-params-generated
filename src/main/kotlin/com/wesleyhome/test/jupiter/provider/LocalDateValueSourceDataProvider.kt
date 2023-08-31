@@ -152,5 +152,5 @@ infix fun ClosedRange<LocalDate>.step(step: String): LocalDateProgression {
 
 fun String.period(): Period = Period.parse(this)
 fun String.duration(): Duration = Duration.parse(this)
-fun String.toLocalDate(dateFormat: String): LocalDate = LocalDate.parse(this, DateTimeFormatter.ofPattern(dateFormat))
-fun String.toLocalDateTime(dateTimeFormat: String): LocalDateTime = LocalDateTime.parse(this, DateTimeFormatter.ofPattern(dateTimeFormat))
+fun String.toLocalDate(dateFormat: String = "yyyy-MM-dd"): LocalDate = LocalDate.parse(this, DateTimeFormatter.ofPattern(dateFormat))
+fun String.toLocalDateTime(dateTimeFormat: String = "yyyy-MM-dd HH:mm"): LocalDateTime = LocalDateTime.parse(this, DateTimeFormatter.ofPattern(dateTimeFormat))
