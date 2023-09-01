@@ -89,7 +89,14 @@ tasks.withType<Javadoc>() {
 }
 
 signing {
-  setRequired({ project.extra["isReleaseVersion"] as Boolean })
+  setRequired { !project.version.toString().endsWith("-SNAPSHOT") && !project.hasProperty("skipSigning") }
+  if(isOnCIServer()) {
+    val signingKey: String? by project
+    if((signingKey?.length ?: 0) <= 0){
+      throw RuntimeException("No Signing Key")
+    }
+    useInMemoryPgpKeys(signingKey, "")
+  }
   sign(publishing.publications["mavenJava"])
 }
 
@@ -98,7 +105,7 @@ tasks.javadoc {
     (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
   }
 }
-
+fun isOnCIServer() = System.getenv("CI") == "true"
 nexusPublishing {
   this.repositories {
     sonatype()
@@ -143,7 +150,7 @@ fun releaseVersion(version: String) {
   }
   if(!isSnapshot) {
     exec {
-      commandLine("cmd", "/c", "git", "tag", """"koin-aws-lambda-$version"""")
+      commandLine("cmd", "/c", "git", "tag", """"junit-jupiter-params-generated-$version"""")
     }
   }
 }
