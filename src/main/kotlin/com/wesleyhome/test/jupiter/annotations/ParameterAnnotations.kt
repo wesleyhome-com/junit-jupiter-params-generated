@@ -81,3 +81,8 @@ annotation class LocalDateTimeRangeSource(
   val ascending: Boolean = true,
   val dateTimeFormat: String = "yyyy-MM-dd HH:mm"
 )
+
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class StringSource(val values: Array<String>)
