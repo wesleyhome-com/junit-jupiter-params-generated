@@ -7,8 +7,8 @@ import java.util.stream.Stream
 import java.util.stream.StreamSupport
 
 internal class MethodArgumentsProvider : ArgumentsProvider {
-  override fun provideArguments(context: ExtensionContext): Stream<out Arguments?> {
-    val parametersGenerator = ParametersGenerator.create(context)
-    return StreamSupport.stream(parametersGenerator.spliterator(), false)
-  }
+    override fun provideArguments(context: ExtensionContext): Stream<out Arguments?> {
+        val parametersGenerator = ParametersGenerator.create(context)
+        return StreamSupport.stream(parametersGenerator.spliterator(), false)
+    }
 }

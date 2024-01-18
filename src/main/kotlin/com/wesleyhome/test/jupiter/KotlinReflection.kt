@@ -18,38 +18,38 @@ fun KFunction<*>.isStatic(): Boolean = this.javaMethod?.let { Modifier.isStatic(
 fun KFunction<*>.isNotStatic(): Boolean = !this.isStatic()
 
 fun KFunction<*>.isStaticNonTestInstance(providerClass: KClass<*>): Boolean =
-  this.isStatic() && this.declaredKClass() == providerClass
+    this.isStatic() && this.declaredKClass() == providerClass
 
 fun KFunction<*>.declaredKClass() = this.javaMethod?.declaringClass?.kotlin
 
 fun KFunction<*>.isInstanceMethodOfTestClass(testClass: KClass<*>): Boolean {
-  val notStatic = this.isNotStatic()
-  val assignableFrom = this.declaredKClass()?.java?.isAssignableFrom(testClass.java) ?: false
-  return notStatic && assignableFrom
+    val notStatic = this.isNotStatic()
+    val assignableFrom = this.declaredKClass()?.java?.isAssignableFrom(testClass.java) ?: false
+    return notStatic && assignableFrom
 }
 
 fun KFunction<*>.isNoArg(): Boolean = this.parameters.drop(1).isEmpty()
 
 fun KFunction<*>.returnsIterable(parameter: KParameter): Boolean {
-  val returnType = this.returnType
-  val isIterable = returnType.isSubtypeOf(Iterable::class.starProjectedType)
-  return if (isIterable) {
-    val arguments = returnType.arguments
-    if (arguments.isNotEmpty()) {
-      val type = arguments[0].type
-      if (type != null) {
-        val parameterType = parameter.type
-        val sameType = parameterType == type
-        val subtype = parameterType.isSubtypeOf(type)
-        val otherSubtype = type.isSubtypeOf(parameterType)
-        sameType || (subtype && otherSubtype)
-      } else {
-        false
-      }
+    val returnType = this.returnType
+    val isIterable = returnType.isSubtypeOf(Iterable::class.starProjectedType)
+    return if (isIterable) {
+        val arguments = returnType.arguments
+        if (arguments.isNotEmpty()) {
+            val type = arguments[0].type
+            if (type != null) {
+                val parameterType = parameter.type
+                val sameType = parameterType == type
+                val subtype = parameterType.isSubtypeOf(type)
+                val otherSubtype = type.isSubtypeOf(parameterType)
+                sameType || (subtype && otherSubtype)
+            } else {
+                false
+            }
+        } else {
+            false
+        }
     } else {
-      false
+        false
     }
-  } else {
-    false
-  }
 }

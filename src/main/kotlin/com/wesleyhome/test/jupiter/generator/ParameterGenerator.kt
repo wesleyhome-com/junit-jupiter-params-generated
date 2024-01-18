@@ -4,7 +4,7 @@ import kotlin.reflect.KClass
 
 interface ParameterGenerator {
 
-  fun supportsType(type: KClass<*>): Boolean
+    fun supportsType(type: KClass<*>): Boolean
 
-  fun <T : Any> options(type: KClass<T>): List<T>
+    fun <T : Any> options(type: KClass<T>): List<T>
 }

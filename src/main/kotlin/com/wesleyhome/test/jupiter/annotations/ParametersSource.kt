@@ -28,7 +28,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 @ArgumentsSource(
-  ParametersSourceArgumentsProvider::class
+    ParametersSourceArgumentsProvider::class
 )
 annotation class ParametersSource
 

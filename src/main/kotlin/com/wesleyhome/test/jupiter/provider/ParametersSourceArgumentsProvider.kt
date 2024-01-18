@@ -10,23 +10,23 @@ import kotlin.reflect.KClass
 import kotlin.reflect.jvm.kotlinFunction
 
 class ParametersSourceArgumentsProvider : ArgumentsProvider {
-  override fun provideArguments(context: ExtensionContext): Stream<out Arguments> {
-    val requiredTestMethod = context.requiredTestMethod.kotlinFunction!!
-    val parameters = requiredTestMethod.parameters.toMutableList().also { it.removeFirst() }.toList()
-    val generator = ParametersGenerator(
-      testModel = TestModel(
-        name = requiredTestMethod.name,
-        testParameters = parameters.map {
-          TestParameter(
-            name = it.name ?: "param${it.index}",
-            type = it.type.classifier as KClass<*>,
-            isNullable = it.type.isMarkedNullable,
-            annotations = it.annotations.toList()
-          )
-        }
-      )
-    )
-    val arguments = generator.arguments()
-    return StreamSupport.stream(arguments.spliterator(), false)
-  }
+    override fun provideArguments(context: ExtensionContext): Stream<out Arguments> {
+        val requiredTestMethod = context.requiredTestMethod.kotlinFunction!!
+        val parameters = requiredTestMethod.parameters.toMutableList().also { it.removeFirst() }.toList()
+        val generator = ParametersGenerator(
+            testModel = TestModel(
+                name = requiredTestMethod.name,
+                testParameters = parameters.map {
+                    TestParameter(
+                        name = it.name ?: "param${it.index}",
+                        type = it.type.classifier as KClass<*>,
+                        isNullable = it.type.isMarkedNullable,
+                        annotations = it.annotations.toList()
+                    )
+                }
+            )
+        )
+        val arguments = generator.arguments()
+        return StreamSupport.stream(arguments.spliterator(), false)
+    }
 }

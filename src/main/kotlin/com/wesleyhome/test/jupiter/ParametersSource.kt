@@ -34,24 +34,24 @@ import kotlin.reflect.KClass
  * @since 5.0
  */
 @Target(
-  AnnotationTarget.ANNOTATION_CLASS,
-  AnnotationTarget.FUNCTION,
-  AnnotationTarget.PROPERTY_GETTER,
-  AnnotationTarget.PROPERTY_SETTER
+    AnnotationTarget.ANNOTATION_CLASS,
+    AnnotationTarget.FUNCTION,
+    AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY_SETTER
 )
 @Retention(
-  AnnotationRetention.RUNTIME
+    AnnotationRetention.RUNTIME
 )
 @MustBeDocumented
 @ArgumentsSource(
-  MethodArgumentsProvider::class
+    MethodArgumentsProvider::class
 )
 @Deprecated(message = "", replaceWith = ReplaceWith("com.wesleyhome.test.jupiter.annotations.ParametersSource"))
 annotation class ParametersSource(
-  /**
-   * Defines Classes that contain methods for providing arrays of data.
-   *
-   * @return the declared provider classes
-   */
-  vararg val value: KClass<*> = []
+    /**
+     * Defines Classes that contain methods for providing arrays of data.
+     *
+     * @return the declared provider classes
+     */
+    vararg val value: KClass<*> = []
 )

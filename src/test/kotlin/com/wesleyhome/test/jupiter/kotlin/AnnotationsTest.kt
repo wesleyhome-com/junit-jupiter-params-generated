@@ -17,7 +17,6 @@ import com.wesleyhome.test.jupiter.annotations.StringSource
 import com.wesleyhome.test.jupiter.provider.step
 import com.wesleyhome.test.jupiter.provider.toLocalDate
 import com.wesleyhome.test.jupiter.provider.toLocalDateTime
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.params.ParameterizedTest
@@ -26,7 +25,7 @@ import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
-class AnnotationsTest  {
+class AnnotationsTest {
 
     companion object {
         private const val BOOLEAN = "BOOLEAN"
@@ -81,6 +80,7 @@ class AnnotationsTest  {
         private fun int(map: String): AtomicInteger = intMap.computeIfAbsent(map) {
             AtomicInteger(0)
         }
+
         private fun typeArray(range: IntProgression) = range.toList().map { "$it" }.toTypedArray()
 
         /**
