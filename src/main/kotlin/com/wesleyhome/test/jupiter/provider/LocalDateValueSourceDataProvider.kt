@@ -66,8 +66,12 @@ object LocalDateRangeDataProvider : AbstractParameterDataProvider<LocalDate>() {
   override fun createParameterOptionsData(testParameter: TestParameter): List<LocalDate?> {
     val s = findAnnotation(testParameter)!!
     val dateFormat = s.dateFormat
-    val range = s.min.toLocalDate(dateFormat)..s.max.toLocalDate(dateFormat) step s.increment
-    return range.toList()
+    val range = (s.min.toLocalDate(dateFormat)..s.max.toLocalDate(dateFormat) step s.increment).toList()
+    return if(s.ascending) {
+      range
+    } else {
+      range.reversed()
+    }
   }
 
   private fun findAnnotation(testParameter: TestParameter) =
@@ -88,8 +92,13 @@ object LocalDateTimeRangeDataProvider : AbstractParameterDataProvider<LocalDateT
 
   override fun createParameterOptionsData(testParameter: TestParameter): List<LocalDateTime?> {
     val s = findAnnotation(testParameter)!!
-    val range = s.min.toLocalDateTime(s.dateTimeFormat)..s.max.toLocalDateTime(s.dateTimeFormat) step s.increment
-    return range.toList()
+    val dateFormat = s.dateTimeFormat
+    val range = (s.min.toLocalDateTime(dateFormat)..s.max.toLocalDateTime(dateFormat) step s.increment).toList()
+    return if(s.ascending) {
+      range
+    } else {
+      range.reversed()
+    }
   }
 
   private fun findAnnotation(testParameter: TestParameter) =

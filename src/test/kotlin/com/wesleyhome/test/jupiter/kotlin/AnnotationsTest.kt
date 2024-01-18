@@ -17,6 +17,7 @@ import com.wesleyhome.test.jupiter.annotations.StringSource
 import com.wesleyhome.test.jupiter.provider.step
 import com.wesleyhome.test.jupiter.provider.toLocalDate
 import com.wesleyhome.test.jupiter.provider.toLocalDateTime
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.params.ParameterizedTest
@@ -25,7 +26,7 @@ import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
-class AnnotationsTest {
+class AnnotationsTest  {
 
     companion object {
         private const val BOOLEAN = "BOOLEAN"
@@ -35,6 +36,7 @@ class AnnotationsTest {
         private const val INT_SOURCE = "INT_SOURCE"
         private const val INT_RANGE = "INT_RANGE"
         private const val INT_RANGE_STEP = "INT_RANGE_STEP"
+        private const val INT_RANGE_STEP_DESCENDING = "INT_RANGE_STEP_NEGATIVE"
         private const val LONG_SOURCE = "LONG_SOURCE"
         private const val LONG_RANGE = "LONG_RANGE"
         private const val LONG_RANGE_STEP = "LONG_RANGE_STEP"
@@ -79,6 +81,7 @@ class AnnotationsTest {
         private fun int(map: String): AtomicInteger = intMap.computeIfAbsent(map) {
             AtomicInteger(0)
         }
+        private fun typeArray(range: IntProgression) = range.toList().map { "$it" }.toTypedArray()
 
         /**
          * Unorthodox way, until I can come up with something better to validate
@@ -96,8 +99,11 @@ class AnnotationsTest {
             }
             assertThat(getRef(BOOL_ENUM)).containsOnly(*map.toTypedArray())
             assertThat(int(INT_SOURCE)).hasValue(60)
-            assertThat(int(INT_RANGE)).hasValue((10..20).sum())
-            assertThat(int(INT_RANGE_STEP)).hasValue((10..20 step 5).sum())
+            assertThat(getRef(INT_RANGE)).containsExactly(*typeArray((10..20)))
+            assertThat(getRef(INT_RANGE_STEP))
+                .containsExactly(*typeArray((10..20 step 5)))
+            assertThat(getRef(INT_RANGE_STEP_DESCENDING))
+                .containsExactly(*typeArray((20 downTo 10 step 5)))
             assertThat(int(LONG_SOURCE)).hasValue(60)
             assertThat(int(LONG_RANGE)).hasValue((10..20).sum())
             assertThat(int(LONG_RANGE_STEP)).hasValue((10..20 step 5).sum())
@@ -210,17 +216,19 @@ class AnnotationsTest {
     @ParameterizedTest
     @ParametersSource
     fun testIntRange(@IntRangeSource(min = 10, max = 20) value: Int) {
-        update(INT_RANGE) {
-            it + value
-        }
+        append(INT_RANGE, value)
     }
 
     @ParameterizedTest
     @ParametersSource
     fun testIntRangeStep(@IntRangeSource(min = 10, max = 20, increment = 5) value: Int) {
-        update(INT_RANGE_STEP) {
-            it + value
-        }
+        append(INT_RANGE_STEP, value)
+    }
+
+    @ParameterizedTest
+    @ParametersSource
+    fun testIntRangeStepDescending(@IntRangeSource(min = 10, max = 20, increment = 5, ascending = false) value: Int) {
+        append(INT_RANGE_STEP_DESCENDING, value)
     }
 
     @ParameterizedTest

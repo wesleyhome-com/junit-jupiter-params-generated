@@ -32,8 +32,18 @@ object DoubleRangeDataProvider : AbstractParameterDataProvider<Double>() {
 
   override fun createParameterOptionsData(testParameter: TestParameter): List<Double?> {
     val s = findAnnotation(testParameter)!!
-    val range = s.min .. s.max step s.increment
-    return range.toList()
+    if(s.increment <= 0) {
+      throw IllegalArgumentException("increment must be greater than 0")
+    }
+    if(s.min >= s.max) {
+      throw IllegalArgumentException("min must be less than or equal to max")
+    }
+      val range = (s.min .. s.max step s.increment).toList()
+      return if(s.ascending) {
+          range
+      } else {
+          range.reversed()
+      }
   }
 
   private fun findAnnotation(testParameter: TestParameter) =
