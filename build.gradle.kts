@@ -4,10 +4,10 @@ plugins {
     java
     `java-library`
     `maven-publish`
-    kotlin("jvm") version "1.9.21"
+    kotlin("jvm") version "1.9.22"
     signing
     id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
-    id("com.github.ben-manes.versions") version "0.50.0"
+    id("com.github.ben-manes.versions") version "0.51.0"
 }
 
 group = "com.wesleyhome.test"
@@ -21,15 +21,15 @@ repositories {
 }
 
 dependencies {
-    api("org.junit.jupiter:junit-jupiter-params:5.10.1")
-    api("org.junit.jupiter:junit-jupiter-engine:5.10.1")
-    api("org.junit.jupiter:junit-jupiter-api:5.10.1")
+    api("org.junit.jupiter:junit-jupiter-params:5.10.2")
+    api("org.junit.jupiter:junit-jupiter-engine:5.10.2")
+    api("org.junit.jupiter:junit-jupiter-api:5.10.2")
     implementation(kotlin("reflect"))
     implementation(kotlin("stdlib"))
-    testImplementation("org.mockito:mockito-core:5.8.0")
-    testImplementation("org.mockito:mockito-junit-jupiter:5.8.0")
-    testImplementation("io.mockk:mockk:1.13.8")
-    testImplementation("org.assertj:assertj-core:3.24.2")
+    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.11.0")
+    testImplementation("io.mockk:mockk:1.13.10")
+    testImplementation("org.assertj:assertj-core:3.25.3")
 }
 
 java {
