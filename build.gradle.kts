@@ -4,7 +4,7 @@ plugins {
     java
     `java-library`
     `maven-publish`
-    kotlin("jvm") version "1.9.23"
+    kotlin("jvm") version "1.9.24"
     signing
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
     id("com.github.ben-manes.versions") version "0.51.0"
