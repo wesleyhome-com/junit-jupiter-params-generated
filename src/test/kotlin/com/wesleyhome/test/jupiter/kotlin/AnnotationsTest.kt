@@ -10,6 +10,8 @@ import com.wesleyhome.test.jupiter.annotations.LocalDateRangeSource
 import com.wesleyhome.test.jupiter.annotations.LocalDateSource
 import com.wesleyhome.test.jupiter.annotations.LocalDateTimeRangeSource
 import com.wesleyhome.test.jupiter.annotations.LocalDateTimeSource
+import com.wesleyhome.test.jupiter.annotations.LocalTimeRangeSource
+import com.wesleyhome.test.jupiter.annotations.LocalTimeSource
 import com.wesleyhome.test.jupiter.annotations.LongRangeSource
 import com.wesleyhome.test.jupiter.annotations.LongSource
 import com.wesleyhome.test.jupiter.annotations.ParametersSource
@@ -17,11 +19,13 @@ import com.wesleyhome.test.jupiter.annotations.StringSource
 import com.wesleyhome.test.jupiter.provider.step
 import com.wesleyhome.test.jupiter.provider.toLocalDate
 import com.wesleyhome.test.jupiter.provider.toLocalDateTime
+import com.wesleyhome.test.jupiter.provider.toLocalTime
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.params.ParameterizedTest
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
@@ -58,6 +62,13 @@ class AnnotationsTest {
         private const val LOCAL_DATE_TIME_RANGE_WITH_PATTERN = "LOCAL_DATE_TIME_RANGE_WITH_PATTERN"
         private const val LOCAL_DATE_TIME_RANGE_STEP_WITH_PATTERN = "LOCAL_DATE_TIME_RANGE_STEP_WITH_PATTERN"
 
+        private const val LOCAL_TIME_SOURCE: String = "LOCAL_TIME_SOURCE"
+        private const val LOCAL_TIME_SOURCE_WITH_PATTERN: String = "LOCAL_TIME_SOURCE_WITH_PATTERN"
+        private const val LOCAL_TIME_RANGE: String = "LOCAL_TIME_RANGE"
+        private const val LOCAL_TIME_RANGE_STEP: String = "LOCAL_TIME_RANGE_STEP"
+        private const val LOCAL_TIME_RANGE_WITH_PATTERN: String = "LOCAL_TIME_RANGE_WITH_PATTERN"
+        private const val LOCAL_TIME_RANGE_STEP_WITH_PATTERN: String = "LOCAL_TIME_RANGE_STEP_WITH_PATTERN"
+
         private val stringMap = mutableMapOf<String, AtomicReference<List<String>>>()
         private val intMap = mutableMapOf<String, AtomicInteger>()
 
@@ -91,8 +102,8 @@ class AnnotationsTest {
         @JvmStatic
         fun tester() {
             assertThat(getRef(BOOLEAN)).containsExactlyInAnyOrder("true", "false")
-            assertThat(getRef(ENUM)).containsOnly(*TestKotlinEnum.values().map { it.name }.toTypedArray())
-            val map = TestKotlinEnum.values().flatMap { enum ->
+            assertThat(getRef(ENUM)).containsOnly(*TestKotlinEnum.entries.map { it.name }.toTypedArray())
+            val map = TestKotlinEnum.entries.flatMap { enum ->
                 listOf(true, false).map { bool ->
                     "$bool,$enum"
                 }
@@ -176,6 +187,33 @@ class AnnotationsTest {
             assertThat(getRef(STRING_SOURCE))
                 .describedAs(STRING_SOURCE)
                 .containsExactlyInAnyOrder("Ten", "Twenty", "Thirty")
+            assertThat(getRef(LOCAL_TIME_SOURCE)).describedAs(
+                LOCAL_TIME_SOURCE
+            )
+                .containsOnly("12:30", "12:30:01")
+            assertThat(getRef(LOCAL_TIME_SOURCE_WITH_PATTERN)).describedAs(
+                LOCAL_TIME_SOURCE_WITH_PATTERN
+            )
+                .containsOnly("12:30", "12:31")
+            val localTimeRange =
+                ("12:00".toLocalTime().."18:00".toLocalTime() step "PT1H")
+                    .map { it.toString() }
+            assertThat(getRef(LOCAL_TIME_RANGE)).describedAs(LOCAL_TIME_RANGE)
+                .containsExactlyInAnyOrderElementsOf(localTimeRange)
+            val localTimeRangeStep = ("12:00".toLocalTime().."13:00".toLocalTime() step "PT1m")
+                .map { it.toString() }
+            assertThat(getRef(LOCAL_TIME_RANGE_STEP)).describedAs(
+                LOCAL_TIME_RANGE_STEP
+            ).containsExactlyInAnyOrderElementsOf(localTimeRangeStep)
+
+            assertThat(getRef(LOCAL_TIME_RANGE_WITH_PATTERN)).describedAs(
+                LOCAL_TIME_RANGE_WITH_PATTERN
+            ).containsExactlyInAnyOrderElementsOf(localTimeRange)
+
+            assertThat(getRef(LOCAL_TIME_RANGE_STEP_WITH_PATTERN)).describedAs(
+                LOCAL_TIME_RANGE_STEP_WITH_PATTERN
+            ).containsExactlyInAnyOrderElementsOf(localTimeRangeStep)
+
         }
     }
 
@@ -416,4 +454,66 @@ class AnnotationsTest {
     ) {
         append(LOCAL_DATE_TIME_RANGE_STEP_WITH_PATTERN, value)
     }
+
+
+    @ParameterizedTest
+    @ParametersSource
+    fun testLocalTimeSource(
+        @LocalTimeSource(
+            values = ["12:30:00", "12:30:01"],
+            timeFormat = "HH:mm:ss"
+        ) value: LocalTime
+    ) {
+        append(LOCAL_TIME_SOURCE, value)
+    }
+
+    @ParameterizedTest
+    @ParametersSource
+    fun testLocalTimeSourceWithPattern(@LocalTimeSource(values = ["12:30", "12:31"]) value: LocalTime) {
+        append(LOCAL_TIME_SOURCE_WITH_PATTERN, value)
+    }
+
+    @ParameterizedTest
+    @ParametersSource
+    fun testLocalTimeRange(@LocalTimeRangeSource(min = "12:00", max = "18:00") value: LocalTime) {
+        append(LOCAL_TIME_RANGE, value)
+    }
+
+    @ParameterizedTest
+    @ParametersSource
+    fun testLocalTimeRangeWithPattern(
+        @LocalTimeRangeSource(
+            min = "12:00:00",
+            max = "18:00:00",
+            timeFormat = "HH:mm:ss"
+        ) value: LocalTime
+    ) {
+        append(LOCAL_TIME_RANGE_WITH_PATTERN, value)
+    }
+
+    @ParameterizedTest
+    @ParametersSource
+    fun testLocalTimeRangeStep(
+        @LocalTimeRangeSource(
+            min = "12:00",
+            max = "13:00",
+            increment = "PT1m"
+        ) value: LocalTime
+    ) {
+        append(LOCAL_TIME_RANGE_STEP, value)
+    }
+
+    @ParameterizedTest
+    @ParametersSource
+    fun testLocalTimeRangeStepWithPattern(
+        @LocalTimeRangeSource(
+            min = "12:00:00",
+            max = "13:00:00",
+            increment = "PT1m",
+            timeFormat = "HH:mm:ss"
+        ) value: LocalTime
+    ) {
+        append(LOCAL_TIME_RANGE_STEP_WITH_PATTERN, value)
+    }
+
 }

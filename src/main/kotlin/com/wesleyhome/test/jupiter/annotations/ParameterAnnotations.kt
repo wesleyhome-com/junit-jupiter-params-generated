@@ -137,6 +137,42 @@ annotation class LocalDateSource(val values: Array<String>, val dateFormat: Stri
 annotation class LocalDateTimeSource(val values: Array<String>, val dateTimeFormat: String = "yyyy-MM-dd HH:mm")
 
 /**
+ * Annotation to be utilized on a parameter of type LocalTime in a parametrized test. The annotated parameter's
+ * value will be populated with a randomized value derived from the provided [values] array.
+ *
+ * The [values] array should consist of time string values, formatted according to the [timeFormat] property.
+ *
+ * Default value for [timeFormat] is "HH:mm:ss".
+ *
+ * For instance:
+ *
+ * <code>
+ *
+ *     @ParameterizedTest
+ *     @ParameterSource
+ *     fun test(@LocalTimeSource(values = ["12:00", "14:30", "16:45"]) time: LocalTime) {
+ *     // test code
+ *     }
+ *     // the above will generate 3 individual tests, with 'time' parameter set to 12:00:00, 14:30:00, and 16:45:00 respectively
+ *
+ *     @ParameterizedTest
+ *     @ParameterSource
+ *     fun test(@LocalTimeSource(values = ["12:00:00", "14:30:00", "16:45:01"], timeFormat = "HH:mm:ss) time: LocalTime) {
+ *     // test code
+ *     }
+ *     // the above will generate 3 individual tests, with 'time' parameter set to 12:00:00, 14:30:00, and 16:45:01 respectively
+ *
+ * </code>
+ *
+ * @property values An array of string representing time, to be converted into LocalTime instances.
+ * @property timeFormat A String representing the pattern to be used for parsing the [values] into LocalTime instances.
+*/
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class LocalTimeSource(val values: Array<String>, val timeFormat: String = "HH:mm")
+
+/**
  * Annotation to indicate that the annotated int parameter should be populated with an integer range
  * from [min] to [max] with an [increment] step in the [ascending] direction. The default [increment] is 1.
  * The default [ascending] is true.
@@ -357,6 +393,40 @@ annotation class LocalDateTimeRangeSource(
     val increment: String = "PT1h",
     val ascending: Boolean = true,
     val dateTimeFormat: String = "yyyy-MM-dd HH:mm"
+)
+
+/**
+ * Annotation to mark that the given LocalTime parameter should be populated with a LocalTime range
+ * starting from the minimum value [min] to the maximum value [max] with an [increment] in the direction specified by [ascending].
+ * The default [increment] is 1 hour and the default [ascending] order is true.
+ *
+ * Example of usage:
+ * <code>
+ *     @ParameterizedTest
+ *     @ParameterSource
+ *     fun test(@LocalTimeRangeSource(min = "12:00", max = "14:00", increment = "PT1h", ascending = true, dateTimeFormat = "HH:mm") time: LocalTime) {
+ *         // test code
+ *     }
+ *     // This will generate 3 tests with the time values 12:00:00, 13:00:00, and 14:00:00
+ *     // The values will be in 1 hour increments in ascending order
+ * </code>
+ *
+ * @property min A string representing the minimum value for the LocalTime range. Should be specified in [timeFormat].
+ * @property max A string representing the maximum value for the LocalTime range. Should be specified in [timeFormat].
+ * @property increment A string representing the period of increment for the LocalTime range. Should follow the ISO-8601 duration format
+ *                     e.g. "PT1h" for 1 hour, "PT30m" for 30 minutes. Default is "PT1h" for 1 hour.
+ * @property ascending A boolean to indicate the order of the values in the LocalTime range. Default is true, ascending order.
+ * @property timeFormat A string representing the format to be used for parsing [min] and [max] into LocalTime. Default is "HH:mm".
+ */
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class LocalTimeRangeSource(
+    val min: String,
+    val max: String,
+    val increment: String = "PT1h",
+    val ascending: Boolean = true,
+    val timeFormat: String = "HH:mm"
 )
 
 /**

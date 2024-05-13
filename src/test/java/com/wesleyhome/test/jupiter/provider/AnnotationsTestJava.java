@@ -10,17 +10,21 @@ import com.wesleyhome.test.jupiter.annotations.LocalDateRangeSource;
 import com.wesleyhome.test.jupiter.annotations.LocalDateSource;
 import com.wesleyhome.test.jupiter.annotations.LocalDateTimeRangeSource;
 import com.wesleyhome.test.jupiter.annotations.LocalDateTimeSource;
+import com.wesleyhome.test.jupiter.annotations.LocalTimeRangeSource;
+import com.wesleyhome.test.jupiter.annotations.LocalTimeSource;
 import com.wesleyhome.test.jupiter.annotations.LongRangeSource;
 import com.wesleyhome.test.jupiter.annotations.LongSource;
 import com.wesleyhome.test.jupiter.annotations.ParametersSource;
 import com.wesleyhome.test.jupiter.kotlin.TestKotlinEnum;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntUnaryOperator;
@@ -65,6 +69,13 @@ class AnnotationsTestJava {
     private static final String LOCAL_DATE_TIME_RANGE_WITH_PATTERN = "LOCAL_DATE_TIME_RANGE_WITH_PATTERN";
     private static final String LOCAL_DATE_TIME_RANGE_STEP_WITH_PATTERN = "LOCAL_DATE_TIME_RANGE_STEP_WITH_PATTERN";
 
+    private static final String LOCAL_TIME_SOURCE = "LOCAL_TIME_SOURCE";
+    private static final String LOCAL_TIME_SOURCE_WITH_PATTERN = "LOCAL_TIME_SOURCE_WITH_PATTERN";
+    private static final String LOCAL_TIME_RANGE = "LOCAL_TIME_RANGE";
+    private static final String LOCAL_TIME_RANGE_STEP = "LOCAL_TIME_RANGE_STEP";
+    private static final String LOCAL_TIME_RANGE_WITH_PATTERN = "LOCAL_TIME_RANGE_WITH_PATTERN";
+    private static final String LOCAL_TIME_RANGE_STEP_WITH_PATTERN = "LOCAL_TIME_RANGE_STEP_WITH_PATTERN";
+
     private static final Map<String, AtomicReference<List<String>>> stringMap = new HashMap<>();
     private static final Map<String, AtomicInteger> intMap = new HashMap<>();
 
@@ -96,7 +107,7 @@ class AnnotationsTestJava {
     static void tester() {
         assertThat(getRef(BOOLEAN)).describedAs(BOOLEAN).containsExactlyInAnyOrder("true", "false");
         assertThat(getRef(ENUM)).describedAs(ENUM).containsExactlyInAnyOrderElementsOf(
-            Arrays.stream(TestKotlinEnum.values()).map(it -> it.name()).collect(toList()));
+            Arrays.stream(TestKotlinEnum.values()).map(Enum::name).collect(toList()));
         var map = Arrays.stream(TestKotlinEnum.values())
             .flatMap(it -> Stream.of(true, false).map(bool -> String.format("%s,%s", bool, it)))
             .collect(toList());
@@ -159,6 +170,7 @@ class AnnotationsTestJava {
             dt -> dt.isBefore(LocalDateTime.parse("2022-01-01T19:31")),
             dt -> dt.plusMinutes(30)
         ).map(Object::toString).collect(toList());
+
         assertThat(getRef(LOCAL_DATE_TIME_SOURCE)).describedAs(LOCAL_DATE_TIME_SOURCE)
             .containsOnly("2022-01-01T12:30", "2022-01-01T13:30");
         assertThat(getRef(LOCAL_DATE_TIME_SOURCE_WITH_PATTERN)).describedAs(LOCAL_DATE_TIME_SOURCE_WITH_PATTERN)
@@ -171,6 +183,28 @@ class AnnotationsTestJava {
             .containsExactlyInAnyOrderElementsOf(dateTimeRange);
         assertThat(getRef(LOCAL_DATE_TIME_RANGE_STEP_WITH_PATTERN)).describedAs(LOCAL_DATE_TIME_RANGE_STEP_WITH_PATTERN)
             .containsExactlyInAnyOrderElementsOf(filteredDateTimeRange);
+        assertThat(getRef(LOCAL_TIME_SOURCE)).describedAs(LOCAL_TIME_SOURCE)
+            .containsOnly("12:30", "12:30:01");
+        assertThat(getRef(LOCAL_TIME_SOURCE_WITH_PATTERN)).describedAs(LOCAL_TIME_SOURCE_WITH_PATTERN)
+            .containsOnly("12:30", "12:31");
+        final var localTimeRange = Stream.iterate(
+            LocalTime.of(12, 0),
+            dt -> dt.isBefore(LocalTime.of(19, 0)),
+            dt -> dt.plusHours(1)
+        ).map(Object::toString).collect(toList());
+        assertThat(getRef(LOCAL_TIME_RANGE)).describedAs(LOCAL_TIME_RANGE)
+            .containsExactlyInAnyOrderElementsOf(localTimeRange);
+        final var localTimeRangeStep = Stream.iterate(
+            LocalTime.of(12, 0),
+            lt -> lt.isBefore(LocalTime.of(13, 1)),
+            lt -> lt.plusMinutes(1)
+        ).map(Objects::toString).collect(toList());
+        assertThat(getRef(LOCAL_TIME_RANGE_STEP)).describedAs(LOCAL_TIME_RANGE_STEP)
+            .containsExactlyInAnyOrderElementsOf(localTimeRangeStep);
+        assertThat(getRef(LOCAL_TIME_RANGE_WITH_PATTERN)).describedAs(LOCAL_TIME_RANGE_WITH_PATTERN)
+            .containsExactlyInAnyOrderElementsOf(localTimeRange);
+        assertThat(getRef(LOCAL_TIME_RANGE_STEP_WITH_PATTERN)).describedAs(LOCAL_TIME_RANGE_STEP_WITH_PATTERN)
+            .containsExactlyInAnyOrderElementsOf(localTimeRangeStep);
     }
 
     @ParameterizedTest
@@ -399,4 +433,42 @@ class AnnotationsTestJava {
     ) {
         append(LOCAL_DATE_TIME_RANGE_STEP_WITH_PATTERN, value);
     }
+
+
+    @ParameterizedTest
+    @ParametersSource
+    void testLocalTimeSource(@LocalTimeSource(values = {"12:30:00", "12:30:01"}, timeFormat = "HH:mm:ss") LocalTime value) {
+        append(LOCAL_TIME_SOURCE, value);
+    }
+
+    @ParameterizedTest
+    @ParametersSource
+    void testLocalTimeSourceWithPattern(@LocalTimeSource(values = {"12:30", "12:31"}) LocalTime value) {
+        append(LOCAL_TIME_SOURCE_WITH_PATTERN, value);
+    }
+
+    @ParameterizedTest
+    @ParametersSource
+    void testLocalTimeRange(@LocalTimeRangeSource(min = "12:00", max = "18:00") LocalTime value) {
+        append(LOCAL_TIME_RANGE, value);
+    }
+
+    @ParameterizedTest
+    @ParametersSource
+    void testLocalTimeRangeWithPattern(@LocalTimeRangeSource(min = "12:00:00", max = "18:00:00", timeFormat = "HH:mm:ss") LocalTime value) {
+        append(LOCAL_TIME_RANGE_WITH_PATTERN, value);
+    }
+
+    @ParameterizedTest
+    @ParametersSource
+    void testLocalTimeRangeStep(@LocalTimeRangeSource(min = "12:00", max = "13:00", increment = "PT1m") LocalTime value) {
+        append(LOCAL_TIME_RANGE_STEP, value);
+    }
+
+    @ParameterizedTest
+    @ParametersSource
+    void testLocalTimeRangeStepWithPattern(@LocalTimeRangeSource(min = "12:00:00", max = "13:00:00", increment = "PT1m", timeFormat = "HH:mm:ss") LocalTime value) {
+        append(LOCAL_TIME_RANGE_STEP_WITH_PATTERN, value);
+    }
+
 }
