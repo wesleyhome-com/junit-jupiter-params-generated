@@ -26,9 +26,9 @@ dependencies {
     api("org.junit.jupiter:junit-jupiter-api:5.10.2")
     implementation(kotlin("reflect"))
     implementation(kotlin("stdlib"))
-    testImplementation("org.mockito:mockito-core:5.11.0")
-    testImplementation("org.mockito:mockito-junit-jupiter:5.11.0")
-    testImplementation("io.mockk:mockk:1.13.10")
+    testImplementation("org.mockito:mockito-core:5.12.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.12.0")
+    testImplementation("io.mockk:mockk:1.13.11")
     testImplementation("org.assertj:assertj-core:3.25.3")
 }
 
