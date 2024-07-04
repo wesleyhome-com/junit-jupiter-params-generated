@@ -475,3 +475,77 @@ annotation class StringSource(val values: Array<String>)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 annotation class InstantSource(val values: Array<String>)
+
+/**
+ * Annotation to be utilized on a parameter of type Instant in a parameterized test. The annotated parameter
+ * value will be populated with a randomized value derived from the provided [minInstant], [maxInstant], [startPeriodOffset], and [endPeriodOffset].
+ * This will generate [size] number of random values with in the range specified.
+ *
+ * If provided, the [minInstant] and [maxInstant] properties will take precedent oven any value provided by [startPeriodOffset] and [endPeriodOffset]
+ *
+ * The [minInstant] and [maxInstant] properties should be parsable by [java.time.Instant.parse].
+ * The [startPeriodOffset] and [endPeriodOffset] properties should be parsable by [java.time.Period.parse].
+ *
+ * The [startPeriodOffset] and [endPeriodOffset] properties are relative to the current time when the test is run.
+ * For example, if the current time is 2023-01-01T00:00:00.000Z, and [startPeriodOffset] is "-P1D" (one day before), the minimum Instant value will be 2022-12-31T00:00:00.000Z.
+ * If [endPeriodOffset] is "P1D" (one day after), the maximum Instant value will be 2023-01-02T00:00:00.000Z.
+ *
+ * For instance:
+ *
+ * <code>
+ *
+ *     @ParameterizedTest
+ *     @ParameterSource
+ *     fun test(@RandomInstantSource(size = 10, minInstant = "2023-01-01T00:00:00.000Z", maxInstant = "2023-01-02T01:00:00.000Z") instant: Instant) {
+ *     // test code
+ *     }
+ *     // the above will generate 1 individual test, with 'instant' parameter set to a random Instant value between 2023-01-01T00:00:00.000Z and 2023-01-01T01:00:00.000Z
+ *
+ *     @ParameterizedTest
+ *     @ParameterSource
+ *     fun test(@RandomInstantSource(size = 10, startPeriodOffset = "-P1D", endPeriodOffset = "P1D") instant: Instant) {
+ *     // test code
+ *     }
+ *     // the above will generate 1 individual test, with 'instant' parameter set to a random Instant value between 1 day before the current time and 1 day after the current time
+ *
+ * </code>
+ *
+ * @property size The number of random values to generate
+ * @property minInstant The minimum instant value to be generated. The value is inclusive.
+ * @property maxInstant The maximum instant value to be generated. The value is exclusive.
+ * @property startPeriodOffset The offset for the minimum Instant value from [java.time.Instant.now]. For example -P1D.
+ * @property endPeriodOffset The offset for the maximum Instant value from [java.time.Instant.now]. For example P1D.
+ *
+ * @see Instant
+ */
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class RandomInstantSource(
+    /**
+     * The number of random values to generate
+     */
+    val size: Int,
+    /**
+     * The minimum instant value to be generated. The value is inclusive.
+     * This overrides any value by [startPeriodOffset]
+     */
+    val minInstant: String = "",
+    /**
+     * The maximum instant value to be generated. The value is exclusive.
+     * This overrides any value by [endPeriodOffset]
+     */
+    val maxInstant: String = "",
+    /**
+     * The offset for the minimum Instant value from [java.time.Instant.now]. For example -P1D.
+     * This need to be parsable by [java.time.Period].
+     * This is overridden by [minInstant] if provided.
+     */
+    val startPeriodOffset: String = "",
+    /**
+     * The offset for the maximum Instant value from [java.time.Instant.now]. For example P1D.
+     * This need to be parsable by [java.time.Period].
+     * This is overridden by [maxInstant] if provided.
+     */
+    val endPeriodOffset: String = "",
+)
