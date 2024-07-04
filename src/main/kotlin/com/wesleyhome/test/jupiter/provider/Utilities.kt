@@ -1,0 +1,32 @@
+package com.wesleyhome.test.jupiter.provider
+
+import java.time.Duration
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.Period
+import java.time.format.DateTimeFormatter
+
+
+infix fun ClosedRange<LocalDateTime>.step(step: String): LocalDateTimeProgression {
+    return LocalDateTimeProgression(this.start, this.endInclusive, step.duration())
+}
+
+infix fun ClosedRange<LocalDate>.step(step: String): LocalDateProgression {
+    return LocalDateProgression(this.start, this.endInclusive, step.period())
+}
+
+infix fun ClosedRange<LocalTime>.step(step: String) : LocalTimeProgression {
+    return LocalTimeProgression(this.start, this.endInclusive, step.duration())
+}
+
+fun String.period(): Period = Period.parse(this)
+fun String.duration(): Duration = Duration.parse(this)
+fun String.toLocalDate(dateFormat: String = "yyyy-MM-dd"): LocalDate =
+    LocalDate.parse(this, DateTimeFormatter.ofPattern(dateFormat))
+
+fun String.toLocalDateTime(dateTimeFormat: String = "yyyy-MM-dd HH:mm"): LocalDateTime =
+    LocalDateTime.parse(this, DateTimeFormatter.ofPattern(dateTimeFormat))
+
+fun String.toLocalTime(timeFormat: String = "HH:mm") : LocalTime =
+    LocalTime.parse(this, DateTimeFormatter.ofPattern(timeFormat))
