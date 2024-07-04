@@ -1,59 +1,16 @@
 package com.wesleyhome.test.jupiter.provider
 
-import com.wesleyhome.test.jupiter.annotations.FloatRangeSource
 import com.wesleyhome.test.jupiter.annotations.FloatSource
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.reflect.KClass
 
-object FloatValueSourceDataProvider : AbstractParameterDataProvider<Float>() {
+object FloatValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<Float, FloatSource>() {
 
-    override fun providesDataFor(testParameter: TestParameter): Boolean {
-        return super.providesDataFor(testParameter) && findAnnotation(testParameter) != null
-    }
+    override val annotation: KClass<FloatSource> = FloatSource::class
 
     override fun createParameterOptionsData(testParameter: TestParameter): List<Float?> {
         return findAnnotation(testParameter)!!.values.toList()
     }
-
-    private fun findAnnotation(testParameter: TestParameter) =
-        testParameter.annotations.firstOrNull { it is FloatSource }.let { annotation ->
-            if (annotation == null) {
-                null
-            } else {
-                annotation as FloatSource
-            }
-        }
-}
-
-object FloatRangeDataProvider : AbstractParameterDataProvider<Float>() {
-
-    override fun providesDataFor(testParameter: TestParameter): Boolean {
-        return super.providesDataFor(testParameter) && findAnnotation(testParameter) != null
-    }
-
-    override fun createParameterOptionsData(testParameter: TestParameter): List<Float?> {
-        val s = findAnnotation(testParameter)!!
-        if (s.increment <= 0) {
-            throw IllegalArgumentException("increment must be greater than 0")
-        }
-        if (s.min >= s.max) {
-            throw IllegalArgumentException("min must be less than or equal to max")
-        }
-        val range = (s.min..s.max step s.increment).toList()
-        return if (s.ascending) {
-            range
-        } else {
-            range.reversed()
-        }
-    }
-
-    private fun findAnnotation(testParameter: TestParameter) =
-        testParameter.annotations.firstOrNull { it is FloatRangeSource }.let { annotation ->
-            if (annotation == null) {
-                null
-            } else {
-                annotation as FloatRangeSource
-            }
-        }
 }
 
 class FloatProgression(

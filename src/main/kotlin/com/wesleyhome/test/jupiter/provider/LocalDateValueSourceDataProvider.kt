@@ -2,12 +2,11 @@ package com.wesleyhome.test.jupiter.provider
 
 import com.wesleyhome.test.jupiter.annotations.LocalDateSource
 import java.time.LocalDate
+import kotlin.reflect.KClass
 
-object LocalDateValueSourceDataProvider : AbstractParameterDataProvider<LocalDate>() {
+object LocalDateValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<LocalDate, LocalDateSource>() {
 
-    override fun providesDataFor(testParameter: TestParameter): Boolean {
-        return super.providesDataFor(testParameter) && findAnnotation(testParameter) != null
-    }
+    override val annotation: KClass<LocalDateSource> = LocalDateSource::class
 
     override fun createParameterOptionsData(testParameter: TestParameter): List<LocalDate?> {
         val localDateSource = findAnnotation(testParameter)!!
@@ -15,13 +14,4 @@ object LocalDateValueSourceDataProvider : AbstractParameterDataProvider<LocalDat
             .map { it.toLocalDate(localDateSource.dateFormat) }
             .toList()
     }
-
-    private fun findAnnotation(testParameter: TestParameter) =
-        testParameter.annotations.firstOrNull { it is LocalDateSource }.let { annotation ->
-            if (annotation == null) {
-                null
-            } else {
-                annotation as LocalDateSource
-            }
-        }
 }

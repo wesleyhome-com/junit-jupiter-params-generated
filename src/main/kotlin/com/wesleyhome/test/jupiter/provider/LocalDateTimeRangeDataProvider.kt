@@ -2,12 +2,11 @@ package com.wesleyhome.test.jupiter.provider
 
 import com.wesleyhome.test.jupiter.annotations.LocalDateTimeRangeSource
 import java.time.LocalDateTime
+import kotlin.reflect.KClass
 
-object LocalDateTimeRangeDataProvider : AbstractParameterDataProvider<LocalDateTime>() {
+object LocalDateTimeRangeDataProvider : AbstractAnnotatedParameterDataProvider<LocalDateTime, LocalDateTimeRangeSource>() {
 
-    override fun providesDataFor(testParameter: TestParameter): Boolean {
-        return super.providesDataFor(testParameter) && findAnnotation(testParameter) != null
-    }
+    override val annotation: KClass<LocalDateTimeRangeSource> = LocalDateTimeRangeSource::class
 
     override fun createParameterOptionsData(testParameter: TestParameter): List<LocalDateTime?> {
         val s = findAnnotation(testParameter)!!
@@ -19,13 +18,4 @@ object LocalDateTimeRangeDataProvider : AbstractParameterDataProvider<LocalDateT
             range.reversed()
         }
     }
-
-    private fun findAnnotation(testParameter: TestParameter) =
-        testParameter.annotations.firstOrNull { it is LocalDateTimeRangeSource }.let { annotation ->
-            if (annotation == null) {
-                null
-            } else {
-                annotation as LocalDateTimeRangeSource
-            }
-        }
 }
