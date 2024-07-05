@@ -23,13 +23,13 @@ object InstantRangeSourceDataProvider : AbstractAnnotatedParameterDataProvider<I
         val increment = if(ascending) annotation.increment else "-${annotation.increment}"
         val truncateTo = annotation.truncateTo
         if(minInstant.isBlank() && minOffset.isBlank()) {
-            throw IllegalArgumentException("Either minInstant or startPeriodOffset must be provided")
+            throw IllegalArgumentException("Either [minInstant] or [minOffset] must be provided")
         }
         if(minInstant.isNotBlank() && maxInstant.isBlank()) {
-            throw IllegalArgumentException("[maxInstant] must be provided when minInstant is provided")
+            throw IllegalArgumentException("[maxInstant] must be provided when [minInstant] is provided")
         }
         if(minOffset.isNotBlank() && maxOffset.isBlank()) {
-            throw IllegalArgumentException("[endPeriodOffset] must be provided when startPeriodOffset is provided")
+            throw IllegalArgumentException("[maxOffset] must be provided when [minOffset] is provided")
         }
         val truncationUnit = if(minOffset.isNotBlank()) {
             ChronoUnit.valueOf(truncateTo)
