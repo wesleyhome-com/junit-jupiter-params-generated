@@ -4,6 +4,7 @@ import com.wesleyhome.test.jupiter.annotations.DoubleRangeSource
 import com.wesleyhome.test.jupiter.annotations.DoubleSource
 import com.wesleyhome.test.jupiter.annotations.FloatRangeSource
 import com.wesleyhome.test.jupiter.annotations.FloatSource
+import com.wesleyhome.test.jupiter.annotations.InstantRangeSource
 import com.wesleyhome.test.jupiter.annotations.InstantSource
 import com.wesleyhome.test.jupiter.annotations.IntRangeSource
 import com.wesleyhome.test.jupiter.annotations.IntSource
@@ -78,6 +79,8 @@ class AnnotationsTest {
         private const val INSTANT_VALUE_SOURCE: String = "INSTANT_VALUE_SOURCE"
         private const val RANDOM_INSTANT_VALUE_SOURCE: String = "RANDOM_INSTANT_VALUE_SOURCE"
         private const val RANDOM_INSTANT_VALUE_OFFSET_SOURCE: String = "RANDOM_INSTANT_VALUE_OFFSET_SOURCE"
+        private const val INSTANT_RANGE_SOURCE: String = "INSTANT_RANGE_SOURCE"
+        private const val INSTANT_RANGE_OFFSET_SOURCE: String = "INSTANT_RANGE_OFFSET_SOURCE"
 
         private val stringMap = mutableMapOf<String, AtomicReference<List<String>>>()
         private val intMap = mutableMapOf<String, AtomicInteger>()
@@ -241,7 +244,7 @@ class AnnotationsTest {
                     Instant.parse(it)
                 })
                 .allMatch { it in instantRange }
-            val now = Instant.now()
+            val now = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS).toInstant()
             val start = now.minus(1, ChronoUnit.HOURS)
             val end = now.plus(2, ChronoUnit.DAYS)
             val instantOffsetRange = start..end
@@ -251,6 +254,17 @@ class AnnotationsTest {
                     Instant.parse(it)
                 })
                 .allMatch { it in instantOffsetRange }
+
+            val startInstant = ZonedDateTime.of(2024, 1, 1, 12, 30, 0, 0, ZoneId.of("UTC")).toInstant()
+            val endInstant = ZonedDateTime.of(2024, 1, 2, 12, 30, 0, 0, ZoneId.of("UTC")).toInstant()
+            val expectedValues = (startInstant..endInstant step "PT1h").map { it.toString() }.toList()
+            assertThat(getRef(INSTANT_RANGE_SOURCE)).describedAs(INSTANT_RANGE_SOURCE)
+                .containsExactlyInAnyOrderElementsOf(expectedValues)
+            val startOffsetInstant = now.minus(2, ChronoUnit.DAYS)
+            val endOffsetInstant = now.plus(12, ChronoUnit.HOURS)
+            val expectedOffsetValues = (startOffsetInstant..endOffsetInstant step "PT6h").map { it.toString() }.toList()
+            assertThat(getRef(INSTANT_RANGE_OFFSET_SOURCE)).describedAs(INSTANT_RANGE_OFFSET_SOURCE)
+                .containsExactlyInAnyOrderElementsOf(expectedOffsetValues)
         }
     }
 
@@ -577,11 +591,38 @@ class AnnotationsTest {
     fun testRandomInstantSourceWithOffset (
         @RandomInstantSource(
             size = 10,
-            startPeriodOffset = "-PT1H",
-            endPeriodOffset = "P2D"
+            truncateTo = "HOURS",
+            minOffset = "-PT1H",
+            maxOffset = "P2D"
         )
         value: Instant
     ) {
         append(RANDOM_INSTANT_VALUE_OFFSET_SOURCE, value)
+    }
+
+    @ParameterizedTest
+    @ParametersSource
+    fun testInstantRangeSource(
+        @InstantRangeSource(
+            minInstant = "2024-01-01T12:30:00Z",
+            maxInstant = "2024-01-02T12:30:00Z",
+        )
+        value: Instant
+    ) {
+        append(INSTANT_RANGE_SOURCE, value)
+    }
+
+    @ParameterizedTest
+    @ParametersSource
+    fun testInstantRangeSourceWithOffset(
+        @InstantRangeSource(
+            minOffset = "-P2D",
+            maxOffset = "PT12h",
+            truncateTo = "HOURS",
+            increment = "PT6h",
+        )
+        value: Instant
+    ) {
+        append(INSTANT_RANGE_OFFSET_SOURCE, value)
     }
 }

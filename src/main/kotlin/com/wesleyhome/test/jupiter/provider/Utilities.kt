@@ -1,27 +1,41 @@
 package com.wesleyhome.test.jupiter.provider
 
 import java.time.Duration
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.Period
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+import java.time.temporal.TemporalAmount
 
 
 infix fun ClosedRange<LocalDateTime>.step(step: String): LocalDateTimeProgression {
-    return LocalDateTimeProgression(this.start, this.endInclusive, step.duration())
+    return LocalDateTimeProgression(this.start, this.endInclusive, step.temporalAmount())
 }
 
 infix fun ClosedRange<LocalDate>.step(step: String): LocalDateProgression {
-    return LocalDateProgression(this.start, this.endInclusive, step.period())
+    return LocalDateProgression(this.start, this.endInclusive, step.temporalAmount())
 }
 
 infix fun ClosedRange<LocalTime>.step(step: String) : LocalTimeProgression {
-    return LocalTimeProgression(this.start, this.endInclusive, step.duration())
+    return LocalTimeProgression(this.start, this.endInclusive, step.temporalAmount())
+}
+
+infix fun ClosedRange<Instant>.step(step: String) : InstantProgression {
+    return InstantProgression(this.start, this.endInclusive, step.temporalAmount())
 }
 
 fun String.period(): Period = Period.parse(this)
 fun String.duration(): Duration = Duration.parse(this)
+fun String.temporalAmount(): TemporalAmount =
+    try {
+        this.period()
+    } catch (e: DateTimeParseException) {
+        this.duration()
+    }
+
 fun String.toLocalDate(dateFormat: String = "yyyy-MM-dd"): LocalDate =
     LocalDate.parse(this, DateTimeFormatter.ofPattern(dateFormat))
 

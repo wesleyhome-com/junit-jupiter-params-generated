@@ -20,6 +20,7 @@ import com.wesleyhome.test.jupiter.provider.LongValueSourceDataProvider
 import com.wesleyhome.test.jupiter.provider.ParameterDataProvider
 import com.wesleyhome.test.jupiter.provider.StringValueSourceDataProvider
 import com.wesleyhome.test.jupiter.provider.TestModel
+import com.wesleyhome.test.jupiter.provider.instant.InstantRangeSourceDataProvider
 import com.wesleyhome.test.jupiter.provider.instant.InstantValueSourceDataProvider
 import com.wesleyhome.test.jupiter.provider.instant.RandomInstanceSourceDataProvider
 import org.junit.jupiter.params.provider.Arguments
@@ -47,7 +48,8 @@ class ParametersGenerator(
         LocalTimeValueSourceDataProvider,
         LocalTimeRangeDataProvider,
         InstantValueSourceDataProvider,
-        RandomInstanceSourceDataProvider
+        RandomInstanceSourceDataProvider,
+        InstantRangeSourceDataProvider
     )
     private val options: List<List<Any?>> = testModel.testParameters.map {
         dataProviders.firstOrNull { dp ->
