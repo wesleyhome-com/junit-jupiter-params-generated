@@ -448,3 +448,193 @@ annotation class LocalTimeRangeSource(
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 annotation class StringSource(val values: Array<String>)
+
+/**
+ * Annotation to be utilized on a parameter of type Instant in a parameterized test. The annotated parameter;s
+ * value will be populated with a randomized value derived from the provided [values] array.
+ *
+ * The [values] array should consist of instant string values, formatted according to the [java.time.format.DateTimeFormatter.ISO_INSTANT]
+ * standard.
+ *
+ * For instance:
+ *
+ * <code>
+ *
+ *     @ParameterizedTest
+ *     @ParameterSource
+ *     fun test(@InstantSource(values = ["2023-01-01T00:00:00.000Z", "2022-01-01T00:00:00.000Z", "2021-01-01T00:00:00.000Z"]) instant: Instant) {
+ *     // test code
+ *     }
+ *     // the above will generate 3 individual tests, with 'instant' parameter set to 2023-01-01T00:00:00.000Z, 2022-01-01T00:00:00.000Z, and 2021-01-01T00:00:00.000Z respectively
+ *
+ * </code>
+ *
+ * @property values An array of string representing instant, to be converted into Instant instances.
+ */
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class InstantSource(val values: Array<String>)
+
+/**
+ * Annotation to be utilized on a parameter of type Instant in a parameterized test. The annotated parameter
+ * value will be populated with a randomized value derived from the provided [minInstant], [maxInstant], [minOffset], and [maxOffset].
+ * This will generate [size] number of random values with in the range specified.
+ *
+ * If provided, the [minInstant] and [maxInstant] properties will take precedent oven any value provided by [minOffset] and [maxOffset]
+ *
+ * The [minInstant] and [maxInstant] properties should be parsable by [java.time.Instant.parse].
+ * The [minOffset] and [maxOffset] properties should be parsable by [java.time.Period.parse].
+ *
+ * The [minOffset] and [maxOffset] properties are relative to the current time when the test is run.
+ * For example, if the current time is 2023-01-01T00:00:00.000Z, and [minOffset] is "-P1D" (one day before), the minimum Instant value will be 2022-12-31T00:00:00.000Z.
+ * If [maxOffset] is "P1D" (one day after), the maximum Instant value will be 2023-01-02T00:00:00.000Z.
+ *
+ * For instance:
+ *
+ * <code>
+ *
+ *     @ParameterizedTest
+ *     @ParameterSource
+ *     fun test(@RandomInstantSource(size = 10, minInstant = "2023-01-01T00:00:00.000Z", maxInstant = "2023-01-02T01:00:00.000Z") instant: Instant) {
+ *     // test code
+ *     }
+ *     // the above will generate 1 individual test, with 'instant' parameter set to a random Instant value between 2023-01-01T00:00:00.000Z and 2023-01-01T01:00:00.000Z
+ *
+ *     @ParameterizedTest
+ *     @ParameterSource
+ *     fun test(@RandomInstantSource(size = 10, startPeriodOffset = "-P1D", endPeriodOffset = "P1D") instant: Instant) {
+ *     // test code
+ *     }
+ *     // the above will generate 1 individual test, with 'instant' parameter set to a random Instant value between 1 day before the current time and 1 day after the current time
+ *
+ * </code>
+ *
+ * @property size The number of random values to generate
+ * @property minInstant The minimum instant value to be generated. The value is inclusive.
+ * @property maxInstant The maximum instant value to be generated. The value is exclusive.
+ * @property minOffset The offset for the minimum Instant value from [java.time.Instant.now]. For example -P1D.
+ * @property maxOffset The offset for the maximum Instant value from [java.time.Instant.now]. For example P1D.
+ *
+ */
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class RandomInstantSource(
+    /**
+     * The number of random values to generate
+     */
+    val size: Int,
+    /**
+     * The minimum instant value to be generated. The value is inclusive.
+     * This overrides any value by [minOffset]
+     */
+    val minInstant: String = "",
+    /**
+     * The maximum instant value to be generated. The value is exclusive.
+     * This overrides any value by [maxOffset]
+     */
+    val maxInstant: String = "",
+    /**
+     * The offset for the minimum Instant value from [java.time.Instant.now]. For example -P1D.
+     * This need to be parsable by [java.time.Period].
+     * This is overridden by [minInstant] if provided.
+     */
+    val minOffset: String = "",
+    /**
+     * The offset for the maximum Instant value from [java.time.Instant.now]. For example P1D.
+     * This need to be parsable by [java.time.Period].
+     * This is overridden by [maxInstant] if provided.
+     */
+    val maxOffset: String = "",
+    /**
+     * The truncation unit that the starting instant will be truncated to. This is only
+     * used if [minOffset] is provided. This must be a value of [java.time.temporal.ChronoUnit].
+     */
+    val truncateTo: String = "MINUTES",
+)
+
+/**
+ * Annotation to indicate that the annotated Instant parameter should be populated with an Instant range
+ * from [minInstant] up to [maxInstant] or [minOffset] up to [maxOffset] with an [increment]. The default [increment] is 1 hour.
+ * If [ascending] is false, the process will be reversed.
+ * The default [ascending] is true.
+ *
+ * <code>
+ *
+ *     @ParameterizedTest
+ *     @ParameterSource
+ *     fun test(@InstantRangeSource(minInstant = "2023-01-01T00:00:00Z", maxInstant = "2023-01-01T23:00:00Z") value: Instant) {
+ *     // test code
+ *     }
+ *     // will generate 24 tests with the values January 1st, 2023 00:00:00Z to January 1st, 2023 23:00:00Z
+ *     // the values will be in ascending order
+ *     // the values will be in increments of 1 hour
+ *
+ *     @ParameterizedTest
+ *     @ParameterSource
+ *     fun test(
+ *          @InstantRangeSource(
+ *              minInstant = "01/01/2023T00:00:00Z",
+ *              maxInstant = "01/01/2023T23:00:00Z",
+ *              increment = "PT2h",
+ *              ascending = false
+ *          )
+ *          value: Instant
+ *     ) {
+ *     // test code
+ *     }
+ *     // will generate 12 tests with the values January 1st, 2023 00:00:00Z to January 1st, 2023 23:00:00Z
+ *     // the values will be in descending order
+ *     // the values will be in increments of 2 hours
+ *
+ * </code>
+ */
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class InstantRangeSource(
+    /**
+     * The minimum instant value that the range of values will include. Depending on [increment]
+     * and [ascending], this value may or may not be used as a parameter value.
+     *
+     * This overrides [minOffset] if provided.
+     */
+    val minInstant: String = "",
+    /**
+     * The maximum instant value that the range of values will include. Depending on [increment]
+     * and [ascending], this value may or may not be used as a parameter value.
+     *
+     * This overrides [maxOffset] if provided.
+     */
+    val maxInstant: String = "",
+    /**
+     * The offset for the minimum Instant value from [java.time.Instant.now]. For example -P1D.
+     * This need to be parsable by [java.time.Period].
+     * This is overridden by [minInstant] if provided.
+     */
+    val minOffset: String = "",
+    /**
+     * The offset for the maximum Instant value from [java.time.Instant.now]. For example P1D.
+     * This need to be parsable by [java.time.Period].
+     * This is overridden by [maxInstant] if provided.
+     */
+    val maxOffset: String = "",
+    /**
+     * The truncation unit that the starting instant will be truncated to. This is only
+     * used if [minOffset] is provided. This must be a value of [java.time.temporal.ChronoUnit].
+     */
+    val truncateTo: String = "MINUTES",
+    /**
+     * How much time to increment the value for each test. If [ascending] is false, this value will be
+     * negated. The default value is 1 hour. Should follow the ISO-8601 duration format e.g. "PT1h" for
+     * 1 hour, "PT30m" for 30 minutes.
+     */
+    val increment: String = "PT1h",
+    /**
+     * The direction the values will be generated. If true, the range will start with [minInstant]
+     * and increment until it reaches [maxInstant]. If false, the range will start with [maxInstant]
+     * and decrement until it reaches [minInstant].
+     */
+    val ascending: Boolean = true
+)
