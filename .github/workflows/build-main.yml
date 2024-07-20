@@ -1,8 +1,9 @@
-name: Build Snapshot Gradle project
+name: Build Gradle project
 
 on:
   push:
-
+    branches:
+      - 'main'
 
 jobs:
   build-snapshot-gradle-project:
@@ -14,9 +15,10 @@ jobs:
     steps:
       - name: Checkout project sources
         uses: actions/checkout@v4
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
         with:
-          gradle-version: 8.5
+          java-version: '17'
+          distribution: 'corretto'
       - name: Run build with Gradle Wrapper
         run: ./gradlew build publishToSonatype closeAndReleaseSonatypeStagingRepository
