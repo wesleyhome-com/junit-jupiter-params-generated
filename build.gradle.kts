@@ -1,4 +1,3 @@
-import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 
 plugins {
     java
@@ -7,7 +6,6 @@ plugins {
     kotlin("jvm") version "2.0.0"
     signing
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
-    id("com.github.ben-manes.versions") version "0.51.0"
 }
 
 group = "com.wesleyhome.test"
@@ -163,12 +161,4 @@ fun isNonStable(version: String): Boolean {
     val regex = "^[0-9,.v-]+(-r)?$".toRegex()
     val isStable = stableKeyword || regex.matches(version)
     return isStable.not()
-}
-
-tasks.withType<DependencyUpdatesTask> {
-    rejectVersionIf {
-        isNonStable(candidate.version) && !isNonStable(currentVersion)
-    }
-    checkForGradleUpdate = true
-    gradleReleaseChannel = "current"
 }
