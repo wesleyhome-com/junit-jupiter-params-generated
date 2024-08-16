@@ -9,3 +9,4 @@ build/
 /mvnw.cmd
 /.mvn/**
 /*.64
+/.kotlin

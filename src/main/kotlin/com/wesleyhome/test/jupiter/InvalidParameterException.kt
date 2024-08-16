@@ -1,6 +1,6 @@
 package com.wesleyhome.test.jupiter
 
-import kotlin.reflect.KClass
+import com.wesleyhome.test.jupiter.provider.TestParameter
 
-class InvalidParameterException(parameterClass: KClass<*>) :
-    RuntimeException("Unable to find a suitable data provider for '${parameterClass.qualifiedName}' type")
+class InvalidParameterException(testParameter: TestParameter) :
+    RuntimeException("Unable to find a suitable data provider for parameter [${testParameter.name}] with type '${testParameter.type.qualifiedName}'")

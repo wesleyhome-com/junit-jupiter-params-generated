@@ -2,7 +2,7 @@ package com.wesleyhome.test.jupiter.provider
 
 import kotlin.reflect.full.isSubclassOf
 
-object EnumParameterDataProvider : ParameterDataProvider<Enum<*>> {
+class EnumParameterDataProvider : ParameterDataProvider<Enum<*>> {
     override fun providesDataFor(testParameter: TestParameter): Boolean {
         return testParameter.type.isSubclassOf(Enum::class)
     }

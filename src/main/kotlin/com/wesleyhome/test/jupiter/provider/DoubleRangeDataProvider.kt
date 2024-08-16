@@ -3,7 +3,7 @@ package com.wesleyhome.test.jupiter.provider
 import com.wesleyhome.test.jupiter.annotations.DoubleRangeSource
 import kotlin.reflect.KClass
 
-object DoubleRangeDataProvider : AbstractAnnotatedParameterDataProvider<Double, DoubleRangeSource>() {
+class DoubleRangeDataProvider : AbstractAnnotatedParameterDataProvider<Double, DoubleRangeSource>() {
 
     override val annotation: KClass<DoubleRangeSource> = DoubleRangeSource::class
 

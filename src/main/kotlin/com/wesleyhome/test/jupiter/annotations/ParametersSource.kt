@@ -30,5 +30,6 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @ArgumentsSource(
     ParametersSourceArgumentsProvider::class
 )
+@Deprecated(message = "")
 annotation class ParametersSource
 

@@ -4,7 +4,7 @@ import com.wesleyhome.test.jupiter.annotations.LocalTimeSource
 import java.time.LocalTime
 import kotlin.reflect.KClass
 
-object LocalTimeValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<LocalTime, LocalTimeSource>() {
+class LocalTimeValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<LocalTime, LocalTimeSource>() {
 
     override val annotation: KClass<LocalTimeSource> = LocalTimeSource::class
 
