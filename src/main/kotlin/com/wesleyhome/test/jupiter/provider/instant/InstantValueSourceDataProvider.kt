@@ -6,7 +6,7 @@ import com.wesleyhome.test.jupiter.provider.TestParameter
 import java.time.Instant
 import kotlin.reflect.KClass
 
-object InstantValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<Instant, InstantSource>() {
+class InstantValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<Instant, InstantSource>() {
 
     override val annotation: KClass<InstantSource> = InstantSource::class
 

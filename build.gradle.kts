@@ -19,9 +19,11 @@ repositories {
 }
 
 dependencies {
-    api("org.junit.jupiter:junit-jupiter-params:5.10.3")
-    api("org.junit.jupiter:junit-jupiter-engine:5.10.3")
-    api("org.junit.jupiter:junit-jupiter-api:5.10.3")
+    val junitJupiterVersion = "5.10.3"
+    api("org.junit.jupiter:junit-jupiter-params:$junitJupiterVersion")
+    api("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
+    api("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
+    implementation("io.github.classgraph:classgraph:4.8.173")
     implementation(kotlin("reflect"))
     implementation(kotlin("stdlib"))
     testImplementation("org.mockito:mockito-core:5.12.0")
@@ -33,7 +35,7 @@ dependencies {
 java {
     withSourcesJar()
     withJavadocJar()
-    sourceCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_17
 }
 
 tasks.named<Test>("test") {
@@ -41,7 +43,7 @@ tasks.named<Test>("test") {
 }
 
 kotlin {
-    jvmToolchain(11)
+    jvmToolchain(17)
 }
 
 publishing {

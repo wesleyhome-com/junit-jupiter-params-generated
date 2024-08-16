@@ -30,5 +30,6 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @ArgumentsSource(
     ParametersSourceArgumentsProvider::class
 )
+@Deprecated(message = "Deprecated in favor of GeneratedParametersTest which can run without @ParameterizedTest", replaceWith = ReplaceWith(expression = "@GeneratedParametersTest"))
 annotation class ParametersSource
 

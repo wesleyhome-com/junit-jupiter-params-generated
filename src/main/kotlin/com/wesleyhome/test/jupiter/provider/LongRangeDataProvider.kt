@@ -3,7 +3,7 @@ package com.wesleyhome.test.jupiter.provider
 import com.wesleyhome.test.jupiter.annotations.LongRangeSource
 import kotlin.reflect.KClass
 
-object LongRangeDataProvider : AbstractAnnotatedParameterDataProvider<Long, LongRangeSource>() {
+class LongRangeDataProvider : AbstractAnnotatedParameterDataProvider<Long, LongRangeSource>() {
 
     override val annotation: KClass<LongRangeSource> = LongRangeSource::class
 
