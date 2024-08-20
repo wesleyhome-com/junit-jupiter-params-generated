@@ -23,7 +23,7 @@ dependencies {
     api("org.junit.jupiter:junit-jupiter-params:$junitJupiterVersion")
     api("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
     api("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
-    implementation("io.github.classgraph:classgraph:4.8.174")
+    implementation("io.github.classgraph:classgraph:4.8.175")
     implementation(kotlin("reflect"))
     implementation(kotlin("stdlib"))
     testImplementation("org.mockito:mockito-core:5.12.0")
