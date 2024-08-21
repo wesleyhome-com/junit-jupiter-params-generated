@@ -19,9 +19,9 @@ repositories {
 }
 
 dependencies {
-    api("org.junit.jupiter:junit-jupiter-params:5.10.3")
-    api("org.junit.jupiter:junit-jupiter-engine:5.10.3")
-    api("org.junit.jupiter:junit-jupiter-api:5.10.3")
+    api("org.junit.jupiter:junit-jupiter-params:5.11.0")
+    api("org.junit.jupiter:junit-jupiter-engine:5.11.0")
+    api("org.junit.jupiter:junit-jupiter-api:5.11.0")
     implementation(kotlin("reflect"))
     implementation(kotlin("stdlib"))
     testImplementation("org.mockito:mockito-core:5.12.0")
