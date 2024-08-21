@@ -3,7 +3,7 @@ package com.wesleyhome.test.jupiter.provider
 import com.wesleyhome.test.jupiter.annotations.FloatRangeSource
 import kotlin.reflect.KClass
 
-class FloatRangeDataProvider : AbstractAnnotatedParameterDataProvider<Float, FloatRangeSource>() {
+object FloatRangeDataProvider : AbstractAnnotatedParameterDataProvider<Float, FloatRangeSource>() {
 
     override val annotation: KClass<FloatRangeSource> = FloatRangeSource::class
 
