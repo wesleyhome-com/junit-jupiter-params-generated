@@ -11,7 +11,7 @@ import kotlin.random.Random
 import kotlin.random.nextLong
 import kotlin.reflect.KClass
 
-class RandomInstanceSourceDataProvider : AbstractAnnotatedParameterDataProvider<Instant, RandomInstantSource>() {
+object RandomInstanceSourceDataProvider : AbstractAnnotatedParameterDataProvider<Instant, RandomInstantSource>() {
     override val annotation: KClass<RandomInstantSource> = RandomInstantSource::class
 
     override fun createParameterOptionsData(testParameter: TestParameter): List<Instant?> {

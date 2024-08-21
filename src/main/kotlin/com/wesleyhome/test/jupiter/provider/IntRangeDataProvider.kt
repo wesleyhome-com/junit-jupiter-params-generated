@@ -3,7 +3,7 @@ package com.wesleyhome.test.jupiter.provider
 import com.wesleyhome.test.jupiter.annotations.IntRangeSource
 import kotlin.reflect.KClass
 
-class IntRangeDataProvider : AbstractAnnotatedParameterDataProvider<Int, IntRangeSource>() {
+object IntRangeDataProvider : AbstractAnnotatedParameterDataProvider<Int, IntRangeSource>() {
 
     override val annotation: KClass<IntRangeSource> = IntRangeSource::class
 

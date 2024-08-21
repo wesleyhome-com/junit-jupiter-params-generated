@@ -4,7 +4,7 @@ import com.wesleyhome.test.jupiter.annotations.DoubleSource
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KClass
 
-class DoubleValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<Double, DoubleSource>() {
+object DoubleValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<Double, DoubleSource>() {
 
     override val annotation: KClass<DoubleSource> = DoubleSource::class
 
