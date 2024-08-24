@@ -2,11 +2,8 @@ package com.wesleyhome.test.jupiter.provider
 
 import com.wesleyhome.test.jupiter.annotations.FloatSource
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.reflect.KClass
 
-object FloatValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<Float, FloatSource>() {
-
-    override val annotation: KClass<FloatSource> = FloatSource::class
+class FloatValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<Float, FloatSource>() {
 
     override fun createParameterOptionsData(testParameter: TestParameter): List<Float?> {
         return findAnnotation(testParameter)!!.values.toList()
@@ -14,8 +11,8 @@ object FloatValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<Flo
 }
 
 class FloatProgression(
-    private val min: Float,
-    private val max: Float,
+    min: Float,
+    max: Float,
     private val step: Float
 ) : Iterable<Float> {
 

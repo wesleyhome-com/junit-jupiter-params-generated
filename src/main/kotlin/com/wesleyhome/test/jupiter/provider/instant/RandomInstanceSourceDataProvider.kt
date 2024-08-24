@@ -11,8 +11,7 @@ import kotlin.random.Random
 import kotlin.random.nextLong
 import kotlin.reflect.KClass
 
-object RandomInstanceSourceDataProvider : AbstractAnnotatedParameterDataProvider<Instant, RandomInstantSource>() {
-    override val annotation: KClass<RandomInstantSource> = RandomInstantSource::class
+class RandomInstanceSourceDataProvider : AbstractAnnotatedParameterDataProvider<Instant, RandomInstantSource>() {
 
     override fun createParameterOptionsData(testParameter: TestParameter): List<Instant?> {
         val annotation = findAnnotation(testParameter)!!
@@ -24,13 +23,13 @@ object RandomInstanceSourceDataProvider : AbstractAnnotatedParameterDataProvider
         val size: Int = annotation.size
 
         if(minInstant.isBlank() && minOffset.isBlank()) {
-            throw IllegalArgumentException("Either minInstant or startPeriodOffset must be provided")
+            throw IllegalArgumentException("Either [minInstant] or [minOffset] must be provided")
         }
         if(minInstant.isNotBlank() && maxInstant.isBlank()) {
-            throw IllegalArgumentException("[maxInstant] must be provided when minInstant is provided")
+            throw IllegalArgumentException("[maxInstant] must be provided when [minInstant] is provided")
         }
         if(minOffset.isNotBlank() && maxOffset.isBlank()) {
-            throw IllegalArgumentException("[endPeriodOffset] must be provided when startPeriodOffset is provided")
+            throw IllegalArgumentException("[maxOffset] must be provided when [minOffset] is provided")
         }
         val truncationUnit = if(minOffset.isNotBlank()) {
             ChronoUnit.valueOf(truncateTo)
@@ -38,20 +37,23 @@ object RandomInstanceSourceDataProvider : AbstractAnnotatedParameterDataProvider
             ChronoUnit.MILLIS
         }
         if(size < 1) {
-            throw IllegalArgumentException("Size must be greater than 0")
+            throw IllegalArgumentException("[size] must be greater than 0")
         }
         val now = ZonedDateTime.now().truncatedTo(truncationUnit).toInstant()
-        val min = if(minInstant.isBlank()) {
+        var min = if(minInstant.isBlank()) {
             now.plus(minOffset.temporalAmount())
         } else {
             Instant.parse(minInstant)
-        }.toEpochMilli()
+        }
         val max = if(maxInstant.isBlank()) {
             now.plus(maxOffset.temporalAmount())
         } else {
             Instant.parse(maxInstant)
-        }.toEpochMilli()
-        val range = (min .. max)
+        }
+        if(min.isAfter(max)) {
+            min = max.plus(minOffset.temporalAmount())
+        }
+        val range = (min.toEpochMilli() .. max.toEpochMilli())
         return (1..size)
             .map { Random.nextLong(range) }
             .map { Instant.ofEpochMilli(it) }

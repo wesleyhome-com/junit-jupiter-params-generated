@@ -2,11 +2,8 @@ package com.wesleyhome.test.jupiter.provider
 
 import com.wesleyhome.test.jupiter.annotations.DoubleSource
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.reflect.KClass
 
-object DoubleValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<Double, DoubleSource>() {
-
-    override val annotation: KClass<DoubleSource> = DoubleSource::class
+class DoubleValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<Double, DoubleSource>() {
 
     override fun createParameterOptionsData(testParameter: TestParameter): List<Double?> {
         return findAnnotation(testParameter)!!.values.toList()
