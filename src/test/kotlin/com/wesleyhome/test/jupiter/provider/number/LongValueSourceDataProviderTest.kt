@@ -1,6 +1,8 @@
-package com.wesleyhome.test.jupiter.provider
+package com.wesleyhome.test.jupiter.provider.number
 
 import com.wesleyhome.test.jupiter.annotations.LongSource
+import com.wesleyhome.test.jupiter.provider.AnnotatedParameterDataProviderTest
+import com.wesleyhome.test.jupiter.provider.TestParameter
 import org.junit.jupiter.api.Test
 
 class LongValueSourceDataProviderTest :

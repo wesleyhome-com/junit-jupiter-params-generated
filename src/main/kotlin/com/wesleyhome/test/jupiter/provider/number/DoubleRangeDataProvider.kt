@@ -1,4 +1,4 @@
-package com.wesleyhome.test.jupiter.provider
+package com.wesleyhome.test.jupiter.provider.number
 
 import com.wesleyhome.test.jupiter.annotations.DoubleRangeSource
 

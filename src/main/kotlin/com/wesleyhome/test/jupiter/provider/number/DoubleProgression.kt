@@ -1,14 +1,6 @@
-package com.wesleyhome.test.jupiter.provider
+package com.wesleyhome.test.jupiter.provider.number
 
-import com.wesleyhome.test.jupiter.annotations.DoubleSource
 import java.util.concurrent.atomic.AtomicReference
-
-class DoubleValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<Double, DoubleSource>() {
-
-    override fun createParameterOptionsData(testParameter: TestParameter): List<Double?> {
-        return findAnnotation(testParameter)!!.values.toList()
-    }
-}
 
 class DoubleProgression(
     min: Double,
@@ -28,8 +20,4 @@ class DoubleProgression(
             }
         }
     }
-}
-
-infix fun ClosedFloatingPointRange<Double>.step(step: Double): DoubleProgression {
-    return DoubleProgression(this.start, this.endInclusive, step)
 }

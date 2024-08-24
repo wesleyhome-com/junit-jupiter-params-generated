@@ -19,6 +19,7 @@ import com.wesleyhome.test.jupiter.annotations.LongSource
 import com.wesleyhome.test.jupiter.annotations.ParametersSource
 import com.wesleyhome.test.jupiter.annotations.RandomInstantSource
 import com.wesleyhome.test.jupiter.annotations.StringSource
+import com.wesleyhome.test.jupiter.provider.number.step
 import com.wesleyhome.test.jupiter.provider.step
 import com.wesleyhome.test.jupiter.provider.toLocalDate
 import com.wesleyhome.test.jupiter.provider.toLocalDateTime
