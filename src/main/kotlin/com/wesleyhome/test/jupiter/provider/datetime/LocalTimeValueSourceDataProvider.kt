@@ -1,8 +1,10 @@
-package com.wesleyhome.test.jupiter.provider
+package com.wesleyhome.test.jupiter.provider.datetime
 
 import com.wesleyhome.test.jupiter.annotations.LocalTimeSource
+import com.wesleyhome.test.jupiter.provider.AbstractAnnotatedParameterDataProvider
+import com.wesleyhome.test.jupiter.provider.TestParameter
+import com.wesleyhome.test.jupiter.provider.toLocalTime
 import java.time.LocalTime
-import kotlin.reflect.KClass
 
 class LocalTimeValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<LocalTime, LocalTimeSource>() {
 

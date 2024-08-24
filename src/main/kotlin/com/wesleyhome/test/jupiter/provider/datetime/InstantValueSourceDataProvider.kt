@@ -1,10 +1,9 @@
-package com.wesleyhome.test.jupiter.provider.instant
+package com.wesleyhome.test.jupiter.provider.datetime
 
 import com.wesleyhome.test.jupiter.annotations.InstantSource
 import com.wesleyhome.test.jupiter.provider.AbstractAnnotatedParameterDataProvider
 import com.wesleyhome.test.jupiter.provider.TestParameter
 import java.time.Instant
-import kotlin.reflect.KClass
 
 class InstantValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<Instant, InstantSource>() {
 

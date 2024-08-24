@@ -1,4 +1,4 @@
-package com.wesleyhome.test.jupiter.provider.instant
+package com.wesleyhome.test.jupiter.provider.datetime
 
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.InstantRangeSource
