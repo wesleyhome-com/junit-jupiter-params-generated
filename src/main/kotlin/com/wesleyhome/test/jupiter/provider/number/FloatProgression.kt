@@ -1,14 +1,6 @@
-package com.wesleyhome.test.jupiter.provider
+package com.wesleyhome.test.jupiter.provider.number
 
-import com.wesleyhome.test.jupiter.annotations.FloatSource
 import java.util.concurrent.atomic.AtomicReference
-
-class FloatValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<Float, FloatSource>() {
-
-    override fun createParameterOptionsData(testParameter: TestParameter): List<Float?> {
-        return findAnnotation(testParameter)!!.values.toList()
-    }
-}
 
 class FloatProgression(
     min: Float,
@@ -28,8 +20,4 @@ class FloatProgression(
             }
         }
     }
-}
-
-infix fun ClosedFloatingPointRange<Float>.step(step: Float): FloatProgression {
-    return FloatProgression(this.start, this.endInclusive, step)
 }

@@ -1,5 +1,8 @@
-package com.wesleyhome.test.jupiter.provider
+package com.wesleyhome.test.jupiter.provider.number
 
+import com.wesleyhome.test.jupiter.provider.AbstractAnnotatedParameterDataProvider
+import com.wesleyhome.test.jupiter.provider.TestParameter
+import com.wesleyhome.test.jupiter.provider.step
 import kotlin.reflect.full.memberProperties
 
 abstract class AbstractAnnotatedNumberRangeDataProvider<T : Number, A : Annotation> :

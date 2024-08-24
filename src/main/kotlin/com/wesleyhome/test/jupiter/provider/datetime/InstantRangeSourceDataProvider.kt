@@ -3,6 +3,7 @@ package com.wesleyhome.test.jupiter.provider.datetime
 import com.wesleyhome.test.jupiter.annotations.InstantRangeSource
 import com.wesleyhome.test.jupiter.provider.AbstractAnnotatedParameterDataProvider
 import com.wesleyhome.test.jupiter.provider.TestParameter
+import com.wesleyhome.test.jupiter.provider.number.step
 import com.wesleyhome.test.jupiter.provider.step
 import com.wesleyhome.test.jupiter.provider.temporalAmount
 import java.time.Instant

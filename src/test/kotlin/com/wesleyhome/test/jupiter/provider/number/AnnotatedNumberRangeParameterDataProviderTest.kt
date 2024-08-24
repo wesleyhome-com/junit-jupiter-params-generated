@@ -1,4 +1,7 @@
-package com.wesleyhome.test.jupiter.provider
+package com.wesleyhome.test.jupiter.provider.number
+
+import com.wesleyhome.test.jupiter.provider.AnnotatedParameterDataProviderTest
+import com.wesleyhome.test.jupiter.provider.TestParameter
 
 abstract class AnnotatedNumberRangeParameterDataProviderTest<P : AbstractAnnotatedNumberRangeDataProvider<T, A>, T : Number, A : Annotation> :
     AnnotatedParameterDataProviderTest<P, T, A>() {

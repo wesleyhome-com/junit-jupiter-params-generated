@@ -1,5 +1,7 @@
 package com.wesleyhome.test.jupiter.provider
 
+import com.wesleyhome.test.jupiter.provider.number.DoubleProgression
+import com.wesleyhome.test.jupiter.provider.number.FloatProgression
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -25,6 +27,13 @@ infix fun ClosedRange<LocalTime>.step(step: String) : LocalTimeProgression {
 
 infix fun ClosedRange<Instant>.step(step: String) : InstantProgression {
     return InstantProgression(this.start, this.endInclusive, step.temporalAmount())
+}
+infix fun ClosedFloatingPointRange<Double>.step(step: Double): DoubleProgression {
+    return DoubleProgression(this.start, this.endInclusive, step)
+}
+
+infix fun ClosedFloatingPointRange<Float>.step(step: Float): FloatProgression {
+    return FloatProgression(this.start, this.endInclusive, step)
 }
 
 fun String.period(): Period = Period.parse(this)

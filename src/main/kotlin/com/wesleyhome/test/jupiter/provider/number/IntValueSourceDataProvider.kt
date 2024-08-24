@@ -1,6 +1,8 @@
-package com.wesleyhome.test.jupiter.provider
+package com.wesleyhome.test.jupiter.provider.number
 
 import com.wesleyhome.test.jupiter.annotations.IntSource
+import com.wesleyhome.test.jupiter.provider.AbstractAnnotatedParameterDataProvider
+import com.wesleyhome.test.jupiter.provider.TestParameter
 
 class IntValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<Int, IntSource>() {
 
