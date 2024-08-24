@@ -10,8 +10,7 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.reflect.KClass
 
-object InstantRangeSourceDataProvider : AbstractAnnotatedParameterDataProvider<Instant, InstantRangeSource>() {
-    override val annotation: KClass<InstantRangeSource> = InstantRangeSource::class
+class InstantRangeSourceDataProvider : AbstractAnnotatedParameterDataProvider<Instant, InstantRangeSource>() {
 
     override fun createParameterOptionsData(testParameter: TestParameter): List<Instant?> {
         val annotation = findAnnotation(testParameter)!!

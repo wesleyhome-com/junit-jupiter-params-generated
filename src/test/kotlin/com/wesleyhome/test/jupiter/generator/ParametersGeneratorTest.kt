@@ -29,7 +29,7 @@ class ParametersGeneratorTest {
     @Test
     fun arguments_enum_bool_class() {
         assertTestParameterSourceMethod(
-            TestKotlinEnum.values().size * 2,
+            TestKotlinEnum.entries.size * 2,
             "testMethod",
             TestKotlinEnum::class, Boolean::class
         )
@@ -44,18 +44,18 @@ class ParametersGeneratorTest {
                 TestKotlinEnum::class, Boolean::class, TestObjectKotlin::class
             )
         }.isInstanceOf(InvalidParameterException::class.java)
-            .hasMessage("Unable to find a suitable data provider for '${TestObjectKotlin::class.qualifiedName}' type")
+            .hasMessage("Unable to find a suitable data provider for parameter [param_TestObjectKotlin] with type '${TestObjectKotlin::class.qualifiedName}'")
     }
 
     @Test
     fun provideArguments_enum_class() {
-        assertTestParameterSourceMethod(TestKotlinEnum.values().size, "testEnumMethod", TestKotlinEnum::class)
+        assertTestParameterSourceMethod(TestKotlinEnum.entries.size, "testEnumMethod", TestKotlinEnum::class)
     }
 
     @Test
     fun provideArguments_nullable_enum_class() {
         assertTestParameterSourceMethod(
-            TestKotlinEnum.values().size + 1,
+            TestKotlinEnum.entries.size + 1,
             "testNullableEnumMethod",
             true,
             TestKotlinEnum::class

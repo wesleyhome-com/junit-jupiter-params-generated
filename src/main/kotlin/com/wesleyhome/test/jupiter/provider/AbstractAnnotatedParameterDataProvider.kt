@@ -1,10 +1,12 @@
 package com.wesleyhome.test.jupiter.provider
 
+import com.wesleyhome.test.jupiter.actualTypeArguments
+import com.wesleyhome.test.jupiter.kotlinType
 import kotlin.reflect.KClass
 
 abstract class AbstractAnnotatedParameterDataProvider<T : Any, A : Annotation> : AbstractParameterDataProvider<T>() {
 
-    abstract val annotation: KClass<A>
+    protected val annotation: KClass<A> by lazy { actualTypeArguments[1].kotlinType()}
 
     override fun providesDataFor(testParameter: TestParameter): Boolean {
         return super.providesDataFor(testParameter) && findAnnotation(testParameter) != null

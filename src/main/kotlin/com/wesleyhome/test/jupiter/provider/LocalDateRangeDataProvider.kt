@@ -4,9 +4,7 @@ import com.wesleyhome.test.jupiter.annotations.LocalDateRangeSource
 import java.time.LocalDate
 import kotlin.reflect.KClass
 
-object LocalDateRangeDataProvider : AbstractAnnotatedParameterDataProvider<LocalDate, LocalDateRangeSource>() {
-
-    override val annotation: KClass<LocalDateRangeSource> = LocalDateRangeSource::class
+class LocalDateRangeDataProvider : AbstractAnnotatedParameterDataProvider<LocalDate, LocalDateRangeSource>() {
 
     override fun createParameterOptionsData(testParameter: TestParameter): List<LocalDate?> {
         val s = findAnnotation(testParameter)!!
