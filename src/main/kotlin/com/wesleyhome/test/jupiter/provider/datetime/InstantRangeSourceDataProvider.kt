@@ -1,27 +1,25 @@
-package com.wesleyhome.test.jupiter.provider.instant
+package com.wesleyhome.test.jupiter.provider.datetime
 
-import com.wesleyhome.test.jupiter.annotations.RandomInstantSource
+import com.wesleyhome.test.jupiter.annotations.InstantRangeSource
 import com.wesleyhome.test.jupiter.provider.AbstractAnnotatedParameterDataProvider
 import com.wesleyhome.test.jupiter.provider.TestParameter
+import com.wesleyhome.test.jupiter.provider.step
 import com.wesleyhome.test.jupiter.provider.temporalAmount
 import java.time.Instant
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
-import kotlin.random.Random
-import kotlin.random.nextLong
-import kotlin.reflect.KClass
 
-class RandomInstanceSourceDataProvider : AbstractAnnotatedParameterDataProvider<Instant, RandomInstantSource>() {
+class InstantRangeSourceDataProvider : AbstractAnnotatedParameterDataProvider<Instant, InstantRangeSource>() {
 
     override fun createParameterOptionsData(testParameter: TestParameter): List<Instant?> {
         val annotation = findAnnotation(testParameter)!!
-        val minInstant: String = annotation.minInstant
-        val maxInstant: String = annotation.maxInstant
-        val minOffset: String = annotation.minOffset
-        val maxOffset: String = annotation.maxOffset
-        val truncateTo: String = annotation.truncateTo
-        val size: Int = annotation.size
-
+        val minInstant = annotation.minInstant
+        val maxInstant = annotation.maxInstant
+        val minOffset = annotation.minOffset
+        val maxOffset = annotation.maxOffset
+        val ascending = annotation.ascending
+        val increment = if(ascending) annotation.increment else "-${annotation.increment}"
+        val truncateTo = annotation.truncateTo
         if(minInstant.isBlank() && minOffset.isBlank()) {
             throw IllegalArgumentException("Either [minInstant] or [minOffset] must be provided")
         }
@@ -36,11 +34,8 @@ class RandomInstanceSourceDataProvider : AbstractAnnotatedParameterDataProvider<
         } else {
             ChronoUnit.MILLIS
         }
-        if(size < 1) {
-            throw IllegalArgumentException("[size] must be greater than 0")
-        }
         val now = ZonedDateTime.now().truncatedTo(truncationUnit).toInstant()
-        var min = if(minInstant.isBlank()) {
+        val min = if(minInstant.isBlank()) {
             now.plus(minOffset.temporalAmount())
         } else {
             Instant.parse(minInstant)
@@ -50,13 +45,6 @@ class RandomInstanceSourceDataProvider : AbstractAnnotatedParameterDataProvider<
         } else {
             Instant.parse(maxInstant)
         }
-        if(min.isAfter(max)) {
-            min = max.plus(minOffset.temporalAmount())
-        }
-        val range = (min.toEpochMilli() .. max.toEpochMilli())
-        return (1..size)
-            .map { Random.nextLong(range) }
-            .map { Instant.ofEpochMilli(it) }
-            .toList()
+        return (min .. max step increment).toList()
     }
 }
