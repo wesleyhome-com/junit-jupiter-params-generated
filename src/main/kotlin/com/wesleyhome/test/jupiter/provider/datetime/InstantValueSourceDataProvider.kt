@@ -7,10 +7,6 @@ import java.time.Instant
 
 class InstantValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<Instant, InstantSource>() {
 
-    override fun providesDataFor(testParameter: TestParameter): Boolean {
-        return super.providesDataFor(testParameter) && findAnnotation(testParameter) != null
-    }
-
     override fun createParameterOptionsData(testParameter: TestParameter): List<Instant?> {
         val instantSource = findAnnotation(testParameter)!!
         return instantSource.values.map { Instant.parse(it) }

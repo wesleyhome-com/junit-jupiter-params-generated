@@ -9,9 +9,5 @@ val Any.actualTypeArguments: Array<Type>
         .actualTypeArguments
 
 fun <T: Any> Type.kotlinType(): KClass<T> {
-    return when (this) {
-        is Class<*> -> (this as Class<T>).kotlin
-        is ParameterizedType -> this.rawType.kotlinType()
-        else -> throw IllegalArgumentException("Unsupported type: $this")
-    }
+    return (this as Class<T>).kotlin
 }
