@@ -7,7 +7,8 @@ import com.wesleyhome.test.jupiter.provider.propertyValue
 import com.wesleyhome.test.jupiter.provider.temporalAmount
 import java.time.format.DateTimeParseException
 
-abstract class AbstractAnnotatedDateTimeRangeDataProvider<T: Comparable<T>, A: Annotation> : AbstractAnnotatedParameterDataProvider<T, A>() {
+abstract class AbstractAnnotatedDateTimeRangeDataProvider<T : Comparable<T>, A : Annotation> :
+    AbstractAnnotatedParameterDataProvider<T, A>() {
 
     open val formatPropertyName = "dateFormat"
 
@@ -27,7 +28,7 @@ abstract class AbstractAnnotatedDateTimeRangeDataProvider<T: Comparable<T>, A: A
         } catch (e: DateTimeParseException) {
             throw IllegalArgumentException("Unable to parse $maxString using format $format", e)
         }
-        if(min >= max) {
+        if (min >= max) {
             throw IllegalArgumentException("$maxString is not after $minString")
         }
         val increment = annotation.propertyValue<String>("increment")

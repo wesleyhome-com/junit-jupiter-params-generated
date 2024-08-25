@@ -6,7 +6,8 @@ import com.wesleyhome.test.jupiter.provider.TestParameter
 import com.wesleyhome.test.jupiter.provider.toLocalDateTime
 import java.time.LocalDateTime
 
-class LocalDateTimeValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<LocalDateTime, LocalDateTimeSource>() {
+class LocalDateTimeValueSourceDataProvider :
+    AbstractAnnotatedParameterDataProvider<LocalDateTime, LocalDateTimeSource>() {
 
     override fun createParameterOptionsData(testParameter: TestParameter): List<LocalDateTime?> {
         val localDateSource = findAnnotation(testParameter)!!

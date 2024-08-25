@@ -10,6 +10,7 @@ import kotlin.reflect.jvm.kotlinFunction
 
 class GeneratedParametersTestMethodContext(context: ExtensionContext) {
     val generator: ParametersGenerator
+
     init {
         val requiredTestMethod = context.requiredTestMethod.kotlinFunction!!
         val parameters = requiredTestMethod.parameters.filter { it.kind == KParameter.Kind.VALUE }

@@ -22,13 +22,14 @@ infix fun ClosedRange<LocalDate>.step(step: String): LocalDateProgression {
     return LocalDateProgression(this.start, this.endInclusive, step.temporalAmount())
 }
 
-infix fun ClosedRange<LocalTime>.step(step: String) : LocalTimeProgression {
+infix fun ClosedRange<LocalTime>.step(step: String): LocalTimeProgression {
     return LocalTimeProgression(this.start, this.endInclusive, step.temporalAmount())
 }
 
-infix fun ClosedRange<Instant>.step(step: String) : InstantProgression {
+infix fun ClosedRange<Instant>.step(step: String): InstantProgression {
     return InstantProgression(this.start, this.endInclusive, step.temporalAmount())
 }
+
 infix fun ClosedFloatingPointRange<Double>.step(step: Double): DoubleProgression {
     return DoubleProgression(this.start, this.endInclusive, step)
 }
@@ -46,7 +47,7 @@ fun String.temporalAmount(): TemporalAmount =
         this.duration()
     }
 
-fun String.formatter() : DateTimeFormatter = DateTimeFormatter.ofPattern(this)
+fun String.formatter(): DateTimeFormatter = DateTimeFormatter.ofPattern(this)
 
 fun String.toLocalDate(dateFormat: String = "yyyy-MM-dd"): LocalDate =
     LocalDate.parse(this, dateFormat.formatter())
@@ -54,7 +55,7 @@ fun String.toLocalDate(dateFormat: String = "yyyy-MM-dd"): LocalDate =
 fun String.toLocalDateTime(dateTimeFormat: String = "yyyy-MM-dd HH:mm"): LocalDateTime =
     LocalDateTime.parse(this, dateTimeFormat.formatter())
 
-fun String.toLocalTime(timeFormat: String = "HH:mm") : LocalTime =
+fun String.toLocalTime(timeFormat: String = "HH:mm"): LocalTime =
     LocalTime.parse(this, timeFormat.formatter())
 
 fun <T> Annotation.propertyValue(propertyName: String): T =

@@ -2,7 +2,8 @@ package com.wesleyhome.test.jupiter.provider
 
 import org.junit.jupiter.api.Test
 
-class BooleanParameterParameterDataProviderTest : AbstractParameterDataProviderTest<BooleanParameterDataProvider, Boolean>() {
+class BooleanParameterParameterDataProviderTest :
+    AbstractParameterDataProviderTest<BooleanParameterDataProvider, Boolean>() {
 
     @Test
     fun testCreateBooleanOptionsData() {
