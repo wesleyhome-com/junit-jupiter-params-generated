@@ -7,8 +7,7 @@ import kotlin.reflect.KClass
 abstract class AbstractParameterDataProvider<T : Any> : ParameterDataProvider<T> {
     private val classType: KClass<T> by lazy { actualTypeArguments[0].kotlinType()}
 
-    override fun providesDataFor(testParameter: TestParameter): Boolean {
-        return testParameter.type == classType
+    override fun dataProviderFor(): KClass<T> {
+        return classType
     }
-
 }

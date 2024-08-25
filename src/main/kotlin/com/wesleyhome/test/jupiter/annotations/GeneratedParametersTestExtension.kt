@@ -5,19 +5,21 @@ import org.junit.jupiter.api.extension.ExtensionContext.Namespace.create
 import org.junit.jupiter.api.extension.TestTemplateInvocationContext
 import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.platform.commons.util.AnnotationUtils.isAnnotated
 import org.junit.platform.commons.util.Preconditions
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
+import kotlin.reflect.full.hasAnnotation
+import kotlin.reflect.jvm.kotlinFunction
 
 class GeneratedParametersTestExtension : TestTemplateInvocationContextProvider {
     override fun supportsTestTemplate(context: ExtensionContext): Boolean {
         return if (!context.testMethod.isPresent) false else {
-            val method = context.testMethod.get()
-            if (isAnnotated(method, GeneratedParametersTest::class.java)) {
+            val kFunction = context.requiredTestMethod.kotlinFunction!!
+            if(kFunction.hasAnnotation<GeneratedParametersTest>()){
+                val isParameterizedTest = kFunction.hasAnnotation<ParameterizedTest>()
                 Preconditions.condition(
-                    !isAnnotated(method, ParameterizedTest::class.java),
+                    !isParameterizedTest,
                     "Test annotated with @GeneratedParametersTest cannot be annotated with @ParameterizedTest"
                 )
                 getStore(context).put(METHOD_CONTEXT_KEY, GeneratedParametersTestMethodContext(context))
@@ -48,3 +50,4 @@ class GeneratedParametersTestExtension : TestTemplateInvocationContextProvider {
 
     }
 }
+

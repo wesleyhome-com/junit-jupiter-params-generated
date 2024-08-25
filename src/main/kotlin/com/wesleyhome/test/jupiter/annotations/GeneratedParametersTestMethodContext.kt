@@ -18,7 +18,7 @@ class GeneratedParametersTestMethodContext(context: ExtensionContext) {
                 name = requiredTestMethod.name,
                 testParameters = parameters.map {
                     TestParameter(
-                        name = it.name ?: "param${it.index}",
+                        name = it.name!!,
                         type = it.type.classifier as KClass<*>,
                         isNullable = it.type.isMarkedNullable,
                         annotations = it.annotations.toList()

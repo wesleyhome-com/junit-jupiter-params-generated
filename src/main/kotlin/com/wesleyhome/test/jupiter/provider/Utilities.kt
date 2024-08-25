@@ -11,6 +11,7 @@ import java.time.Period
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.temporal.TemporalAmount
+import kotlin.reflect.full.memberProperties
 
 
 infix fun ClosedRange<LocalDateTime>.step(step: String): LocalDateTimeProgression {
@@ -45,11 +46,16 @@ fun String.temporalAmount(): TemporalAmount =
         this.duration()
     }
 
+fun String.formatter() : DateTimeFormatter = DateTimeFormatter.ofPattern(this)
+
 fun String.toLocalDate(dateFormat: String = "yyyy-MM-dd"): LocalDate =
-    LocalDate.parse(this, DateTimeFormatter.ofPattern(dateFormat))
+    LocalDate.parse(this, dateFormat.formatter())
 
 fun String.toLocalDateTime(dateTimeFormat: String = "yyyy-MM-dd HH:mm"): LocalDateTime =
-    LocalDateTime.parse(this, DateTimeFormatter.ofPattern(dateTimeFormat))
+    LocalDateTime.parse(this, dateTimeFormat.formatter())
 
 fun String.toLocalTime(timeFormat: String = "HH:mm") : LocalTime =
-    LocalTime.parse(this, DateTimeFormatter.ofPattern(timeFormat))
+    LocalTime.parse(this, timeFormat.formatter())
+
+fun <T> Annotation.propertyValue(propertyName: String): T =
+    this::class.memberProperties.first { it.name == propertyName }.getter.call(this) as T

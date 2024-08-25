@@ -19,15 +19,7 @@ class GeneratedParametersTestInvocationContext(
             override fun supportsParameter(
                 parameterContext: ParameterContext,
                 extensionContext: ExtensionContext
-            ): Boolean {
-                val declaringExecutable = parameterContext.declaringExecutable
-                val testMethod = extensionContext.testMethod.orElse(null)
-                return if (declaringExecutable != testMethod) {
-                    false
-                } else {
-                    parameterContext.index < arguments.size
-                }
-            }
+            ): Boolean = true
 
             override fun resolveParameter(
                 parameterContext: ParameterContext,
