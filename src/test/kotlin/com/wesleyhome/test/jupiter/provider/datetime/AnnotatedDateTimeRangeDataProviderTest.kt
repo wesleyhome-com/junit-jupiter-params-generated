@@ -110,7 +110,7 @@ abstract class AnnotatedDateTimeRangeDataProviderTest
     override fun createTrueProvidesForTestParameter(): TestParameter =
         testParameter("2024-01-01 12:00", "2024-02-01 12:00", dateFormat = "yyyy-MM-dd hh:mm")
 
-    abstract fun convert(valueString: String, dateFormat: String): T
+    abstract fun convert(valueString: String, format: String): T
 
     abstract fun expectedList(min: T, max: T, increment: String): List<T>
 }

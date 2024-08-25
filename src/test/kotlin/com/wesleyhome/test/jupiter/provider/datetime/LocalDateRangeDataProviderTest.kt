@@ -28,7 +28,7 @@ class LocalDateRangeDataProviderTest :
         createAndAssertTestParameter(min, max, increment, ascending, dateFormat)
     }
 
-    override fun convert(valueString: String, dateFormat: String): LocalDate = valueString.toLocalDate(dateFormat)
+    override fun convert(valueString: String, format: String): LocalDate = valueString.toLocalDate(format)
 
     override fun expectedList(min: LocalDate, max: LocalDate, increment: String): List<LocalDate> {
         return (min..max step increment).toList()
