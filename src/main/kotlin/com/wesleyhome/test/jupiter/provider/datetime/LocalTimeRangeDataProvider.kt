@@ -12,6 +12,6 @@ class LocalTimeRangeDataProvider : AbstractAnnotatedDateTimeRangeDataProvider<Lo
     override fun convert(value: String, format: String): LocalTime = value.toLocalTime(format)
 
     override fun toList(min: LocalTime, max: LocalTime, increment: String): List<LocalTime> =
-        (min .. max step increment).toList()
+        (min..max step increment).toList()
 
 }

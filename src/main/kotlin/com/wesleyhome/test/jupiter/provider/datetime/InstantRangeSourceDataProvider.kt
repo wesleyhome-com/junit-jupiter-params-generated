@@ -18,33 +18,33 @@ class InstantRangeSourceDataProvider : AbstractAnnotatedParameterDataProvider<In
         val minOffset = annotation.minOffset
         val maxOffset = annotation.maxOffset
         val ascending = annotation.ascending
-        val increment = if(ascending) annotation.increment else "-${annotation.increment}"
+        val increment = if (ascending) annotation.increment else "-${annotation.increment}"
         val truncateTo = annotation.truncateTo
-        if(minInstant.isBlank() && minOffset.isBlank()) {
+        if (minInstant.isBlank() && minOffset.isBlank()) {
             throw IllegalArgumentException("Either [minInstant] or [minOffset] must be provided")
         }
-        if(minInstant.isNotBlank() && maxInstant.isBlank()) {
+        if (minInstant.isNotBlank() && maxInstant.isBlank()) {
             throw IllegalArgumentException("[maxInstant] must be provided when [minInstant] is provided")
         }
-        if(minOffset.isNotBlank() && maxOffset.isBlank()) {
+        if (minOffset.isNotBlank() && maxOffset.isBlank()) {
             throw IllegalArgumentException("[maxOffset] must be provided when [minOffset] is provided")
         }
-        val truncationUnit = if(minOffset.isNotBlank()) {
+        val truncationUnit = if (minOffset.isNotBlank()) {
             ChronoUnit.valueOf(truncateTo)
         } else {
             ChronoUnit.MILLIS
         }
         val now = ZonedDateTime.now().truncatedTo(truncationUnit).toInstant()
-        val min = if(minInstant.isBlank()) {
+        val min = if (minInstant.isBlank()) {
             now.plus(minOffset.temporalAmount())
         } else {
             Instant.parse(minInstant)
         }
-        val max = if(maxInstant.isBlank()) {
+        val max = if (maxInstant.isBlank()) {
             now.plus(maxOffset.temporalAmount())
         } else {
             Instant.parse(maxInstant)
         }
-        return (min .. max step increment).toList()
+        return (min..max step increment).toList()
     }
 }

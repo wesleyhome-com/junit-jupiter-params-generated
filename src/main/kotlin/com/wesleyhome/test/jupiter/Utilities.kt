@@ -8,6 +8,6 @@ val Any.actualTypeArguments: Array<Type>
     get() = (this.javaClass.genericSuperclass as ParameterizedType)
         .actualTypeArguments
 
-fun <T: Any> Type.kotlinType(): KClass<T> {
+fun <T : Any> Type.kotlinType(): KClass<T> {
     return (this as Class<T>).kotlin
 }

@@ -20,14 +20,14 @@ object DataProviderRegistry {
                                 throw RuntimeException(e)
                             }
                         }
-                }
+                    }
             }
     }
     val dataProviders by lazy { allDataProviders.getValue(false) }
     val defaultDataProviders by lazy {
         allDataProviders.getValue(true)
             .groupBy { it.dataProviderFor() }
-            .mapValues { (_, it) -> it.toSortedSet(compareBy { it.javaClass.getAnnotation(DefaultProvider::class.java).priority })}
+            .mapValues { (_, it) -> it.toSortedSet(compareBy { it.javaClass.getAnnotation(DefaultProvider::class.java).priority }) }
             .values.flatten()
     }
 }

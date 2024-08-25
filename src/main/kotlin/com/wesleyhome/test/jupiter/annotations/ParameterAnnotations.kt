@@ -166,7 +166,7 @@ annotation class LocalDateTimeSource(val values: Array<String>, val dateTimeForm
  *
  * @property values An array of string representing time, to be converted into LocalTime instances.
  * @property timeFormat A String representing the pattern to be used for parsing the [values] into LocalTime instances.
-*/
+ */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented

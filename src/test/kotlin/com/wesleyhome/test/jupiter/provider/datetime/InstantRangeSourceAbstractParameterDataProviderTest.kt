@@ -63,9 +63,15 @@ class InstantRangeSourceAbstractParameterDataProviderTest :
 
             else -> {
                 val now = ZonedDateTime.now()
-                val minValue = if (minInstant.isNotBlank()) minInstant.toInstant() else minOffset.toInstant(now, ChronoUnit.valueOf(truncateTo))
-                val maxValue = if (maxInstant.isNotBlank()) maxInstant.toInstant() else maxOffset.toInstant(now, ChronoUnit.valueOf(truncateTo))
-                val expected = (minValue..maxValue step if(ascending) increment else "-$increment").toList()
+                val minValue = if (minInstant.isNotBlank()) minInstant.toInstant() else minOffset.toInstant(
+                    now,
+                    ChronoUnit.valueOf(truncateTo)
+                )
+                val maxValue = if (maxInstant.isNotBlank()) maxInstant.toInstant() else maxOffset.toInstant(
+                    now,
+                    ChronoUnit.valueOf(truncateTo)
+                )
+                val expected = (minValue..maxValue step if (ascending) increment else "-$increment").toList()
                 testCreateParameterOptionsData(testParameter, false) {
                     it.containsExactlyElementsOf(expected)
                 }

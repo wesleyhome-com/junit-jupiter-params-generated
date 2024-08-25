@@ -3,7 +3,6 @@ package com.wesleyhome.test.jupiter.provider.datetime
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.LocalDateRangeSource
 import com.wesleyhome.test.jupiter.annotations.StringSource
-import com.wesleyhome.test.jupiter.provider.TestParameter
 import com.wesleyhome.test.jupiter.provider.step
 import com.wesleyhome.test.jupiter.provider.toLocalDate
 import java.time.LocalDate
@@ -20,22 +19,18 @@ class LocalDateRangeDataProviderTest :
         min: String,
         @StringSource(["", "Unparseable", "2024-02-01", "2024-04-01", "2024-08-01", "01/02/2024", "2024-02-01 15:25"])
         max: String,
-        @StringSource(["", "Unpareseable","P2d", "P5d"])
+        @StringSource(["", "Unpareseable", "P2d", "P5d"])
         increment: String?,
-        @StringSource(["","Unparseable","yyyy-MM-dd","MM/dd/yyyy","yyyy-MM-dd hh:mm"])
+        @StringSource(["", "Unparseable", "yyyy-MM-dd", "MM/dd/yyyy", "yyyy-MM-dd hh:mm"])
         dateFormat: String?,
         ascending: Boolean?
     ) {
         createAndAssertTestParameter(min, max, increment, ascending, dateFormat)
     }
 
-    override fun createTrueProvidesForTestParameter(): TestParameter {
-        return super.createTrueProvidesForTestParameter()
-    }
-
     override fun convert(valueString: String, dateFormat: String): LocalDate = valueString.toLocalDate(dateFormat)
 
     override fun expectedList(min: LocalDate, max: LocalDate, increment: String): List<LocalDate> {
-        return (min .. max step increment).toList()
+        return (min..max step increment).toList()
     }
 }

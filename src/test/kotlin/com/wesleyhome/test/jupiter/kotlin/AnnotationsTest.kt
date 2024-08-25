@@ -4,6 +4,7 @@ import com.wesleyhome.test.jupiter.annotations.DoubleRangeSource
 import com.wesleyhome.test.jupiter.annotations.DoubleSource
 import com.wesleyhome.test.jupiter.annotations.FloatRangeSource
 import com.wesleyhome.test.jupiter.annotations.FloatSource
+import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.InstantRangeSource
 import com.wesleyhome.test.jupiter.annotations.InstantSource
 import com.wesleyhome.test.jupiter.annotations.IntRangeSource
@@ -16,7 +17,6 @@ import com.wesleyhome.test.jupiter.annotations.LocalTimeRangeSource
 import com.wesleyhome.test.jupiter.annotations.LocalTimeSource
 import com.wesleyhome.test.jupiter.annotations.LongRangeSource
 import com.wesleyhome.test.jupiter.annotations.LongSource
-import com.wesleyhome.test.jupiter.annotations.ParametersSource
 import com.wesleyhome.test.jupiter.annotations.RandomInstantSource
 import com.wesleyhome.test.jupiter.annotations.StringSource
 import com.wesleyhome.test.jupiter.provider.step
@@ -237,7 +237,7 @@ class AnnotationsTest {
                 .map { it.toString() }
             assertThat(getRef(INSTANT_VALUE_SOURCE)).describedAs(INSTANT_VALUE_SOURCE)
                 .containsExactlyInAnyOrderElementsOf(instantValueSource)
-            val instantRange = instantRangeList[0] .. instantRangeList[1]
+            val instantRange = instantRangeList[0]..instantRangeList[1]
             assertThat(getRef(RANDOM_INSTANT_VALUE_SOURCE)).describedAs(RANDOM_INSTANT_VALUE_SOURCE)
                 .hasSize(10)
                 .map(Function {
@@ -269,7 +269,7 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testStringSource(
         @StringSource(values = ["Ten", "Twenty", "Thirty"]) value: String
     ) {
@@ -277,25 +277,25 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testBoolean(enabled: Boolean) {
         append(BOOLEAN, enabled.toString())
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testEnum(enumValue: TestKotlinEnum) {
         append(ENUM, enumValue.name)
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testBoolEnum(enabled: Boolean, enumValue: TestKotlinEnum) {
         append(BOOL_ENUM, "$enabled,$enumValue")
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testIntSource(@IntSource(values = [10, 20, 30]) value: Int) {
         update(INT_SOURCE) {
             it + value
@@ -303,25 +303,25 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testIntRange(@IntRangeSource(min = 10, max = 20) value: Int) {
         append(INT_RANGE, value)
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testIntRangeStep(@IntRangeSource(min = 10, max = 20, increment = 5) value: Int) {
         append(INT_RANGE_STEP, value)
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testIntRangeStepDescending(@IntRangeSource(min = 10, max = 20, increment = 5, ascending = false) value: Int) {
         append(INT_RANGE_STEP_DESCENDING, value)
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLongSource(@LongSource(values = [10, 20, 30]) value: Long) {
         update(LONG_SOURCE) {
             it + value.toInt()
@@ -329,7 +329,7 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLongRange(@LongRangeSource(min = 10, max = 20) value: Long) {
         update(LONG_RANGE) {
             it + value.toInt()
@@ -337,7 +337,7 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLongRangeStep(@LongRangeSource(min = 10, max = 20, increment = 5) value: Long) {
         update(LONG_RANGE_STEP) {
             it + value.toInt()
@@ -345,49 +345,49 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testDoubleSource(@DoubleSource(values = [10.0, 20.0, 30.0]) value: Double) {
         append(DOUBLE_SOURCE, value)
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testDoubleRange(@DoubleRangeSource(min = 10.0, max = 20.0) value: Double) {
         append(DOUBLE_RANGE, value)
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testDoubleRangeStep(@DoubleRangeSource(min = 10.0, max = 20.0, increment = 1.5) value: Double) {
         append(DOUBLE_RANGE_STEP, value)
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testFloatSource(@FloatSource(values = [10.0f, 20.0f, 30.0f]) value: Float) {
         append(FLOAT_SOURCE, value)
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testFloatRange(@FloatRangeSource(min = 10.0f, max = 20.0f) value: Float) {
         append(FLOAT_RANGE, value)
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testFloatRangeStep(@FloatRangeSource(min = 10.0f, max = 20.0f, increment = 1.5f) value: Float) {
         append(FLOAT_RANGE_STEP, value)
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLocalDateSource(@LocalDateSource(values = ["2022-01-01", "2023-01-01", "2023-02-01"]) value: LocalDate) {
         append(LOCAL_DATE_SOURCE, value)
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLocalDateSourceWithPattern(
         @LocalDateSource(
             values = ["01/01/2022", "01/01/2023", "02/01/2023"],
@@ -398,13 +398,13 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLocalDateRange(@LocalDateRangeSource(min = "2022-01-01", max = "2022-01-31") value: LocalDate) {
         append(LOCAL_DATE_RANGE, value)
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLocalDateRangeStep(
         @LocalDateRangeSource(
             min = "2022-01-01",
@@ -416,7 +416,7 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLocalDateRangeWithPattern(
         @LocalDateRangeSource(
             min = "01/01/2022",
@@ -428,7 +428,7 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLocalDateRangeStepWithPattern(
         @LocalDateRangeSource(
             min = "01/01/2022",
@@ -442,13 +442,13 @@ class AnnotationsTest {
 
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLocalDateTimeSource(@LocalDateTimeSource(values = ["2022-01-01 12:30", "2022-01-01 13:30"]) value: LocalDateTime) {
         append(LOCAL_DATE_TIME_SOURCE, value)
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLocalDateTimeSourceWithPattern(
         @LocalDateTimeSource(
             values = ["01/01/2022 12:30 AM", "01/01/2022 1:30 PM"],
@@ -459,7 +459,7 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLocalDateTimeRange(
         @LocalDateTimeRangeSource(
             min = "2022-01-01 12:30",
@@ -470,7 +470,7 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLocalDateTimeRangeStep(
         @LocalDateTimeRangeSource(
             min = "2022-01-01 12:30",
@@ -482,7 +482,7 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLocalDateTimeRangeWithPattern(
         @LocalDateTimeRangeSource(
             min = "01/01/2022 12:30",
@@ -494,7 +494,7 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLocalDateTimeRangeStepWithPattern(
         @LocalDateTimeRangeSource(
             min = "01/01/2022 12:30",
@@ -508,7 +508,7 @@ class AnnotationsTest {
 
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLocalTimeSource(
         @LocalTimeSource(
             values = ["12:30:00", "12:30:01"],
@@ -519,19 +519,19 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLocalTimeSourceWithPattern(@LocalTimeSource(values = ["12:30", "12:31"]) value: LocalTime) {
         append(LOCAL_TIME_SOURCE_WITH_PATTERN, value)
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLocalTimeRange(@LocalTimeRangeSource(min = "12:00", max = "18:00") value: LocalTime) {
         append(LOCAL_TIME_RANGE, value)
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLocalTimeRangeWithPattern(
         @LocalTimeRangeSource(
             min = "12:00:00",
@@ -543,7 +543,7 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLocalTimeRangeStep(
         @LocalTimeRangeSource(
             min = "12:00",
@@ -555,7 +555,7 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testLocalTimeRangeStepWithPattern(
         @LocalTimeRangeSource(
             min = "12:00:00",
@@ -568,13 +568,13 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testInstantValueSource(@InstantSource(values = ["2024-01-01T12:30:00Z", "2024-01-01T13:30:00Z"]) value: Instant) {
         append(INSTANT_VALUE_SOURCE, value)
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testRandomInstantSource(
         @RandomInstantSource(
             size = 10,
@@ -587,8 +587,8 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
-    fun testRandomInstantSourceWithOffset (
+    @GeneratedParametersTest
+    fun testRandomInstantSourceWithOffset(
         @RandomInstantSource(
             size = 10,
             truncateTo = "HOURS",
@@ -601,7 +601,7 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testInstantRangeSource(
         @InstantRangeSource(
             minInstant = "2024-01-01T12:30:00Z",
@@ -613,7 +613,7 @@ class AnnotationsTest {
     }
 
     @ParameterizedTest
-    @ParametersSource
+    @GeneratedParametersTest
     fun testInstantRangeSourceWithOffset(
         @InstantRangeSource(
             minOffset = "-P2D",

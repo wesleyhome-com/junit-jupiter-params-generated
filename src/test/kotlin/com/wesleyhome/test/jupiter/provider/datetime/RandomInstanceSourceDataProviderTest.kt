@@ -57,16 +57,24 @@ class RandomInstanceSourceDataProviderTest :
                         .hasMessage("[maxOffset] must be provided when [minOffset] is provided")
                 }
             }
+
             size <= 0 -> {
                 testCreateParameterOptionsDataWithException(testParameter) {
                     it.isInstanceOf(IllegalArgumentException::class.java)
                         .hasMessage("[size] must be greater than 0")
                 }
             }
+
             else -> {
                 val now = ZonedDateTime.now()
-                val minValue = if (minInstant.isNotBlank()) minInstant.toInstant() else minOffset.toInstant(now, ChronoUnit.valueOf(truncateTo))
-                val maxValue = if (maxInstant.isNotBlank()) maxInstant.toInstant() else maxOffset.toInstant(now, ChronoUnit.valueOf(truncateTo))
+                val minValue = if (minInstant.isNotBlank()) minInstant.toInstant() else minOffset.toInstant(
+                    now,
+                    ChronoUnit.valueOf(truncateTo)
+                )
+                val maxValue = if (maxInstant.isNotBlank()) maxInstant.toInstant() else maxOffset.toInstant(
+                    now,
+                    ChronoUnit.valueOf(truncateTo)
+                )
                 testCreateParameterOptionsData(testParameter, false) {
                     it.allSatisfy { value ->
                         value.isBetween(minValue, maxValue)
@@ -77,7 +85,7 @@ class RandomInstanceSourceDataProviderTest :
     }
 
     override fun createTrueProvidesForTestParameter(): TestParameter {
-        val size: Int = 5
+        val size = 5
         return createAnnotatedTestParameter(
             size,
             "2024-06-01T12:00:00Z",

@@ -16,7 +16,7 @@ class GeneratedParametersTestExtension : TestTemplateInvocationContextProvider {
     override fun supportsTestTemplate(context: ExtensionContext): Boolean {
         return if (!context.testMethod.isPresent) false else {
             val kFunction = context.requiredTestMethod.kotlinFunction!!
-            if(kFunction.hasAnnotation<GeneratedParametersTest>()){
+            if (kFunction.hasAnnotation<GeneratedParametersTest>()) {
                 val isParameterizedTest = kFunction.hasAnnotation<ParameterizedTest>()
                 Preconditions.condition(
                     !isParameterizedTest,
@@ -29,7 +29,8 @@ class GeneratedParametersTestExtension : TestTemplateInvocationContextProvider {
     }
 
     override fun provideTestTemplateInvocationContexts(extensionContext: ExtensionContext): Stream<TestTemplateInvocationContext> {
-        val methodContext = getStore(extensionContext).get(METHOD_CONTEXT_KEY, GeneratedParametersTestMethodContext::class.java)
+        val methodContext =
+            getStore(extensionContext).get(METHOD_CONTEXT_KEY, GeneratedParametersTestMethodContext::class.java)
         val arguments = methodContext.generator.arguments()
         val invocationCount = AtomicInteger(0)
         return StreamSupport.stream(arguments.spliterator(), false)
