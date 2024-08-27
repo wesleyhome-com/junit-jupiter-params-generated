@@ -3,7 +3,7 @@ plugins {
     java
     `java-library`
     `maven-publish`
-    kotlin("jvm") version "2.0.10"
+    kotlin("jvm") version "2.0.20"
     signing
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
 }
@@ -24,8 +24,8 @@ dependencies {
     api("org.junit.jupiter:junit-jupiter-api:5.11.0")
     implementation(kotlin("reflect"))
     implementation(kotlin("stdlib"))
-    testImplementation("org.mockito:mockito-core:5.12.0")
-    testImplementation("org.mockito:mockito-junit-jupiter:5.12.0")
+    testImplementation("org.mockito:mockito-core:5.13.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.13.0")
     testImplementation("io.mockk:mockk:1.13.12")
     testImplementation("org.assertj:assertj-core:3.26.3")
 }
