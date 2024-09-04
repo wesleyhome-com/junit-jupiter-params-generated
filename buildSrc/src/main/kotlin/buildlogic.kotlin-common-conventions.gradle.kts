@@ -27,7 +27,6 @@ java {
         languageVersion = JavaLanguageVersion.of(17)
     }
     sourceCompatibility = JavaVersion.VERSION_17
-    withJavadocJar()
     withSourcesJar()
 }
 
@@ -85,20 +84,19 @@ signing {
     sign(publishing.publications["mavenJava"])
 }
 
-tasks.javadoc {
-    if (JavaVersion.current().isJava9Compatible) {
-        (options as StandardJavadocDocletOptions).apply {
-            addBooleanOption("html5", true)
-        }
-    }
-}
-
 tasks.withType<JavaCompile>() {
     options.encoding = "UTF-8"
 }
 
 tasks.withType<Javadoc>() {
     options.encoding = "UTF-8"
+
+    setDestinationDir(file("$buildFile/javadoc"))
+    if (JavaVersion.current().isJava9Compatible) {
+        (options as StandardJavadocDocletOptions).apply {
+            addBooleanOption("html5", true)
+        }
+    }
 }
 
 fun isOnCIServer() = System.getenv("CI") == "true"

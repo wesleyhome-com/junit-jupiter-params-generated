@@ -7,10 +7,9 @@ plugins {
 }
 
 dependencies {
-    val rootName = rootProject.name.removeSuffix("-parent")
     api(libs.bundles.junit)
-    api(project(":${rootName}-annotations"))
-    api(project(":${rootName}-validation"))
+    api(project(":annotations"))
+    api(project(":validation"))
     implementation("io.github.classgraph:classgraph:4.8.176")
     implementation(kotlin("reflect"))
     implementation(kotlin("stdlib"))

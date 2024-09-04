@@ -9,3 +9,4 @@ plugins {
 dependencies {
     implementation(libs.junit.jupiter.api)
 }
+

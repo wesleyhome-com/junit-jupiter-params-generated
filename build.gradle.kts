@@ -1,6 +1,8 @@
+import org.jetbrains.dokka.gradle.DokkaMultiModuleTask
 
 plugins {
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
+    id("org.jetbrains.dokka") version "1.9.20"
 }
 
 group = "com.wesleyhome.test"
@@ -8,6 +10,23 @@ val versionString = providers.gradleProperty("version").get()
 version = versionString
 description = "junit-jupiter-params-generated"
 extra["isReleaseVersion"] = !version.toString().endsWith("SNAPSHOT")
+
+subprojects {
+    if(!name.contains("examples")) {
+        apply(plugin = "org.jetbrains.dokka")
+        tasks.register<Jar>("javadocJar") {
+            dependsOn(tasks.dokkaJavadoc)
+            from(tasks.dokkaJavadoc.flatMap { it.outputDirectory })
+            archiveClassifier.set("javadoc")
+        }
+    }
+}
+tasks.register("clean") {
+    delete("build")
+}
+
+
+repositories { mavenCentral() }
 
 nexusPublishing {
     this.repositories {

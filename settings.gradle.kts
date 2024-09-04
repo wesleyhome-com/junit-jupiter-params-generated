@@ -8,9 +8,9 @@ plugins {
 
 val name = "junit-jupiter-params-generated"
 rootProject.name = "$name-parent"
-val subProjects = listOf("annotations", "validation", "annotation-processor", "extension", "tests")
+val subProjects = listOf("annotations", "validation", "annotation-processor", "extension", "examples")
 include(subProjects)
-subProjects.filterNot { it == "extension" }.forEach {
-    project(":$it").name = "$name-$it"
-}
+//subProjects.filterNot { it == "extension" }.forEach {
+//    project(":$it").name = "$name-$it"
+//}
 project(":extension").name = name
