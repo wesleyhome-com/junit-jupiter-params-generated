@@ -9,3 +9,9 @@ build/
 /mvnw.cmd
 /.mvn/**
 /*.64
+/buildSrc/.gradle/8.10/executionHistory/executionHistory.bin
+/buildSrc/.gradle/8.10/executionHistory/executionHistory.lock
+/buildSrc/.gradle/buildOutputCleanup/buildOutputCleanup.lock
+/buildSrc/.gradle/buildOutputCleanup/cache.properties
+/buildSrc/.gradle/buildOutputCleanup/outputFiles.bin
+/buildSrc/.gradle/file-system.probe
