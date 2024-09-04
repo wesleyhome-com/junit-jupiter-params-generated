@@ -1,10 +1,5 @@
 
 plugins {
-    java
-    `java-library`
-    `maven-publish`
-    kotlin("jvm") version "2.0.20"
-    signing
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
 }
 
@@ -13,103 +8,7 @@ val versionString = providers.gradleProperty("version").get()
 version = versionString
 description = "junit-jupiter-params-generated"
 extra["isReleaseVersion"] = !version.toString().endsWith("SNAPSHOT")
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
 
-dependencies {
-    val junitJupiterVersion = "5.11.0"
-    api("org.junit.jupiter:junit-jupiter-params:$junitJupiterVersion")
-    api("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
-    api("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
-    implementation("io.github.classgraph:classgraph:4.8.174")
-    implementation(kotlin("reflect"))
-    implementation(kotlin("stdlib"))
-    testImplementation("org.mockito:mockito-core:5.13.0")
-    testImplementation("org.mockito:mockito-junit-jupiter:5.13.0")
-    testImplementation("io.mockk:mockk:1.13.12")
-    testImplementation("org.assertj:assertj-core:3.26.3")
-    testImplementation("com.willowtreeapps.assertk:assertk:0.28.1")
-}
-
-java {
-    withSourcesJar()
-    withJavadocJar()
-    sourceCompatibility = JavaVersion.VERSION_17
-}
-
-tasks.named<Test>("test") {
-    useJUnitPlatform()
-}
-
-kotlin {
-    jvmToolchain(17)
-}
-
-publishing {
-    publications {
-        val description = """
-            Library to help generate test parameter permutations for parameterized tests in JUnit.
-            This version is an initial attempt to convert to building with Gradle.
-        """.trimIndent()
-
-        create<MavenPublication>("mavenJava") {
-            from(components["java"])
-            pom {
-                this.description.set(description)
-                this.name.set("Generated JUnit Jupiter Parameters")
-                this.url.set("https://github.com/justin-wesley/junit-jupiter-params-generated")
-                scm {
-                    connection.set("scm:git:https://github.com/justin-wesley/junit-jupiter-params-generated.git")
-                    developerConnection.set("scm:git:https://github.com/justin-wesley/junit-jupiter-params-generated.git")
-                    url.set("https://github.com/justin-wesley/junit-jupiter-params-generated.git")
-                    tag.set("HEAD")
-                }
-                developers {
-                    developer {
-                        id.set("justin")
-                        name.set("Justin Wesley")
-                        roles.set(listOf("Software Development Engineer"))
-                    }
-                }
-                licenses {
-                    license {
-                        name.set("The Apache Software License, Version 2.0")
-                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                    }
-                }
-            }
-        }
-    }
-}
-
-tasks.withType<JavaCompile>() {
-    options.encoding = "UTF-8"
-}
-
-tasks.withType<Javadoc>() {
-    options.encoding = "UTF-8"
-}
-
-signing {
-    setRequired { !project.version.toString().endsWith("-SNAPSHOT") && !project.hasProperty("skipSigning") }
-    if (isOnCIServer()) {
-        val signingKey: String? by project
-        if ((signingKey?.length ?: 0) <= 0) {
-            throw RuntimeException("No Signing Key")
-        }
-        useInMemoryPgpKeys(signingKey, "")
-    }
-    sign(publishing.publications["mavenJava"])
-}
-
-tasks.javadoc {
-    if (JavaVersion.current().isJava9Compatible) {
-        (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
-    }
-}
-fun isOnCIServer() = System.getenv("CI") == "true"
 nexusPublishing {
     this.repositories {
         sonatype()
