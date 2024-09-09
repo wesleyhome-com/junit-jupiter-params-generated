@@ -6,7 +6,8 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":annotations"))
-    implementation(project(":validation"))
+    val rootName = rootProject.name.removeSuffix("-parent")
+    implementation(project(":${rootName}-annotations"))
+    implementation(project(":${rootName}-validation"))
     implementation("com.google.devtools.ksp:symbol-processing-api:2.0.20-1.0.25")
 }

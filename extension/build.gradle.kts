@@ -7,9 +7,10 @@ plugins {
 }
 
 dependencies {
+    val rootName = rootProject.name.removeSuffix("-parent")
     api(libs.bundles.junit)
-    api(project(":annotations"))
-    api(project(":validation"))
+    api(project(":${rootName}-annotations"))
+    api(project(":${rootName}-validation"))
     implementation("io.github.classgraph:classgraph:4.8.175")
     implementation(kotlin("reflect"))
     implementation(kotlin("stdlib"))
@@ -26,7 +27,6 @@ tasks.test {
 }
 
 tasks.jacocoTestReport {
-    version = "0.8.12"
     dependsOn(tasks.test)
     reports {
         xml.required.set(true)

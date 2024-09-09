@@ -8,8 +8,9 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":annotations"))
-    implementation(project(":validation"))
-    implementation(project(":extension"))
-    ksp(project(":annotation-processor"))
+    val rootName = rootProject.name.removeSuffix("-parent")
+    implementation(project(":${rootName}-annotations"))
+    implementation(project(":${rootName}-validation"))
+    implementation(project(":${rootName}"))
+    ksp(project(":${rootName}-annotation-processor"))
 }
