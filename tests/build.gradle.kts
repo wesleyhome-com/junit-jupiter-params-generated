@@ -14,3 +14,6 @@ dependencies {
     implementation(project(":${rootName}"))
     ksp(project(":${rootName}-annotation-processor"))
 }
+tasks.withType<PublishToMavenRepository>().configureEach {
+    enabled = false
+}
