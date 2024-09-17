@@ -11,7 +11,7 @@ dependencies {
     api(libs.bundles.junit)
     api(project(":${rootName}-annotations"))
     api(project(":${rootName}-validation"))
-    implementation("io.github.classgraph:classgraph:4.8.175")
+    implementation("io.github.classgraph:classgraph:4.8.176")
     implementation(kotlin("reflect"))
     implementation(kotlin("stdlib"))
     testRuntimeOnly(libs.junit.platform.launcher)
