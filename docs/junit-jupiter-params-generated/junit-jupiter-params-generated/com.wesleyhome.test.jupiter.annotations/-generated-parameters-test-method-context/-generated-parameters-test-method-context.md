@@ -1,17 +1,6 @@
----
-title: GeneratedParametersTestMethodContext
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.annotations](../index.html)/[GeneratedParametersTestMethodContext](index.html)/[GeneratedParametersTestMethodContext](-generated-parameters-test-method-context.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.annotations](../index.md)/[GeneratedParametersTestMethodContext](index.md)/[GeneratedParametersTestMethodContext](-generated-parameters-test-method-context.md)
 
 # GeneratedParametersTestMethodContext
 
-
-
 [jvm]\
 constructor(context: ExtensionContext)
-
-
-
-

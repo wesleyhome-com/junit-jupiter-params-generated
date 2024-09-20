@@ -1,17 +1,6 @@
----
-title: AbstractAnnotatedNumberRangeDataProvider
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.provider.number](../index.html)/[AbstractAnnotatedNumberRangeDataProvider](index.html)/[AbstractAnnotatedNumberRangeDataProvider](-abstract-annotated-number-range-data-provider.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.provider.number](../index.md)/[AbstractAnnotatedNumberRangeDataProvider](index.md)/[AbstractAnnotatedNumberRangeDataProvider](-abstract-annotated-number-range-data-provider.md)
 
 # AbstractAnnotatedNumberRangeDataProvider
 
-
-
 [jvm]\
 constructor()
-
-
-
-

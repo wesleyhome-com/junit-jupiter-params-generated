@@ -1,17 +1,6 @@
----
-title: name
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.provider](../index.html)/[TestParameter](index.html)/[name](name.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.provider](../index.md)/[TestParameter](index.md)/[name](name.md)
 
 # name
 
-
-
 [jvm]\
-val [name](name.html): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)
-
-
-
-
+val [name](name.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)

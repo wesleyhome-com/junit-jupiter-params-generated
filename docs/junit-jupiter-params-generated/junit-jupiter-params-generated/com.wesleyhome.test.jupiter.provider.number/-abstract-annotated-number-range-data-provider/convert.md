@@ -1,17 +1,6 @@
----
-title: convert
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.provider.number](../index.html)/[AbstractAnnotatedNumberRangeDataProvider](index.html)/[convert](convert.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.provider.number](../index.md)/[AbstractAnnotatedNumberRangeDataProvider](index.md)/[convert](convert.md)
 
 # convert
 
-
-
 [jvm]\
-abstract fun [convert](convert.html)(value: [Number](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-number/index.html)): [T](index.html)
-
-
-
-
+abstract fun [convert](convert.md)(value: [Number](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-number/index.html)): [T](index.md)

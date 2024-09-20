@@ -1,17 +1,6 @@
----
-title: LongValueSourceDataProvider
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.provider.number](../index.html)/[LongValueSourceDataProvider](index.html)/[LongValueSourceDataProvider](-long-value-source-data-provider.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.provider.number](../index.md)/[LongValueSourceDataProvider](index.md)/[LongValueSourceDataProvider](-long-value-source-data-provider.md)
 
 # LongValueSourceDataProvider
 
-
-
 [jvm]\
 constructor()
-
-
-
-

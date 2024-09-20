@@ -1,17 +1,6 @@
----
-title: max
----
-//[annotations](../../../index.html)/[com.wesleyhome.test.jupiter.annotations.number](../index.html)/[FloatRangeSource](index.html)/[max](max.html)
-
-
+//[annotations](../../../index.md)/[com.wesleyhome.test.jupiter.annotations.number](../index.md)/[FloatRangeSource](index.md)/[max](max.md)
 
 # max
 
-
-
 [jvm]\
-val [max](max.html): [Float](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-float/index.html)
-
-
-
-
+val [max](max.md): [Float](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-float/index.html)

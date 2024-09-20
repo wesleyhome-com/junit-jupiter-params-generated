@@ -1,17 +1,6 @@
----
-title: EnumParameterDataProvider
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.provider](../index.html)/[EnumParameterDataProvider](index.html)/[EnumParameterDataProvider](-enum-parameter-data-provider.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.provider](../index.md)/[EnumParameterDataProvider](index.md)/[EnumParameterDataProvider](-enum-parameter-data-provider.md)
 
 # EnumParameterDataProvider
 
-
-
 [jvm]\
 constructor()
-
-
-
-

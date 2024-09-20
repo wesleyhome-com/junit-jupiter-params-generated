@@ -1,17 +1,6 @@
----
-title: LocalDateTimeRangeDataProvider
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.provider.datetime](../index.html)/[LocalDateTimeRangeDataProvider](index.html)/[LocalDateTimeRangeDataProvider](-local-date-time-range-data-provider.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.provider.datetime](../index.md)/[LocalDateTimeRangeDataProvider](index.md)/[LocalDateTimeRangeDataProvider](-local-date-time-range-data-provider.md)
 
 # LocalDateTimeRangeDataProvider
 
-
-
 [jvm]\
 constructor()
-
-
-
-

@@ -1,17 +1,6 @@
----
-title: formatter
----
-//[validation](../../index.html)/[com.wesleyhome.test.jupiter](index.html)/[formatter](formatter.html)
-
-
+//[validation](../../index.md)/[com.wesleyhome.test.jupiter](index.md)/[formatter](formatter.md)
 
 # formatter
 
-
-
 [jvm]\
-fun [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html).[formatter](formatter.html)(): [DateTimeFormatter](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html)
-
-
-
-
+fun [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html).[formatter](formatter.md)(): [DateTimeFormatter](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html)

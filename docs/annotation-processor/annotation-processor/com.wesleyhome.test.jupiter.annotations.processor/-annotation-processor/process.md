@@ -1,17 +1,6 @@
----
-title: process
----
-//[annotation-processor](../../../index.html)/[com.wesleyhome.test.jupiter.annotations.processor](../index.html)/[AnnotationProcessor](index.html)/[process](process.html)
-
-
+//[annotation-processor](../../../index.md)/[com.wesleyhome.test.jupiter.annotations.processor](../index.md)/[AnnotationProcessor](index.md)/[process](process.md)
 
 # process
 
-
-
 [jvm]\
-open override fun [process](process.html)(resolver: Resolver): [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)&lt;KSAnnotated&gt;
-
-
-
-
+open override fun [process](process.md)(resolver: Resolver): [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)&lt;KSAnnotated&gt;

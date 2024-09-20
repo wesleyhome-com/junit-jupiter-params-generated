@@ -1,31 +1,18 @@
----
-title: TestModel
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.provider](../index.html)/[TestModel](index.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.provider](../index.md)/[TestModel](index.md)
 
 # TestModel
 
-
-
 [jvm]\
-data class [TestModel](index.html)(val testParameters: [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)&lt;[TestParameter](../-test-parameter/index.html)&gt;)
-
-
+data class [TestModel](index.md)(val testParameters: [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)&lt;[TestParameter](../-test-parameter/index.md)&gt;)
 
 ## Constructors
 
-
 | | |
 |---|---|
-| [TestModel](-test-model.html) | [jvm]<br>constructor(testParameters: [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)&lt;[TestParameter](../-test-parameter/index.html)&gt;) |
-
+| [TestModel](-test-model.md) | [jvm]<br>constructor(testParameters: [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)&lt;[TestParameter](../-test-parameter/index.md)&gt;) |
 
 ## Properties
 
-
 | Name | Summary |
 |---|---|
-| [testParameters](test-parameters.html) | [jvm]<br>val [testParameters](test-parameters.html): [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)&lt;[TestParameter](../-test-parameter/index.html)&gt; |
-
+| [testParameters](test-parameters.md) | [jvm]<br>val [testParameters](test-parameters.md): [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)&lt;[TestParameter](../-test-parameter/index.md)&gt; |

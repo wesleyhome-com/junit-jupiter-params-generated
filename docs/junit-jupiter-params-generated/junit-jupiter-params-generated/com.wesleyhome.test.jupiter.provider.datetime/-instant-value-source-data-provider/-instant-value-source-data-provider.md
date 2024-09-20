@@ -1,17 +1,6 @@
----
-title: InstantValueSourceDataProvider
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.provider.datetime](../index.html)/[InstantValueSourceDataProvider](index.html)/[InstantValueSourceDataProvider](-instant-value-source-data-provider.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.provider.datetime](../index.md)/[InstantValueSourceDataProvider](index.md)/[InstantValueSourceDataProvider](-instant-value-source-data-provider.md)
 
 # InstantValueSourceDataProvider
 
-
-
 [jvm]\
 constructor()
-
-
-
-

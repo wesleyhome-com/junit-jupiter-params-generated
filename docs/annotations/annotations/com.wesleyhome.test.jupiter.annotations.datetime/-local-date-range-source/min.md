@@ -1,17 +1,6 @@
----
-title: min
----
-//[annotations](../../../index.html)/[com.wesleyhome.test.jupiter.annotations.datetime](../index.html)/[LocalDateRangeSource](index.html)/[min](min.html)
-
-
+//[annotations](../../../index.md)/[com.wesleyhome.test.jupiter.annotations.datetime](../index.md)/[LocalDateRangeSource](index.md)/[min](min.md)
 
 # min
 
-
-
 [jvm]\
-val [min](min.html): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)
-
-
-
-
+val [min](min.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)

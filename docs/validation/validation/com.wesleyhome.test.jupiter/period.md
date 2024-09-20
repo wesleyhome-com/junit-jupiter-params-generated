@@ -1,17 +1,6 @@
----
-title: period
----
-//[validation](../../index.html)/[com.wesleyhome.test.jupiter](index.html)/[period](period.html)
-
-
+//[validation](../../index.md)/[com.wesleyhome.test.jupiter](index.md)/[period](period.md)
 
 # period
 
-
-
 [jvm]\
-fun [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html).[period](period.html)(): [Period](https://docs.oracle.com/javase/8/docs/api/java/time/Period.html)
-
-
-
-
+fun [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html).[period](period.md)(): [Period](https://docs.oracle.com/javase/8/docs/api/java/time/Period.html)

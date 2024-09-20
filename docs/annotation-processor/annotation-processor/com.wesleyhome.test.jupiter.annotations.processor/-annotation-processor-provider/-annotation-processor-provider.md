@@ -1,17 +1,6 @@
----
-title: AnnotationProcessorProvider
----
-//[annotation-processor](../../../index.html)/[com.wesleyhome.test.jupiter.annotations.processor](../index.html)/[AnnotationProcessorProvider](index.html)/[AnnotationProcessorProvider](-annotation-processor-provider.html)
-
-
+//[annotation-processor](../../../index.md)/[com.wesleyhome.test.jupiter.annotations.processor](../index.md)/[AnnotationProcessorProvider](index.md)/[AnnotationProcessorProvider](-annotation-processor-provider.md)
 
 # AnnotationProcessorProvider
 
-
-
 [jvm]\
 constructor()
-
-
-
-

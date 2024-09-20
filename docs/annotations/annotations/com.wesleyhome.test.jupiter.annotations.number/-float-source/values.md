@@ -1,17 +1,6 @@
----
-title: values
----
-//[annotations](../../../index.html)/[com.wesleyhome.test.jupiter.annotations.number](../index.html)/[FloatSource](index.html)/[values](values.html)
-
-
+//[annotations](../../../index.md)/[com.wesleyhome.test.jupiter.annotations.number](../index.md)/[FloatSource](index.md)/[values](values.md)
 
 # values
 
-
-
 [jvm]\
-val [values](values.html): [FloatArray](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-float-array/index.html)
-
-
-
-
+val [values](values.md): [FloatArray](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-float-array/index.html)

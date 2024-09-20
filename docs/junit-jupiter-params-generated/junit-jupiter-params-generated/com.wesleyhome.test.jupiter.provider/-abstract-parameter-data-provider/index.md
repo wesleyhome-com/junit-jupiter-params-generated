@@ -1,37 +1,26 @@
----
-title: AbstractParameterDataProvider
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.provider](../index.html)/[AbstractParameterDataProvider](index.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.provider](../index.md)/[AbstractParameterDataProvider](index.md)
 
 # AbstractParameterDataProvider
 
-abstract class [AbstractParameterDataProvider](index.html)&lt;[T](index.html) : [Any](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html)&gt; : [ParameterDataProvider](../-parameter-data-provider/index.html)&lt;[T](index.html)&gt; 
+abstract class [AbstractParameterDataProvider](index.md)&lt;[T](index.md) : [Any](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html)&gt; : [ParameterDataProvider](../-parameter-data-provider/index.md)&lt;[T](index.md)&gt; 
 
 #### Inheritors
 
-
 | |
 |---|
-| [AbstractAnnotatedParameterDataProvider](../-abstract-annotated-parameter-data-provider/index.html) |
-| [BooleanParameterDataProvider](../-boolean-parameter-data-provider/index.html) |
-
+| [AbstractAnnotatedParameterDataProvider](../-abstract-annotated-parameter-data-provider/index.md) |
+| [BooleanParameterDataProvider](../-boolean-parameter-data-provider/index.md) |
 
 ## Constructors
 
-
 | | |
 |---|---|
-| [AbstractParameterDataProvider](-abstract-parameter-data-provider.html) | [jvm]<br>constructor() |
-
+| [AbstractParameterDataProvider](-abstract-parameter-data-provider.md) | [jvm]<br>constructor() |
 
 ## Functions
 
-
 | Name | Summary |
 |---|---|
-| [createParameterOptionsData](../-parameter-data-provider/create-parameter-options-data.html) | [jvm]<br>abstract fun [createParameterOptionsData](../-parameter-data-provider/create-parameter-options-data.html)(testParameter: [TestParameter](../-test-parameter/index.html)): [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)&lt;[T](index.html)?&gt; |
-| [dataProviderFor](data-provider-for.html) | [jvm]<br>open override fun [dataProviderFor](data-provider-for.html)(): [KClass](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-class/index.html)&lt;[T](index.html)&gt; |
-| [providesDataFor](../-parameter-data-provider/provides-data-for.html) | [jvm]<br>open fun [providesDataFor](../-parameter-data-provider/provides-data-for.html)(testParameter: [TestParameter](../-test-parameter/index.html)): [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html) |
-
+| [createParameterOptionsData](../-parameter-data-provider/create-parameter-options-data.md) | [jvm]<br>abstract fun [createParameterOptionsData](../-parameter-data-provider/create-parameter-options-data.md)(testParameter: [TestParameter](../-test-parameter/index.md)): [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)&lt;[T](index.md)?&gt; |
+| [dataProviderFor](data-provider-for.md) | [jvm]<br>open override fun [dataProviderFor](data-provider-for.md)(): [KClass](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-class/index.html)&lt;[T](index.md)&gt; |
+| [providesDataFor](../-parameter-data-provider/provides-data-for.md) | [jvm]<br>open fun [providesDataFor](../-parameter-data-provider/provides-data-for.md)(testParameter: [TestParameter](../-test-parameter/index.md)): [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html) |

@@ -1,17 +1,6 @@
----
-title: LongRangeDataProvider
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.provider.number](../index.html)/[LongRangeDataProvider](index.html)/[LongRangeDataProvider](-long-range-data-provider.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.provider.number](../index.md)/[LongRangeDataProvider](index.md)/[LongRangeDataProvider](-long-range-data-provider.md)
 
 # LongRangeDataProvider
 
-
-
 [jvm]\
 constructor()
-
-
-
-

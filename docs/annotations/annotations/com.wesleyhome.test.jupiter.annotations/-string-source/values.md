@@ -1,17 +1,6 @@
----
-title: values
----
-//[annotations](../../../index.html)/[com.wesleyhome.test.jupiter.annotations](../index.html)/[StringSource](index.html)/[values](values.html)
-
-
+//[annotations](../../../index.md)/[com.wesleyhome.test.jupiter.annotations](../index.md)/[StringSource](index.md)/[values](values.md)
 
 # values
 
-
-
 [jvm]\
-val [values](values.html): [Array](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html)&lt;[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)&gt;
-
-
-
-
+val [values](values.md): [Array](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html)&lt;[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)&gt;

@@ -1,17 +1,6 @@
----
-title: priority
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.annotations](../index.html)/[DefaultProvider](index.html)/[priority](priority.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.annotations](../index.md)/[DefaultProvider](index.md)/[priority](priority.md)
 
 # priority
 
-
-
 [jvm]\
-val [priority](priority.html): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)
-
-
-
-
+val [priority](priority.md): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)

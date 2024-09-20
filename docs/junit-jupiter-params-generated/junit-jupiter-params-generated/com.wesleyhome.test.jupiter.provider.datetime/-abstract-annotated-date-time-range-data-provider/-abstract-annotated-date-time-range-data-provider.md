@@ -1,17 +1,6 @@
----
-title: AbstractAnnotatedDateTimeRangeDataProvider
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.provider.datetime](../index.html)/[AbstractAnnotatedDateTimeRangeDataProvider](index.html)/[AbstractAnnotatedDateTimeRangeDataProvider](-abstract-annotated-date-time-range-data-provider.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.provider.datetime](../index.md)/[AbstractAnnotatedDateTimeRangeDataProvider](index.md)/[AbstractAnnotatedDateTimeRangeDataProvider](-abstract-annotated-date-time-range-data-provider.md)
 
 # AbstractAnnotatedDateTimeRangeDataProvider
 
-
-
 [jvm]\
 constructor()
-
-
-
-

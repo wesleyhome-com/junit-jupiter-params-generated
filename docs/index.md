@@ -1,17 +1,10 @@
----
-title: All modules
----
 /
-
-
 
 ## All modules:
 
-
 | Name |
 |---|
-| [annotation-processor](annotation-processor/index.html) |  |
-| [annotations](annotations/index.html) |  |
-| [junit-jupiter-params-generated](junit-jupiter-params-generated/index.html) |  |
-| [validation](validation/index.html) |  |
-
+| [annotation-processor](annotation-processor/index.md) |  |
+| [annotations](annotations/index.md) |  |
+| [junit-jupiter-params-generated](junit-jupiter-params-generated/index.md) |  |
+| [validation](validation/index.md) |  |

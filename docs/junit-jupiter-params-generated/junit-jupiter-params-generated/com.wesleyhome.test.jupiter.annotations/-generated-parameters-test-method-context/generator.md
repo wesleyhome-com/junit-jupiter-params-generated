@@ -1,17 +1,6 @@
----
-title: generator
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.annotations](../index.html)/[GeneratedParametersTestMethodContext](index.html)/[generator](generator.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.annotations](../index.md)/[GeneratedParametersTestMethodContext](index.md)/[generator](generator.md)
 
 # generator
 
-
-
 [jvm]\
-val [generator](generator.html): [ParametersGenerator](../../com.wesleyhome.test.jupiter.generator/-parameters-generator/index.html)
-
-
-
-
+val [generator](generator.md): [ParametersGenerator](../../com.wesleyhome.test.jupiter.generator/-parameters-generator/index.md)

@@ -1,17 +1,6 @@
----
-title: createArgument
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.generator](../index.html)/[ArgumentParameters](index.html)/[createArgument](create-argument.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.generator](../index.md)/[ArgumentParameters](index.md)/[createArgument](create-argument.md)
 
 # createArgument
 
-
-
 [jvm]\
-fun [createArgument](create-argument.html)(): Arguments
-
-
-
-
+fun [createArgument](create-argument.md)(): Arguments

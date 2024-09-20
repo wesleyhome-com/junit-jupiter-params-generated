@@ -1,17 +1,6 @@
----
-title: InvalidParameterException
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter](../index.html)/[InvalidParameterException](index.html)/[InvalidParameterException](-invalid-parameter-exception.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter](../index.md)/[InvalidParameterException](index.md)/[InvalidParameterException](-invalid-parameter-exception.md)
 
 # InvalidParameterException
 
-
-
 [jvm]\
-constructor(testParameter: [TestParameter](../../com.wesleyhome.test.jupiter.provider/-test-parameter/index.html))
-
-
-
-
+constructor(testParameter: [TestParameter](../../com.wesleyhome.test.jupiter.provider/-test-parameter/index.md))

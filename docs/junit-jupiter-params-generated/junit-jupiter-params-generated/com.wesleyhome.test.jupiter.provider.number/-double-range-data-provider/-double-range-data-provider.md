@@ -1,17 +1,6 @@
----
-title: DoubleRangeDataProvider
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.provider.number](../index.html)/[DoubleRangeDataProvider](index.html)/[DoubleRangeDataProvider](-double-range-data-provider.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.provider.number](../index.md)/[DoubleRangeDataProvider](index.md)/[DoubleRangeDataProvider](-double-range-data-provider.md)
 
 # DoubleRangeDataProvider
 
-
-
 [jvm]\
 constructor()
-
-
-
-

@@ -1,17 +1,6 @@
----
-title: LocalDateTimeValueSourceDataProvider
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.provider.datetime](../index.html)/[LocalDateTimeValueSourceDataProvider](index.html)/[LocalDateTimeValueSourceDataProvider](-local-date-time-value-source-data-provider.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.provider.datetime](../index.md)/[LocalDateTimeValueSourceDataProvider](index.md)/[LocalDateTimeValueSourceDataProvider](-local-date-time-value-source-data-provider.md)
 
 # LocalDateTimeValueSourceDataProvider
 
-
-
 [jvm]\
 constructor()
-
-
-
-

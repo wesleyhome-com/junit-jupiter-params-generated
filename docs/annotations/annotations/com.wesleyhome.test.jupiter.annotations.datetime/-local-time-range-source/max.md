@@ -1,17 +1,6 @@
----
-title: max
----
-//[annotations](../../../index.html)/[com.wesleyhome.test.jupiter.annotations.datetime](../index.html)/[LocalTimeRangeSource](index.html)/[max](max.html)
-
-
+//[annotations](../../../index.md)/[com.wesleyhome.test.jupiter.annotations.datetime](../index.md)/[LocalTimeRangeSource](index.md)/[max](max.md)
 
 # max
 
-
-
 [jvm]\
-val [max](max.html): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)
-
-
-
-
+val [max](max.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)

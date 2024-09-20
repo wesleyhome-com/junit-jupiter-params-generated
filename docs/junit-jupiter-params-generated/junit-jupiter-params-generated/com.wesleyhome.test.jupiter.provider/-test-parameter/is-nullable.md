@@ -1,17 +1,6 @@
----
-title: isNullable
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.provider](../index.html)/[TestParameter](index.html)/[isNullable](is-nullable.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.provider](../index.md)/[TestParameter](index.md)/[isNullable](is-nullable.md)
 
 # isNullable
 
-
-
 [jvm]\
-val [isNullable](is-nullable.html): [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html) = false
-
-
-
-
+val [isNullable](is-nullable.md): [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html) = false

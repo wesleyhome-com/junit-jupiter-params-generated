@@ -1,21 +1,8 @@
----
-title: size
----
-//[annotations](../../../index.html)/[com.wesleyhome.test.jupiter.annotations.datetime](../index.html)/[RandomInstantSource](index.html)/[size](size.html)
-
-
+//[annotations](../../../index.md)/[com.wesleyhome.test.jupiter.annotations.datetime](../index.md)/[RandomInstantSource](index.md)/[size](size.md)
 
 # size
 
-
-
 [jvm]\
-val [size](size.html): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)
-
-
+val [size](size.md): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)
 
 The number of random values to generate
-
-
-
-

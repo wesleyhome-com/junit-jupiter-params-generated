@@ -1,22 +1,13 @@
----
-title: LocalDateTimeSource
----
-//[annotations](../../../index.html)/[com.wesleyhome.test.jupiter.annotations.datetime](../index.html)/[LocalDateTimeSource](index.html)
-
-
+//[annotations](../../../index.md)/[com.wesleyhome.test.jupiter.annotations.datetime](../index.md)/[LocalDateTimeSource](index.md)
 
 # LocalDateTimeSource
-
-
 
 [jvm]\
 @[Target](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.annotation/-target/index.html)(allowedTargets = [[AnnotationTarget.VALUE_PARAMETER](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.annotation/-annotation-target/-v-a-l-u-e_-p-a-r-a-m-e-t-e-r/index.html)])
 
+annotation class [LocalDateTimeSource](index.md)(val values: [Array](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html)&lt;[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)&gt;, val dateTimeFormat: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html) = &quot;yyyy-MM-dd HH:mm&quot;)
 
-
-annotation class [LocalDateTimeSource](index.html)(val values: [Array](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html)&lt;[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)&gt;, val dateTimeFormat: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html) = &quot;yyyy-MM-dd HH:mm&quot;)
-
-Annotation to indicate that the annotated LocalDateTime parameter should be populated with a random value from the provided [values](values.html) array.
+Annotation to indicate that the annotated LocalDateTime parameter should be populated with a random value from the provided [values](values.md) array.
 
 <code>```kotlin
 @ParameterizedTest
@@ -37,13 +28,9 @@ fun test(@LocalDateTimeSource(values = ["01/01/2023 00:00", "02/01/2023 00:00", 
 ```
 </code>
 
-
-
 ## Properties
-
 
 | Name | Summary |
 |---|---|
-| [dateTimeFormat](date-time-format.html) | [jvm]<br>val [dateTimeFormat](date-time-format.html): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html) |
-| [values](values.html) | [jvm]<br>val [values](values.html): [Array](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html)&lt;[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)&gt; |
-
+| [dateTimeFormat](date-time-format.md) | [jvm]<br>val [dateTimeFormat](date-time-format.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html) |
+| [values](values.md) | [jvm]<br>val [values](values.md): [Array](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html)&lt;[String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)&gt; |

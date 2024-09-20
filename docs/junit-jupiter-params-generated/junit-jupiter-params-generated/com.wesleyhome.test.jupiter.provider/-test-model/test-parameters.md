@@ -1,17 +1,6 @@
----
-title: testParameters
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.provider](../index.html)/[TestModel](index.html)/[testParameters](test-parameters.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.provider](../index.md)/[TestModel](index.md)/[testParameters](test-parameters.md)
 
 # testParameters
 
-
-
 [jvm]\
-val [testParameters](test-parameters.html): [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)&lt;[TestParameter](../-test-parameter/index.html)&gt;
-
-
-
-
+val [testParameters](test-parameters.md): [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)&lt;[TestParameter](../-test-parameter/index.md)&gt;

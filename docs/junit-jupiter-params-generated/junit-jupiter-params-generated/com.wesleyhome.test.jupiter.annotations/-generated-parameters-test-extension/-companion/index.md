@@ -1,15 +1,6 @@
----
-title: Companion
----
-//[junit-jupiter-params-generated](../../../../index.html)/[com.wesleyhome.test.jupiter.annotations](../../index.html)/[GeneratedParametersTestExtension](../index.html)/[Companion](index.html)
-
-
+//[junit-jupiter-params-generated](../../../../index.md)/[com.wesleyhome.test.jupiter.annotations](../../index.md)/[GeneratedParametersTestExtension](../index.md)/[Companion](index.md)
 
 # Companion
 
-
-
 [jvm]\
-object [Companion](index.html)
-
-
+object [Companion](index.md)

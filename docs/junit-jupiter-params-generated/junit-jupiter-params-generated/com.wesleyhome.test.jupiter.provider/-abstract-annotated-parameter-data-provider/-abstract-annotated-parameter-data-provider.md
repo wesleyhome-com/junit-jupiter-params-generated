@@ -1,17 +1,6 @@
----
-title: AbstractAnnotatedParameterDataProvider
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.provider](../index.html)/[AbstractAnnotatedParameterDataProvider](index.html)/[AbstractAnnotatedParameterDataProvider](-abstract-annotated-parameter-data-provider.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.provider](../index.md)/[AbstractAnnotatedParameterDataProvider](index.md)/[AbstractAnnotatedParameterDataProvider](-abstract-annotated-parameter-data-provider.md)
 
 # AbstractAnnotatedParameterDataProvider
 
-
-
 [jvm]\
 constructor()
-
-
-
-

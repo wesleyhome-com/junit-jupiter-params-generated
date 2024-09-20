@@ -1,17 +1,6 @@
----
-title: formatPropertyName
----
-//[junit-jupiter-params-generated](../../../index.html)/[com.wesleyhome.test.jupiter.provider.datetime](../index.html)/[AbstractAnnotatedDateTimeRangeDataProvider](index.html)/[formatPropertyName](format-property-name.html)
-
-
+//[junit-jupiter-params-generated](../../../index.md)/[com.wesleyhome.test.jupiter.provider.datetime](../index.md)/[AbstractAnnotatedDateTimeRangeDataProvider](index.md)/[formatPropertyName](format-property-name.md)
 
 # formatPropertyName
 
-
-
 [jvm]\
-abstract val [formatPropertyName](format-property-name.html): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)
-
-
-
-
+abstract val [formatPropertyName](format-property-name.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)

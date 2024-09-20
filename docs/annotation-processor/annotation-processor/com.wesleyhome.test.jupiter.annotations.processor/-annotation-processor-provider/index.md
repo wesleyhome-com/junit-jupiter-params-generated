@@ -1,31 +1,18 @@
----
-title: AnnotationProcessorProvider
----
-//[annotation-processor](../../../index.html)/[com.wesleyhome.test.jupiter.annotations.processor](../index.html)/[AnnotationProcessorProvider](index.html)
-
-
+//[annotation-processor](../../../index.md)/[com.wesleyhome.test.jupiter.annotations.processor](../index.md)/[AnnotationProcessorProvider](index.md)
 
 # AnnotationProcessorProvider
 
-
-
 [jvm]\
-class [AnnotationProcessorProvider](index.html) : SymbolProcessorProvider
-
-
+class [AnnotationProcessorProvider](index.md) : SymbolProcessorProvider
 
 ## Constructors
 
-
 | | |
 |---|---|
-| [AnnotationProcessorProvider](-annotation-processor-provider.html) | [jvm]<br>constructor() |
-
+| [AnnotationProcessorProvider](-annotation-processor-provider.md) | [jvm]<br>constructor() |
 
 ## Functions
 
-
 | Name | Summary |
 |---|---|
-| [create](create.html) | [jvm]<br>open override fun [create](create.html)(environment: SymbolProcessorEnvironment): SymbolProcessor |
-
+| [create](create.md) | [jvm]<br>open override fun [create](create.md)(environment: SymbolProcessorEnvironment): SymbolProcessor |

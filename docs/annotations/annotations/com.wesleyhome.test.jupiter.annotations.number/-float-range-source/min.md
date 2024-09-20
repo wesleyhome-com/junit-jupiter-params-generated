@@ -1,17 +1,6 @@
----
-title: min
----
-//[annotations](../../../index.html)/[com.wesleyhome.test.jupiter.annotations.number](../index.html)/[FloatRangeSource](index.html)/[min](min.html)
-
-
+//[annotations](../../../index.md)/[com.wesleyhome.test.jupiter.annotations.number](../index.md)/[FloatRangeSource](index.md)/[min](min.md)
 
 # min
 
-
-
 [jvm]\
-val [min](min.html): [Float](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-float/index.html)
-
-
-
-
+val [min](min.md): [Float](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-float/index.html)

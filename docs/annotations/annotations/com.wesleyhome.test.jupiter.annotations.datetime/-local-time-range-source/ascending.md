@@ -1,17 +1,6 @@
----
-title: ascending
----
-//[annotations](../../../index.html)/[com.wesleyhome.test.jupiter.annotations.datetime](../index.html)/[LocalTimeRangeSource](index.html)/[ascending](ascending.html)
-
-
+//[annotations](../../../index.md)/[com.wesleyhome.test.jupiter.annotations.datetime](../index.md)/[LocalTimeRangeSource](index.md)/[ascending](ascending.md)
 
 # ascending
 
-
-
 [jvm]\
-val [ascending](ascending.html): [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html) = true
-
-
-
-
+val [ascending](ascending.md): [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html) = true

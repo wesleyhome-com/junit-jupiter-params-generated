@@ -1,17 +1,6 @@
----
-title: AnnotationProcessor
----
-//[annotation-processor](../../../index.html)/[com.wesleyhome.test.jupiter.annotations.processor](../index.html)/[AnnotationProcessor](index.html)/[AnnotationProcessor](-annotation-processor.html)
-
-
+//[annotation-processor](../../../index.md)/[com.wesleyhome.test.jupiter.annotations.processor](../index.md)/[AnnotationProcessor](index.md)/[AnnotationProcessor](-annotation-processor.md)
 
 # AnnotationProcessor
 
-
-
 [jvm]\
 constructor(environment: SymbolProcessorEnvironment)
-
-
-
-
