@@ -2,9 +2,9 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 
 [versions]
-kotlin-gradle-plugin = "2.0.20"
-junit-jupiter = "5.11.0"
-junit-platform-launcher = "1.11.0"
+kotlin-gradle-plugin = "2.0.21"
+junit-jupiter = "5.11.3"
+junit-platform-launcher = "1.11.3"
 
 [libraries]
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin-gradle-plugin" }
