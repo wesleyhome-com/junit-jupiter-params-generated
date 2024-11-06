@@ -30,7 +30,7 @@ class InstantRangeSourceDataProvider : AbstractAnnotatedParameterDataProvider<In
             throw IllegalArgumentException("[maxOffset] must be provided when [minOffset] is provided")
         }
         val truncationUnit = if (minOffset.isNotBlank()) {
-            ChronoUnit.valueOf(truncateTo)
+            truncateTo.chronoUnit
         } else {
             ChronoUnit.MILLIS
         }

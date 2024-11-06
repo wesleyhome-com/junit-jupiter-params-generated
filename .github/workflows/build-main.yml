@@ -21,4 +21,4 @@ jobs:
           java-version: '17'
           distribution: 'corretto'
       - name: Run build with Gradle Wrapper
-        run: ./gradlew build publishToSonatype closeAndReleaseSonatypeStagingRepository
+        run: ./gradlew build javadocJar dokkaJekyllMultiModule publishToSonatype closeAndReleaseSonatypeStagingRepository

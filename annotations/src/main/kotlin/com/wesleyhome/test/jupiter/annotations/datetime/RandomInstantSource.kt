@@ -1,45 +1,28 @@
 package com.wesleyhome.test.jupiter.annotations.datetime
 
+import java.time.temporal.ChronoUnit
+
 /**
  * Annotation to be utilized on a parameter of type Instant in a parameterized test. The annotated parameter
  * value will be populated with a randomized value derived from the provided [minInstant], [maxInstant], [minOffset], and [maxOffset].
  * This will generate [size] number of random values with in the range specified.
  *
- * If provided, the [minInstant] and [maxInstant] properties will take precedent oven any value provided by [minOffset] and [maxOffset]
+ * If provided, the [minInstant] and [maxInstant] properties will take precedent over any value provided by [minOffset] and [maxOffset]
  *
  * The [minInstant] and [maxInstant] properties should be parsable by [java.time.Instant.parse].
  * The [minOffset] and [maxOffset] properties should be parsable by [java.time.Period.parse].
+ *
+ * [minInstant], [maxInstant], [minOffset], and [maxOffset] properties are inclusive.
+ *
+ * If neither [minInstant] or [minOffset] are provided, an error will be thrown.
+ * If [minInstant] is provided, [maxInstant] must also be provided.
+ * If [minOffset] is provided, [maxOffset] must also be provided.
  *
  * The [minOffset] and [maxOffset] properties are relative to the current time when the test is run.
  * For example, if the current time is 2023-01-01T00:00:00.000Z, and [minOffset] is "-P1D" (one day before), the minimum Instant value will be 2022-12-31T00:00:00.000Z.
  * If [maxOffset] is "P1D" (one day after), the maximum Instant value will be 2023-01-02T00:00:00.000Z.
  *
- * For instance:
- *
- * <code>
- *
- *     @ParameterizedTest
- *     @ParameterSource
- *     fun test(@RandomInstantSource(size = 10, minInstant = "2023-01-01T00:00:00.000Z", maxInstant = "2023-01-02T01:00:00.000Z") instant: Instant) {
- *     // test code
- *     }
- *     // the above will generate 1 individual test, with 'instant' parameter set to a random Instant value between 2023-01-01T00:00:00.000Z and 2023-01-01T01:00:00.000Z
- *
- *     @ParameterizedTest
- *     @ParameterSource
- *     fun test(@RandomInstantSource(size = 10, startPeriodOffset = "-P1D", endPeriodOffset = "P1D") instant: Instant) {
- *     // test code
- *     }
- *     // the above will generate 1 individual test, with 'instant' parameter set to a random Instant value between 1 day before the current time and 1 day after the current time
- *
- * </code>
- *
- * @property size The number of random values to generate
- * @property minInstant The minimum instant value to be generated. The value is inclusive.
- * @property maxInstant The maximum instant value to be generated. The value is exclusive.
- * @property minOffset The offset for the minimum Instant value from [java.time.Instant.now]. For example -P1D.
- * @property maxOffset The offset for the maximum Instant value from [java.time.Instant.now]. For example P1D.
- *
+ * @sample examples.RandomInstantSource.example
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
@@ -73,7 +56,21 @@ annotation class RandomInstantSource(
     val maxOffset: String = "",
     /**
      * The truncation unit that the starting instant will be truncated to. This is only
-     * used if [minOffset] is provided. This must be a value of [java.time.temporal.ChronoUnit].
+     * used if [minOffset] is provided.
      */
-    val truncateTo: String = "MINUTES",
+    val truncateTo: TruncateChronoUnit = TruncateChronoUnit.MINUTES,
 )
+
+/**
+ * Valid [ChronoUnit] values to use with [RandomInstantSource.truncateTo]
+ */
+enum class TruncateChronoUnit (val chronoUnit: ChronoUnit) {
+    NANOS(ChronoUnit.NANOS),
+    MICROS(ChronoUnit.MICROS),
+    MILLIS(ChronoUnit.MILLIS),
+    SECONDS(ChronoUnit.SECONDS),
+    MINUTES(ChronoUnit.MINUTES),
+    HOURS(ChronoUnit.HOURS),
+    HALF_DAYS(ChronoUnit.HALF_DAYS),
+    DAYS(ChronoUnit.DAYS),
+}
