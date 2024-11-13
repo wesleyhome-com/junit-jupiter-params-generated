@@ -18,7 +18,7 @@ class RandomInstanceSourceDataProvider : AbstractAnnotatedParameterDataProvider<
         val maxInstant: String = annotation.maxInstant
         val minOffset: String = annotation.minOffset
         val maxOffset: String = annotation.maxOffset
-        val truncateTo: String = annotation.truncateTo
+        val truncateTo = annotation.truncateTo
         val size: Int = annotation.size
 
         if (minInstant.isBlank() && minOffset.isBlank()) {
@@ -31,7 +31,7 @@ class RandomInstanceSourceDataProvider : AbstractAnnotatedParameterDataProvider<
             throw IllegalArgumentException("[maxOffset] must be provided when [minOffset] is provided")
         }
         val truncationUnit = if (minOffset.isNotBlank()) {
-            ChronoUnit.valueOf(truncateTo)
+            truncateTo.chronoUnit
         } else {
             ChronoUnit.MILLIS
         }

@@ -1,5 +1,6 @@
 package com.wesleyhome.test.jupiter.annotations
 
+import com.wesleyhome.test.jupiter.generator.GeneratedParametersTestExtension
 import org.apiguardian.api.API
 import org.apiguardian.api.API.Status.STABLE
 import org.junit.jupiter.api.TestTemplate

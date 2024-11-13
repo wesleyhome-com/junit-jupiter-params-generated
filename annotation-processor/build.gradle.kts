@@ -6,7 +6,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":annotations"))
     implementation(project(":validation"))
+    implementation(project(":junit-jupiter-params-generated"))
     implementation("com.google.devtools.ksp:symbol-processing-api:2.0.20-1.0.25")
 }

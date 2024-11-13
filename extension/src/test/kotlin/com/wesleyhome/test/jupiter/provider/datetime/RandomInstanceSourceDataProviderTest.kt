@@ -1,14 +1,14 @@
 package com.wesleyhome.test.jupiter.provider.datetime
 
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
-import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource
-import com.wesleyhome.test.jupiter.annotations.datetime.RandomInstantSource
 import com.wesleyhome.test.jupiter.annotations.StringSource
+import com.wesleyhome.test.jupiter.annotations.datetime.RandomInstantSource
+import com.wesleyhome.test.jupiter.annotations.datetime.TruncateChronoUnit
+import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource
 import com.wesleyhome.test.jupiter.provider.AnnotatedParameterDataProviderTest
 import com.wesleyhome.test.jupiter.provider.TestParameter
 import java.time.Instant
 import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
 
 class RandomInstanceSourceDataProviderTest :
     AnnotatedParameterDataProviderTest<RandomInstanceSourceDataProvider, Instant, RandomInstantSource>() {
@@ -23,8 +23,7 @@ class RandomInstanceSourceDataProviderTest :
         minOffset: String,
         @StringSource(["", "-P1D"])
         maxOffset: String,
-        @StringSource(["MINUTES", "HOURS", "SECONDS"])
-        truncateTo: String,
+        truncateTo: TruncateChronoUnit,
         @IntRangeSource(min = -10, max = 10)
         size: Int,
     ) {
@@ -69,11 +68,11 @@ class RandomInstanceSourceDataProviderTest :
                 val now = ZonedDateTime.now()
                 val minValue = if (minInstant.isNotBlank()) minInstant.toInstant() else minOffset.toInstant(
                     now,
-                    ChronoUnit.valueOf(truncateTo)
+                    truncateTo.chronoUnit
                 )
                 val maxValue = if (maxInstant.isNotBlank()) maxInstant.toInstant() else maxOffset.toInstant(
                     now,
-                    ChronoUnit.valueOf(truncateTo)
+                    truncateTo.chronoUnit
                 )
                 testCreateParameterOptionsData(testParameter, false) {
                     it.allSatisfy { value ->
@@ -92,7 +91,7 @@ class RandomInstanceSourceDataProviderTest :
             "2024-06-02T12:00:00Z",
             "-P1D",
             "-P1D",
-            "SECONDS"
+            TruncateChronoUnit.SECONDS
         )
     }
 }

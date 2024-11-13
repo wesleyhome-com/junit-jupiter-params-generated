@@ -4,6 +4,7 @@ import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
+import com.wesleyhome.test.jupiter.generator.GeneratedParametersTestExtension
 import io.mockk.Called
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -60,21 +61,21 @@ class GeneratedParametersTestExtensionTest {
 
     @GeneratedParametersTest
     @ParameterizedTest
-    @Disabled
+    @Disabled("Function is being used for testing above and is not meant to be a test itself")
     fun isAnnotatedAndIsParameterizedTest() {
     }
 
-    @Disabled
     @ParameterizedTest
+    @Disabled("Function is being used for testing above and is not meant to be a test itself")
     fun isParameterizedTest() {
     }
 
-    @Disabled
     @GeneratedParametersTest
+    @Disabled("Function is being used for testing above and is not meant to be a test itself")
     fun isAnnotated() {
     }
 
-    @Disabled
+    @Disabled("Function is being used for testing above and is not meant to be a test itself")
     fun isNotAnnotated() {
     }
 }

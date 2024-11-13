@@ -22,7 +22,7 @@ abstract class AnnotatedNumberRangeParameterDataProviderTest
         }.addIf("Min value cannot be greater than max value") {
             minDouble >= maxDouble
         }.toList()
-        if(errors.isNotEmpty()) {
+        if (errors.isNotEmpty()) {
             testCreateParameterOptionsDataWithException(testParameter) {
                 it.isInstanceOf(IllegalArgumentException::class.java)
                     .hasMessage(errors.joinToString(", "))

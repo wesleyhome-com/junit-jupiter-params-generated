@@ -1,4 +1,5 @@
-import org.jetbrains.dokka.gradle.DokkaMultiModuleTask
+import org.gradle.internal.extensions.stdlib.capitalized
+import org.jetbrains.dokka.gradle.DokkaTaskPartial
 
 plugins {
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
@@ -12,15 +13,43 @@ description = "junit-jupiter-params-generated"
 extra["isReleaseVersion"] = !version.toString().endsWith("SNAPSHOT")
 
 subprojects {
-    if(!name.contains("examples")) {
+    val subProjectName = name
+    if(!subProjectName.contains("examples")) {
         apply(plugin = "org.jetbrains.dokka")
         tasks.register<Jar>("javadocJar") {
             dependsOn(tasks.dokkaJavadoc)
             from(tasks.dokkaJavadoc.flatMap { it.outputDirectory })
             archiveClassifier.set("javadoc")
         }
+        if (!subProjectName.contains("extension")) {
+            tasks.withType<DokkaTaskPartial>().configureEach {
+                enabled = false
+            }
+        } else {
+            val dokkaPlugin by configurations
+            dependencies {
+                dokkaPlugin("org.jetbrains.dokka:versioning-plugin:1.9.20")
+            }
+            tasks.dokkaHtml.configure {
+
+            }
+            tasks.withType<DokkaTaskPartial>().configureEach {
+                dokkaSourceSets {
+                    configureEach {
+                        val paths = "$rootDir/examples/src/main/kotlin/examples/Examples.kt"
+                        samples.from(paths)
+                        includes.from("Module.md")
+                        displayName = subProjectName.split("-").map { it.capitalized() }.joinToString(separator = " ")
+                    }
+                }
+            }
+        }
     }
 }
+tasks.dokkaHtmlMultiModule {
+    includes.from("README.md")
+}
+
 tasks.register("clean") {
     delete("build")
 }

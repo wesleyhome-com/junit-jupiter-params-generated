@@ -3,6 +3,7 @@ package com.wesleyhome.test.jupiter.provider.datetime
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.StringSource
 import com.wesleyhome.test.jupiter.annotations.datetime.InstantRangeSource
+import com.wesleyhome.test.jupiter.annotations.datetime.TruncateChronoUnit
 import com.wesleyhome.test.jupiter.provider.AnnotatedParameterDataProviderTest
 import com.wesleyhome.test.jupiter.provider.TestParameter
 import com.wesleyhome.test.jupiter.step
@@ -25,11 +26,12 @@ class InstantRangeSourceAbstractParameterDataProviderTest :
         @StringSource(["", "-P1D"])
         maxOffset: String,
         @StringSource(["MINUTES", "HOURS", "SECONDS"])
-        truncateTo: String,
+        truncateToString: String,
         @StringSource(["PT1h", "PT2h"])
         increment: String,
         ascending: Boolean
     ) {
+        val truncateTo = TruncateChronoUnit.valueOf(truncateToString)
         val testParameter = createAnnotatedTestParameter(
             minInstant,
             maxInstant,
@@ -65,11 +67,11 @@ class InstantRangeSourceAbstractParameterDataProviderTest :
                 val now = ZonedDateTime.now()
                 val minValue = if (minInstant.isNotBlank()) minInstant.toInstant() else minOffset.toInstant(
                     now,
-                    ChronoUnit.valueOf(truncateTo)
+                    truncateTo.chronoUnit
                 )
                 val maxValue = if (maxInstant.isNotBlank()) maxInstant.toInstant() else maxOffset.toInstant(
                     now,
-                    ChronoUnit.valueOf(truncateTo)
+                    truncateTo.chronoUnit
                 )
                 val expected = (minValue..maxValue step if (ascending) increment else "-$increment").toList()
                 testCreateParameterOptionsData(testParameter, false) {
@@ -84,7 +86,7 @@ class InstantRangeSourceAbstractParameterDataProviderTest :
         "2024-06-02T12:00:00Z",
         "-P1D",
         "-P1D",
-        "SECONDS",
+        TruncateChronoUnit.SECONDS,
         "PT1h",
         true
     )
@@ -93,7 +95,7 @@ class InstantRangeSourceAbstractParameterDataProviderTest :
 
 fun String.toInstant(now: ZonedDateTime? = null, truncateTo: ChronoUnit? = null): Instant = try {
     Instant.parse(this)
-} catch (e: Exception) {
+} catch (_: Exception) {
     val zonedDateTime = now ?: ZonedDateTime.now()
     val chronoUnit = truncateTo ?: ChronoUnit.HOURS
     zonedDateTime.truncatedTo(chronoUnit).plus(this.temporalAmount()).toInstant()
