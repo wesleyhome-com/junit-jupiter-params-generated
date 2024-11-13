@@ -5,14 +5,6 @@ import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSValueParameter
-import com.wesleyhome.test.jupiter.annotations.datetime.InstantRangeSource
-import com.wesleyhome.test.jupiter.annotations.datetime.LocalDateRangeSource
-import com.wesleyhome.test.jupiter.annotations.datetime.LocalDateTimeRangeSource
-import com.wesleyhome.test.jupiter.annotations.datetime.LocalTimeSource
-import com.wesleyhome.test.jupiter.annotations.number.DoubleRangeSource
-import com.wesleyhome.test.jupiter.annotations.number.FloatRangeSource
-import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource
-import com.wesleyhome.test.jupiter.annotations.number.LongRangeSource
 import com.wesleyhome.test.jupiter.annotations.validation.number.NumberRangeValidator
 
 class AnnotationProcessor(private val environment: SymbolProcessorEnvironment) :
@@ -20,10 +12,10 @@ class AnnotationProcessor(private val environment: SymbolProcessorEnvironment) :
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val logger = environment.logger
         val numberRangeAnnotations = listOf(
-            IntRangeSource::class,
-            LongRangeSource::class,
-            FloatRangeSource::class,
-            DoubleRangeSource::class
+            com.wesleyhome.test.jupiter.annotations.number.IntRangeSource::class,
+            com.wesleyhome.test.jupiter.annotations.number.LongRangeSource::class,
+            com.wesleyhome.test.jupiter.annotations.number.FloatRangeSource::class,
+            com.wesleyhome.test.jupiter.annotations.number.DoubleRangeSource::class
         )
 //        val dateTimeRangeAnnotations = listOf(
 //            LocalDateRangeSource::class,

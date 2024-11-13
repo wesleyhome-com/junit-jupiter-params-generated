@@ -1,5 +1,8 @@
 package com.wesleyhome.test.jupiter.annotations.datetime
 
+import com.wesleyhome.test.jupiter.annotations.ext.SourceProvider
+import com.wesleyhome.test.jupiter.provider.datetime.LocalDateValueSourceDataProvider
+
 /**
  * Annotation to indicate that the annotated LocalDate parameter should be populated with a random value from the provided
  * [values] array.
@@ -8,6 +11,7 @@ package com.wesleyhome.test.jupiter.annotations.datetime
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
+@SourceProvider(LocalDateValueSourceDataProvider::class)
 @MustBeDocumented
 annotation class LocalDateSource(
     /**

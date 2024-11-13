@@ -19,7 +19,7 @@ abstract class ParameterDataProviderTest<P : ParameterDataProvider<T>, T : Any> 
     protected lateinit var provider: P
 
     @BeforeEach
-    fun setup(): Unit {
+    fun setup() {
         provider = createProvider()
     }
 

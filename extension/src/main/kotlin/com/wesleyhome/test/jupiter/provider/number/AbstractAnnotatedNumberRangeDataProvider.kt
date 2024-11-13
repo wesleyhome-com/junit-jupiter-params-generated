@@ -1,9 +1,9 @@
 package com.wesleyhome.test.jupiter.provider.number
 
 import com.wesleyhome.test.jupiter.annotations.validation.number.NumberRangeValidator
+import com.wesleyhome.test.jupiter.propertyValue
 import com.wesleyhome.test.jupiter.provider.AbstractAnnotatedParameterDataProvider
 import com.wesleyhome.test.jupiter.provider.TestParameter
-import com.wesleyhome.test.jupiter.propertyValue
 import com.wesleyhome.test.jupiter.step
 
 abstract class AbstractAnnotatedNumberRangeDataProvider<T : Number, A : Annotation> :

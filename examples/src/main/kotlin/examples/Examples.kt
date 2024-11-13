@@ -4,7 +4,6 @@ import assertk.Assert
 import assertk.all
 import assertk.assertThat
 import assertk.assertions.isBetween
-import assertk.assertions.isGreaterThan
 import assertk.assertions.isIn
 import assertk.assertions.isLessThan
 import assertk.assertions.support.expected

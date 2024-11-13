@@ -1,4 +1,4 @@
-package com.wesleyhome.test.jupiter.annotations
+package com.wesleyhome.test.jupiter.generator
 
 import org.junit.jupiter.api.extension.Extension
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -6,7 +6,7 @@ import org.junit.jupiter.api.extension.ParameterContext
 import org.junit.jupiter.api.extension.ParameterResolver
 import org.junit.jupiter.api.extension.TestTemplateInvocationContext
 
-class GeneratedParametersTestInvocationContext(
+internal class GeneratedParametersTestInvocationContext(
     private val arguments: List<Any>
 ) : TestTemplateInvocationContext {
 

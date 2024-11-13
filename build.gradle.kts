@@ -21,7 +21,7 @@ subprojects {
             from(tasks.dokkaJavadoc.flatMap { it.outputDirectory })
             archiveClassifier.set("javadoc")
         }
-        if (!subProjectName.contains("annotations")) {
+        if (!subProjectName.contains("extension")) {
             tasks.withType<DokkaTaskPartial>().configureEach {
                 enabled = false
             }

@@ -1,8 +1,8 @@
 package com.wesleyhome.test.jupiter.provider.datetime
 
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
-import com.wesleyhome.test.jupiter.annotations.datetime.LocalTimeRangeSource
 import com.wesleyhome.test.jupiter.annotations.StringSource
+import com.wesleyhome.test.jupiter.annotations.datetime.LocalTimeRangeSource
 import com.wesleyhome.test.jupiter.step
 import com.wesleyhome.test.jupiter.toLocalTime
 import java.time.LocalTime

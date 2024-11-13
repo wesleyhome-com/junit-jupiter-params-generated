@@ -1,5 +1,8 @@
 package com.wesleyhome.test.jupiter.annotations.number
 
+import com.wesleyhome.test.jupiter.annotations.ext.SourceProvider
+import com.wesleyhome.test.jupiter.provider.number.FloatRangeDataProvider
+
 /**
  * Annotation to indicate that the annotated float parameter should be populated with a float range
  * from [min] to [max] with an [increment] step in the [ascending] direction.
@@ -8,6 +11,7 @@ package com.wesleyhome.test.jupiter.annotations.number
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
+@SourceProvider(FloatRangeDataProvider::class)
 @MustBeDocumented
 annotation class FloatRangeSource(
     /**

@@ -1,5 +1,7 @@
 package com.wesleyhome.test.jupiter.annotations.datetime
 
+import com.wesleyhome.test.jupiter.annotations.ext.SourceProvider
+import com.wesleyhome.test.jupiter.provider.datetime.RandomInstanceSourceDataProvider
 import java.time.temporal.ChronoUnit
 
 /**
@@ -26,6 +28,7 @@ import java.time.temporal.ChronoUnit
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
+@SourceProvider(RandomInstanceSourceDataProvider::class)
 @MustBeDocumented
 annotation class RandomInstantSource(
     /**
@@ -64,7 +67,7 @@ annotation class RandomInstantSource(
 /**
  * Valid [ChronoUnit] values to use with [RandomInstantSource.truncateTo]
  */
-enum class TruncateChronoUnit (val chronoUnit: ChronoUnit) {
+enum class TruncateChronoUnit(val chronoUnit: ChronoUnit) {
     NANOS(ChronoUnit.NANOS),
     MICROS(ChronoUnit.MICROS),
     MILLIS(ChronoUnit.MILLIS),

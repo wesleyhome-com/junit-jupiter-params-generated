@@ -1,5 +1,6 @@
-package com.wesleyhome.test.jupiter.annotations
+package com.wesleyhome.test.jupiter.generator
 
+import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace.create
 import org.junit.jupiter.api.extension.TestTemplateInvocationContext
@@ -12,7 +13,7 @@ import java.util.stream.StreamSupport
 import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.jvm.kotlinFunction
 
-class GeneratedParametersTestExtension : TestTemplateInvocationContextProvider {
+internal class GeneratedParametersTestExtension : TestTemplateInvocationContextProvider {
     override fun supportsTestTemplate(context: ExtensionContext): Boolean {
         return if (!context.testMethod.isPresent) false else {
             val kFunction = context.requiredTestMethod.kotlinFunction!!

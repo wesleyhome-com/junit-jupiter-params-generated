@@ -8,6 +8,6 @@ plugins {
 
 val name = "junit-jupiter-params-generated"
 rootProject.name = "$name-parent"
-val subProjects = listOf("annotations", "validation", "annotation-processor", "extension", "examples")
+val subProjects = listOf("validation", "annotation-processor", "extension", "examples")
 include(subProjects)
 project(":extension").name = name

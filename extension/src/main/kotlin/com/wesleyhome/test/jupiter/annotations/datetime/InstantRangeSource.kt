@@ -1,5 +1,8 @@
 package com.wesleyhome.test.jupiter.annotations.datetime
 
+import com.wesleyhome.test.jupiter.annotations.ext.SourceProvider
+import com.wesleyhome.test.jupiter.provider.datetime.InstantRangeSourceDataProvider
+
 /**
  * Annotation to indicate that the annotated Instant parameter should be populated with an Instant range
  * from [minInstant] up to [maxInstant] or [minOffset] up to [maxOffset] with an [increment]. The default [increment] is 1 hour.
@@ -10,6 +13,7 @@ package com.wesleyhome.test.jupiter.annotations.datetime
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
+@SourceProvider(InstantRangeSourceDataProvider::class)
 @MustBeDocumented
 annotation class InstantRangeSource(
     /**

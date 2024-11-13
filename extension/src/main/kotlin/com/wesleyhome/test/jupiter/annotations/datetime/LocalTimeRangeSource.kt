@@ -1,5 +1,8 @@
 package com.wesleyhome.test.jupiter.annotations.datetime
 
+import com.wesleyhome.test.jupiter.annotations.ext.SourceProvider
+import com.wesleyhome.test.jupiter.provider.datetime.LocalDateTimeRangeDataProvider
+
 /**
  * Annotation to mark that the given LocalTime parameter should be populated with a LocalTime range
  * starting from the minimum value [min] to the maximum value [max] with an [increment] in the direction specified by [ascending].
@@ -9,6 +12,7 @@ package com.wesleyhome.test.jupiter.annotations.datetime
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
+@SourceProvider(LocalDateTimeRangeDataProvider::class)
 @MustBeDocumented
 annotation class LocalTimeRangeSource(
     /**

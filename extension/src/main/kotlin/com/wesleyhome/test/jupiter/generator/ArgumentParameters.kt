@@ -3,7 +3,7 @@ package com.wesleyhome.test.jupiter.generator
 import org.junit.jupiter.params.provider.Arguments
 import java.util.concurrent.atomic.AtomicLong
 
-class ArgumentParameters(private val options: List<List<Any?>>) : Iterable<Arguments> {
+internal class ArgumentParameters(private val options: List<List<Any?>>) : Iterable<Arguments> {
     private val totalPermutations: Long = options.map { it.size }
         .map { it.toLong() }
         .reduce { acc, i -> acc * i }

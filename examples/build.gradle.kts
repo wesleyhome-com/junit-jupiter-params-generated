@@ -8,7 +8,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":annotations"))
+    implementation(project(":junit-jupiter-params-generated"))
     implementation(project(":validation"))
     implementation(project(":${rootProject.name.removeSuffix("-parent")}"))
     implementation("com.willowtreeapps.assertk:assertk:0.28.1")

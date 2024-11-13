@@ -4,6 +4,7 @@ import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
+import com.wesleyhome.test.jupiter.generator.GeneratedParametersTestExtension
 import io.mockk.Called
 import io.mockk.every
 import io.mockk.impl.annotations.MockK

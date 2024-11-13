@@ -1,6 +1,5 @@
-package com.wesleyhome.test.jupiter.annotations
+package com.wesleyhome.test.jupiter.generator
 
-import com.wesleyhome.test.jupiter.generator.ParametersGenerator
 import com.wesleyhome.test.jupiter.provider.TestModel
 import com.wesleyhome.test.jupiter.provider.TestParameter
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -8,7 +7,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.jvm.kotlinFunction
 
-class GeneratedParametersTestMethodContext(context: ExtensionContext) {
+internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
     val generator: ParametersGenerator
 
     init {

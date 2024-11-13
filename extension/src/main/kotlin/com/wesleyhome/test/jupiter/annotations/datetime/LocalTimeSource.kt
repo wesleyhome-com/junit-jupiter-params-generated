@@ -1,5 +1,8 @@
 package com.wesleyhome.test.jupiter.annotations.datetime
 
+import com.wesleyhome.test.jupiter.annotations.ext.SourceProvider
+import com.wesleyhome.test.jupiter.provider.datetime.LocalDateTimeValueSourceDataProvider
+
 /**
  * Annotation to be utilized on a parameter of type LocalTime in a parametrized test. The annotated parameter's
  * value will be populated with a randomized value derived from the provided [values] array.
@@ -13,6 +16,7 @@ package com.wesleyhome.test.jupiter.annotations.datetime
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
+@SourceProvider(LocalDateTimeValueSourceDataProvider::class)
 @MustBeDocumented
 annotation class LocalTimeSource(
     /**

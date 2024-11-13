@@ -8,9 +8,7 @@ plugins {
 
 dependencies {
     api(libs.bundles.junit)
-    api(project(":annotations"))
     api(project(":validation"))
-    implementation("io.github.classgraph:classgraph:4.8.176")
     implementation(kotlin("reflect"))
     implementation(kotlin("stdlib"))
     testRuntimeOnly(libs.junit.platform.launcher)
