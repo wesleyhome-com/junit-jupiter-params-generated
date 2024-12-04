@@ -1,28 +1,16 @@
 package com.wesleyhome.test.jupiter.annotations.datetime
 
 import com.wesleyhome.test.jupiter.annotations.ext.SourceProvider
+import com.wesleyhome.test.jupiter.annotations.validation.datetime.TruncateChronoUnit
 import com.wesleyhome.test.jupiter.provider.datetime.RandomInstanceSourceDataProvider
-import java.time.temporal.ChronoUnit
 
 /**
- * Annotation to be utilized on a parameter of type Instant in a parameterized test. The annotated parameter
- * value will be populated with a randomized value derived from the provided [minInstant], [maxInstant], [minOffset], and [maxOffset].
- * This will generate [size] number of random values with in the range specified.
- *
- * If provided, the [minInstant] and [maxInstant] properties will take precedent over any value provided by [minOffset] and [maxOffset]
- *
- * The [minInstant] and [maxInstant] properties should be parsable by [java.time.Instant.parse].
- * The [minOffset] and [maxOffset] properties should be parsable by [java.time.Period.parse].
- *
- * [minInstant], [maxInstant], [minOffset], and [maxOffset] properties are inclusive.
- *
- * If neither [minInstant] or [minOffset] are provided, an error will be thrown.
- * If [minInstant] is provided, [maxInstant] must also be provided.
- * If [minOffset] is provided, [maxOffset] must also be provided.
- *
- * The [minOffset] and [maxOffset] properties are relative to the current time when the test is run.
- * For example, if the current time is 2023-01-01T00:00:00.000Z, and [minOffset] is "-P1D" (one day before), the minimum Instant value will be 2022-12-31T00:00:00.000Z.
- * If [maxOffset] is "P1D" (one day after), the maximum Instant value will be 2023-01-02T00:00:00.000Z.
+ * This annotation is used to generate random [java.time.Instant]s.
+ * The [min] and [max] values are used to determine the range of values to generate.
+ * If [useOffset] is true, the [min] and [max] values are treated as offsets from the current time.
+ * Otherwise, the [min] and [max] values are treated as [java.time.Instant]s.
+ * The [size] parameter determines the number of random values to generate.
+ * The [truncateTo] parameter determines the truncation unit that the starting instant will be truncated to.
  *
  * @sample examples.RandomInstantSource.example
  */
@@ -32,48 +20,29 @@ import java.time.temporal.ChronoUnit
 @MustBeDocumented
 annotation class RandomInstantSource(
     /**
+     * This minimum value that is used to generate random values.
+     * If [useOffset] is true, this value needs to be parsable to a [java.time.Period]
+     * Otherwise this value needs to be parseable to a [java.time.Instant]
+     */
+    val min: String = "",
+    /**
+     * The maximum value that is used to generate random values.
+     * If [useOffset] is true, this value needs to be parsable to a [java.time.Period]
+     * Otherwise this value needs to be parseable to a [java.time.Instant]
+     */
+    val max: String = "",
+    /**
+     * If true, the [min] and [max] values will be treated as offsets from the current time.
+     * If false, the [min] and [max] values will be treated as [java.time.Instant]s.
+     */
+    val useOffset: Boolean = false,
+    /**
      * The number of random values to generate
      */
     val size: Int,
-    /**
-     * The minimum instant value to be generated. The value is inclusive.
-     * This overrides any value by [minOffset]
-     */
-    val minInstant: String = "",
-    /**
-     * The maximum instant value to be generated. The value is exclusive.
-     * This overrides any value by [maxOffset]
-     */
-    val maxInstant: String = "",
-    /**
-     * The offset for the minimum Instant value from [java.time.Instant.now]. For example -P1D.
-     * This need to be parsable by [java.time.Period].
-     * This is overridden by [minInstant] if provided.
-     */
-    val minOffset: String = "",
-    /**
-     * The offset for the maximum Instant value from [java.time.Instant.now]. For example P1D.
-     * This need to be parsable by [java.time.Period].
-     * This is overridden by [maxInstant] if provided.
-     */
-    val maxOffset: String = "",
     /**
      * The truncation unit that the starting instant will be truncated to. This is only
      * used if [minOffset] is provided.
      */
     val truncateTo: TruncateChronoUnit = TruncateChronoUnit.MINUTES,
 )
-
-/**
- * Valid [ChronoUnit] values to use with [RandomInstantSource.truncateTo]
- */
-enum class TruncateChronoUnit(val chronoUnit: ChronoUnit) {
-    NANOS(ChronoUnit.NANOS),
-    MICROS(ChronoUnit.MICROS),
-    MILLIS(ChronoUnit.MILLIS),
-    SECONDS(ChronoUnit.SECONDS),
-    MINUTES(ChronoUnit.MINUTES),
-    HOURS(ChronoUnit.HOURS),
-    HALF_DAYS(ChronoUnit.HALF_DAYS),
-    DAYS(ChronoUnit.DAYS),
-}

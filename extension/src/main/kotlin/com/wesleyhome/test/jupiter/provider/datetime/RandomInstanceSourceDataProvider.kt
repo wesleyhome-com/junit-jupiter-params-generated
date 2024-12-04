@@ -1,61 +1,47 @@
 package com.wesleyhome.test.jupiter.provider.datetime
 
 import com.wesleyhome.test.jupiter.annotations.datetime.RandomInstantSource
-import com.wesleyhome.test.jupiter.provider.AbstractAnnotatedParameterDataProvider
-import com.wesleyhome.test.jupiter.provider.TestParameter
+import com.wesleyhome.test.jupiter.annotations.validation.datetime.RandomDateTimeValidator
 import com.wesleyhome.test.jupiter.temporalAmount
 import java.time.Instant
-import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
-import kotlin.random.Random
-import kotlin.random.nextLong
+import java.time.temporal.TemporalAmount
 
-class RandomInstanceSourceDataProvider : AbstractAnnotatedParameterDataProvider<Instant, RandomInstantSource>() {
+class RandomInstanceSourceDataProvider : AbstractAnnotatedRandomDateTimeDataProvider<Instant, RandomInstantSource>() {
 
-    override fun createParameterOptionsData(testParameter: TestParameter): List<Instant?> {
-        val annotation = findAnnotation(testParameter)!!
-        val minInstant: String = annotation.minInstant
-        val maxInstant: String = annotation.maxInstant
-        val minOffset: String = annotation.minOffset
-        val maxOffset: String = annotation.maxOffset
-        val truncateTo = annotation.truncateTo
-        val size: Int = annotation.size
-
-        if (minInstant.isBlank() && minOffset.isBlank()) {
-            throw IllegalArgumentException("Either [minInstant] or [minOffset] must be provided")
-        }
-        if (minInstant.isNotBlank() && maxInstant.isBlank()) {
-            throw IllegalArgumentException("[maxInstant] must be provided when [minInstant] is provided")
-        }
-        if (minOffset.isNotBlank() && maxOffset.isBlank()) {
-            throw IllegalArgumentException("[maxOffset] must be provided when [minOffset] is provided")
-        }
-        val truncationUnit = if (minOffset.isNotBlank()) {
-            truncateTo.chronoUnit
-        } else {
-            ChronoUnit.MILLIS
-        }
-        if (size < 1) {
-            throw IllegalArgumentException("[size] must be greater than 0")
-        }
-        val now = ZonedDateTime.now().truncatedTo(truncationUnit).toInstant()
-        var min = if (minInstant.isBlank()) {
-            now.plus(minOffset.temporalAmount())
-        } else {
-            Instant.parse(minInstant)
-        }
-        val max = if (maxInstant.isBlank()) {
-            now.plus(maxOffset.temporalAmount())
-        } else {
-            Instant.parse(maxInstant)
-        }
-        if (min.isAfter(max)) {
-            min = max.plus(minOffset.temporalAmount())
-        }
-        val range = (min.toEpochMilli()..max.toEpochMilli())
-        return (1..size)
-            .map { Random.nextLong(range) }
-            .map { Instant.ofEpochMilli(it) }
-            .toList()
+    override fun getFormatString(annotation: RandomInstantSource): String {
+        return ""
     }
+
+    override fun now(truncationUnit: ChronoUnit): Instant = Instant.now().truncatedTo(truncationUnit)
+
+    override fun longRange(range: ClosedRange<Instant>): LongRange {
+        return LongRange(range.start.toEpochMilli(), range.endInclusive.toEpochMilli())
+    }
+
+    override fun addOffset(
+        value: Instant,
+        offset: TemporalAmount
+    ): Instant = value.plus(offset)
+
+    override fun convert(value: String, format: String): Instant = Instant.parse(value)
+
+    override fun convert(longValue: Long): Instant =
+        Instant.ofEpochMilli(longValue)
+
+    override fun validate(
+        minString: String,
+        maxString: String,
+        size: Int,
+        useOffset: Boolean
+    ): List<String> {
+        return RandomDateTimeValidator.validate(minString, maxString, size, useOffset, { it ->
+            it.toInstant()
+        }) { it ->
+            it.temporalAmount()
+        }
+    }
+
 }
+
+fun String.toInstant(): Instant = Instant.parse(this)

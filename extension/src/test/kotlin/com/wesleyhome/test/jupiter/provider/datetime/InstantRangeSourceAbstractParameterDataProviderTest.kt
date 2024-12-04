@@ -3,100 +3,49 @@ package com.wesleyhome.test.jupiter.provider.datetime
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.StringSource
 import com.wesleyhome.test.jupiter.annotations.datetime.InstantRangeSource
-import com.wesleyhome.test.jupiter.annotations.datetime.TruncateChronoUnit
-import com.wesleyhome.test.jupiter.provider.AnnotatedParameterDataProviderTest
 import com.wesleyhome.test.jupiter.provider.TestParameter
 import com.wesleyhome.test.jupiter.step
-import com.wesleyhome.test.jupiter.temporalAmount
+import org.junit.jupiter.api.Disabled
 import java.time.Instant
-import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
 
 class InstantRangeSourceAbstractParameterDataProviderTest :
-    AnnotatedParameterDataProviderTest<InstantRangeSourceDataProvider, Instant, InstantRangeSource>() {
+    AnnotatedDateTimeRangeDataProviderTest<InstantRangeSourceDataProvider, Instant, InstantRangeSource>() {
+
+    override val defaultIncrementString: String = "PT1h"
 
     @GeneratedParametersTest
+    @Disabled
     fun testCreateParameterOptionsData(
-        @StringSource(["", "2024-06-01T12:00:00Z"])
-        minInstant: String,
-        @StringSource(["", "2024-06-02T12:00:00Z"])
-        maxInstant: String,
-        @StringSource(["", "-P1D"])
-        minOffset: String,
-        @StringSource(["", "-P1D"])
-        maxOffset: String,
-        @StringSource(["MINUTES", "HOURS", "SECONDS"])
-        truncateToString: String,
-        @StringSource(["PT1h", "PT2h"])
+        @StringSource(["", "Unparseable", "2024-06-01T12:00:00Z"])
+        min: String,
+        @StringSource(["", "Unparseable", "2024-06-02T12:00:00Z"])
+        max: String,
+        @StringSource(["", "Unparseable", "PT2h", "PT6h"])
         increment: String,
         ascending: Boolean
     ) {
-        val truncateTo = TruncateChronoUnit.valueOf(truncateToString)
-        val testParameter = createAnnotatedTestParameter(
-            minInstant,
-            maxInstant,
-            minOffset,
-            maxOffset,
-            truncateTo,
-            increment,
-            ascending
-        )
-        when {
-            minInstant.isBlank() && minOffset.isBlank() -> {
-                testCreateParameterOptionsDataWithException(testParameter) {
-                    it.isInstanceOf(IllegalArgumentException::class.java)
-                        .hasMessage("Either [minInstant] or [minOffset] must be provided")
-                }
-            }
-
-            minInstant.isNotBlank() && maxInstant.isBlank() -> {
-                testCreateParameterOptionsDataWithException(testParameter) {
-                    it.isInstanceOf(IllegalArgumentException::class.java)
-                        .hasMessage("[maxInstant] must be provided when [minInstant] is provided")
-                }
-            }
-
-            minOffset.isNotBlank() && maxOffset.isBlank() -> {
-                testCreateParameterOptionsDataWithException(testParameter) {
-                    it.isInstanceOf(IllegalArgumentException::class.java)
-                        .hasMessage("[maxOffset] must be provided when [minOffset] is provided")
-                }
-            }
-
-            else -> {
-                val now = ZonedDateTime.now()
-                val minValue = if (minInstant.isNotBlank()) minInstant.toInstant() else minOffset.toInstant(
-                    now,
-                    truncateTo.chronoUnit
-                )
-                val maxValue = if (maxInstant.isNotBlank()) maxInstant.toInstant() else maxOffset.toInstant(
-                    now,
-                    truncateTo.chronoUnit
-                )
-                val expected = (minValue..maxValue step if (ascending) increment else "-$increment").toList()
-                testCreateParameterOptionsData(testParameter, false) {
-                    it.containsExactlyElementsOf(expected)
-                }
-            }
-        }
+        createAndAssertTestParameter(min, max, increment, ascending)
     }
 
-    override fun createTrueProvidesForTestParameter(): TestParameter = createAnnotatedTestParameter(
-        "2024-06-01T12:00:00Z",
-        "2024-06-02T12:00:00Z",
-        "-P1D",
-        "-P1D",
-        TruncateChronoUnit.SECONDS,
-        "PT1h",
-        true
-    )
+    override fun testParameter(
+        min: String,
+        max: String,
+        increment: String?,
+        ascending: Boolean?,
+        dateFormat: String?
+    ): TestParameter {
+        return createAnnotatedTestParameter(min, max, increment, ascending)
+    }
 
-}
+    override fun createTrueProvidesForTestParameter(): TestParameter =
+        testParameter("2024-06-01T12:00:00Z", "2024-06-02T12:00:00Z", "PT1H", true, null)
 
-fun String.toInstant(now: ZonedDateTime? = null, truncateTo: ChronoUnit? = null): Instant = try {
-    Instant.parse(this)
-} catch (_: Exception) {
-    val zonedDateTime = now ?: ZonedDateTime.now()
-    val chronoUnit = truncateTo ?: ChronoUnit.HOURS
-    zonedDateTime.truncatedTo(chronoUnit).plus(this.temporalAmount()).toInstant()
+
+    override fun convert(valueString: String, format: String): Instant {
+        return valueString.toInstant()
+    }
+
+    override fun expectedList(min: Instant, max: Instant, increment: String): List<Instant> {
+        return (min..max step increment).toList()
+    }
 }

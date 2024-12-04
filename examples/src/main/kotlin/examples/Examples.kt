@@ -18,7 +18,6 @@ import com.wesleyhome.test.jupiter.annotations.datetime.LocalDateTimeSource
 import com.wesleyhome.test.jupiter.annotations.datetime.LocalTimeRangeSource
 import com.wesleyhome.test.jupiter.annotations.datetime.LocalTimeSource
 import com.wesleyhome.test.jupiter.annotations.datetime.RandomInstantSource
-import com.wesleyhome.test.jupiter.annotations.datetime.TruncateChronoUnit
 import com.wesleyhome.test.jupiter.annotations.number.DoubleRangeSource
 import com.wesleyhome.test.jupiter.annotations.number.DoubleSource
 import com.wesleyhome.test.jupiter.annotations.number.FloatRangeSource
@@ -449,8 +448,8 @@ class RandomInstantSource {
         fun testRandomInstantSourceWithInstant(
             @RandomInstantSource(
                 size = 10,
-                minInstant = "2023-01-01T00:00:00.000Z",
-                maxInstant = "2023-01-02T01:00:00.000Z"
+                min = "2023-01-01T00:00:00.000Z",
+                max = "2023-01-02T01:00:00.000Z"
             )
             value: Instant
         ) {
@@ -461,8 +460,9 @@ class RandomInstantSource {
         fun testRandomInstantSourceWithOffset(
             @RandomInstantSource(
                 size = 10,
-                minOffset = "PT1H",
-                maxOffset = "PT2H"
+                min = "PT1H",
+                max = "PT2H",
+                useOffset = true
             )
             value: Instant
         ) {
@@ -617,9 +617,8 @@ class InstantRangeSource {
         @GeneratedParametersTest
         fun testInstantRangeSourceWithInstant(
             @InstantRangeSource(
-                minInstant = "2023-01-01T00:00:00.000Z",
-                maxInstant = "2023-01-10T00:00:00.000Z",
-                truncateTo = TruncateChronoUnit.MINUTES
+                min = "2023-01-01T00:00:00.000Z",
+                max = "2023-01-10T00:00:00.000Z",
             )
             value: Instant
         ) {
@@ -629,26 +628,6 @@ class InstantRangeSource {
             )
         }
 
-        /**
-         * This will generate tests with random Instant values
-         * between 12 hours before and after NOW
-         *
-         * The values will be truncated to minutes
-         */
-        @GeneratedParametersTest
-        fun testInstantRangeSourceWithOffset(
-            @InstantRangeSource(
-                minOffset = "PT-12H",
-                maxOffset = "PT12H",
-                truncateTo = TruncateChronoUnit.MINUTES
-            )
-            value: Instant
-        ) {
-            assertThat(value).isBetween(
-                Instant.now().plus(1, ChronoUnit.HOURS).truncatedTo(ChronoUnit.MINUTES),
-                Instant.now().plus(2, ChronoUnit.HOURS).truncatedTo(ChronoUnit.MINUTES)
-            )
-        }
     }
 }
 

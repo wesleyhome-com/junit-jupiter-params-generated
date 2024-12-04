@@ -1,6 +1,6 @@
 package com.wesleyhome.test.jupiter.provider
 
-import com.wesleyhome.test.jupiter.actualTypeArguments
+import com.wesleyhome.test.jupiter.typeArguments
 import com.wesleyhome.test.jupiter.kotlinType
 import org.assertj.core.api.AbstractThrowableAssert
 import org.assertj.core.api.Assertions
@@ -14,8 +14,8 @@ import kotlin.reflect.KClass
 abstract class ParameterDataProviderTest<P : ParameterDataProvider<T>, T : Any> {
 
 
-    private val providerType: KClass<P> by lazy { actualTypeArguments[0].kotlinType() }
-    protected open val parameterType: KClass<T> by lazy { actualTypeArguments[1].kotlinType() }
+    private val providerType: KClass<P> by lazy { typeArguments[0].kotlinType() }
+    protected open val parameterType: KClass<T> by lazy { typeArguments[1].kotlinType() }
     protected lateinit var provider: P
 
     @BeforeEach

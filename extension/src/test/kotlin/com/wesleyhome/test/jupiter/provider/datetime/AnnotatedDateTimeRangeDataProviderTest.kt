@@ -12,25 +12,25 @@ abstract class AnnotatedDateTimeRangeDataProviderTest
     : AnnotatedParameterDataProviderTest<P, T, A>() {
     open val defaultAscending: Boolean = true
     abstract val defaultIncrementString: String
-    abstract val defaultDateFormatString: String
+    open val defaultDateFormatString: String = ""
 
     fun createAndAssertTestParameter(
         min: String,
         max: String,
         increment: String?,
         ascending: Boolean?,
-        dateFormat: String?
+        dateFormat: String? = null
     ) {
         val testParameter = testParameter(min, max, increment, ascending, dateFormat)
         assertParameters(testParameter, min, max, increment, ascending, dateFormat)
     }
 
-    private fun testParameter(
+    protected open fun testParameter(
         min: String,
         max: String,
-        increment: String? = null,
-        ascending: Boolean? = null,
-        dateFormat: String? = null
+        increment: String?,
+        ascending: Boolean?,
+        dateFormat: String?
     ) = createAnnotatedTestParameter(
         min,
         max,
@@ -53,7 +53,7 @@ abstract class AnnotatedDateTimeRangeDataProviderTest
                 val test = dateFormatString ?: defaultDateFormatString
                 test.formatter()
                 test
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 testCreateParameterOptionsDataWithException(testParameter) {
                     it.isInstanceOf(IllegalArgumentException::class.java)
                         .hasMessageContaining("Invalid date format: [${dateFormatString!!}]")
@@ -64,12 +64,12 @@ abstract class AnnotatedDateTimeRangeDataProviderTest
 
         try {
             convert(minString, dateFormat)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             errorList += "Unable to parse min string [$minString] using format [$dateFormat]"
         }
         try {
             convert(maxString, dateFormat)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             errorList += "Unable to parse max string [$maxString] using format [$dateFormat]"
         }
         val (min: T, max: T) = if (errorList.isEmpty()) {
@@ -91,7 +91,7 @@ abstract class AnnotatedDateTimeRangeDataProviderTest
                 val test = incrementString ?: defaultIncrementString
                 test.temporalAmount()
                 test
-            } catch (e: DateTimeParseException) {
+            } catch (_: DateTimeParseException) {
                 errorList += "Unable to parse increment [$incrementString] into a duration or period"
                 incrementString!!
             }
@@ -111,18 +111,10 @@ abstract class AnnotatedDateTimeRangeDataProviderTest
     }
 
     override fun createTrueProvidesForTestParameter(): TestParameter =
-        testParameter("2024-01-01 12:00", "2024-02-01 12:00", dateFormat = "yyyy-MM-dd HH:mm")
+        testParameter("2024-01-01 12:00", "2024-02-01 12:00", null, null, dateFormat = "yyyy-MM-dd HH:mm")
 
     abstract fun convert(valueString: String, format: String): T
 
     abstract fun expectedList(min: T, max: T, increment: String): List<T>
 }
 
-fun <T> List<T>.plusIf(error: T, block: () -> Unit): List<T> {
-    try {
-        block()
-        return this
-    } catch (e: Exception) {
-        return this + error
-    }
-}

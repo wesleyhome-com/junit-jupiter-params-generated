@@ -1,12 +1,12 @@
 package com.wesleyhome.test.jupiter.provider
 
-import com.wesleyhome.test.jupiter.actualTypeArguments
+import com.wesleyhome.test.jupiter.typeArguments
 import com.wesleyhome.test.jupiter.kotlinType
 import kotlin.reflect.KClass
 
 abstract class AnnotatedParameterDataProviderTest<P : AbstractAnnotatedParameterDataProvider<T, A>, T : Any, A : Annotation> :
     AbstractParameterDataProviderTest<P, T>() {
-    private val annotationType: KClass<A> by lazy { actualTypeArguments[2].kotlinType() }
+    private val annotationType: KClass<A> by lazy { typeArguments[2].kotlinType() }
 
     protected open fun createAnnotatedTestParameter(vararg annotationParameters: Any?): TestParameter {
         val annotation = createAnnotation(*annotationParameters)

@@ -8,11 +8,11 @@ import com.wesleyhome.test.jupiter.provider.TestParameter
 abstract class AbstractAnnotatedDateTimeRangeDataProvider<T : Comparable<T>, A : Annotation> :
     AbstractAnnotatedParameterDataProvider<T, A>() {
 
-    abstract val formatPropertyName: String
+    open val formatPropertyName: String = ""
 
     final override fun createParameterOptionsData(testParameter: TestParameter): List<T?> {
         val annotation = findAnnotation(testParameter)!!
-        val format = annotation.propertyValue<String>(formatPropertyName)
+        val format = getFormatString(annotation)
         val minString = annotation.propertyValue<String>("min")
         val maxString = annotation.propertyValue<String>("max")
         val increment = annotation.propertyValue<String>("increment")
@@ -31,6 +31,8 @@ abstract class AbstractAnnotatedDateTimeRangeDataProvider<T : Comparable<T>, A :
             range.reversed()
         }
     }
+
+    open fun getFormatString(annotation: A): String = annotation.propertyValue<String>(formatPropertyName)
 
     abstract fun toList(min: T, max: T, increment: String): List<T>
 

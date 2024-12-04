@@ -4,12 +4,18 @@ import com.wesleyhome.test.jupiter.annotations.ext.SourceProvider
 import com.wesleyhome.test.jupiter.provider.datetime.InstantRangeSourceDataProvider
 
 /**
- * Annotation to indicate that the annotated Instant parameter should be populated with an Instant range
- * from [minInstant] up to [maxInstant] or [minOffset] up to [maxOffset] with an [increment]. The default [increment] is 1 hour.
- * If [ascending] is false, the process will be reversed.
- * The default [ascending] is true.
+ * Used to provide a range of instants to a test. The range is inclusive of the min and max values.
  *
- * @sample examples.InstantRangeSource.example
+ * @param min The minimum value for the range. Should follow the ISO-8601 instant format e.g. "2022-01-01T00:00:00Z"
+ * @param max The maximum value for the range. Should follow the ISO-8601 instant format e.g. "2022-01-01T00:00:00Z"
+ * @param increment How much time to increment the value for each test. If [ascending] is false, this value will be
+ * negated. The default value is 1 hour. Should follow the ISO-8601 duration format e.g. "PT1h" for
+ * 1 hour, "PT30m" for 30 minutes.
+ * @param ascending The direction the values will be generated. If true, the range will start with [min]
+ * and increment until it reaches [max]. If false, the range will start with [max]
+ * and decrement until it reaches [min].
+ *
+ * @sample examples.RandomInstantSource.example
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
@@ -17,36 +23,13 @@ import com.wesleyhome.test.jupiter.provider.datetime.InstantRangeSourceDataProvi
 @MustBeDocumented
 annotation class InstantRangeSource(
     /**
-     * The minimum instant value that the range of values will include. Depending on [increment]
-     * and [ascending], this value may or may not be used as a parameter value.
-     *
-     * This overrides [minOffset] if provided.
+     * The minimum value for the range. Should follow the ISO-8601 instant format e.g. "2022-01-01T00:00:00Z"
      */
-    val minInstant: String = "",
+    val min: String,
     /**
-     * The maximum instant value that the range of values will include. Depending on [increment]
-     * and [ascending], this value may or may not be used as a parameter value.
-     *
-     * This overrides [maxOffset] if provided.
+     * The maximum value for the range. Should follow the ISO-8601 instant format e.g. "2022-01-01T00:00:00Z"
      */
-    val maxInstant: String = "",
-    /**
-     * The offset for the minimum Instant value from [java.time.Instant.now]. For example -P1D.
-     * This need to be parsable by [java.time.Period].
-     * This is overridden by [minInstant] if provided.
-     */
-    val minOffset: String = "",
-    /**
-     * The offset for the maximum Instant value from [java.time.Instant.now]. For example P1D.
-     * This need to be parsable by [java.time.Period].
-     * This is overridden by [maxInstant] if provided.
-     */
-    val maxOffset: String = "",
-    /**
-     * The truncation unit that the starting instant will be truncated to. This is only
-     * used if [minOffset] is provided. This must be a value of [java.time.temporal.ChronoUnit].
-     */
-    val truncateTo: TruncateChronoUnit = TruncateChronoUnit.MINUTES,
+    val max: String,
     /**
      * How much time to increment the value for each test. If [ascending] is false, this value will be
      * negated. The default value is 1 hour. Should follow the ISO-8601 duration format e.g. "PT1h" for
@@ -54,9 +37,9 @@ annotation class InstantRangeSource(
      */
     val increment: String = "PT1h",
     /**
-     * The direction the values will be generated. If true, the range will start with [minInstant]
-     * and increment until it reaches [maxInstant]. If false, the range will start with [maxInstant]
-     * and decrement until it reaches [minInstant].
+     * The direction the values will be generated. If true, the range will start with [min]
+     * and increment until it reaches [max]. If false, the range will start with [max]
+     * and decrement until it reaches [min].
      */
     val ascending: Boolean = true
 )

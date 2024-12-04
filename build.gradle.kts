@@ -21,24 +21,19 @@ subprojects {
             from(tasks.dokkaJavadoc.flatMap { it.outputDirectory })
             archiveClassifier.set("javadoc")
         }
-        if (!subProjectName.contains("extension")) {
+        if (!subProjectName.contains("junit-jupiter-params-generated")) {
             tasks.withType<DokkaTaskPartial>().configureEach {
                 enabled = false
             }
         } else {
-            val dokkaPlugin by configurations
             dependencies {
-                dokkaPlugin("org.jetbrains.dokka:versioning-plugin:1.9.20")
-            }
-            tasks.dokkaHtml.configure {
-
+                dokkaHtmlPlugin("org.jetbrains.dokka:versioning-plugin:1.9.20")
             }
             tasks.withType<DokkaTaskPartial>().configureEach {
                 dokkaSourceSets {
                     configureEach {
                         val paths = "$rootDir/examples/src/main/kotlin/examples/Examples.kt"
                         samples.from(paths)
-                        includes.from("Module.md")
                         displayName = subProjectName.split("-").map { it.capitalized() }.joinToString(separator = " ")
                     }
                 }

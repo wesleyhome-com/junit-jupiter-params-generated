@@ -1,3 +1,5 @@
+@file:Suppress("UNCHECKED_CAST")
+
 package com.wesleyhome.test.jupiter
 
 import java.lang.reflect.ParameterizedType
@@ -19,7 +21,7 @@ fun String.duration(): Duration = Duration.parse(this)
 fun String.temporalAmount(): TemporalAmount =
     try {
         this.period()
-    } catch (e: DateTimeParseException) {
+    } catch (_: DateTimeParseException) {
         this.duration()
     }
 
@@ -37,7 +39,7 @@ fun String.toLocalTime(timeFormat: String = "HH:mm"): LocalTime =
 fun <T> Annotation.propertyValue(propertyName: String): T =
     this::class.memberProperties.first { it.name == propertyName }.getter.call(this) as T
 
-val Any.actualTypeArguments: Array<Type>
+val Any.typeArguments: Array<Type>
     get() = (this.javaClass.genericSuperclass as ParameterizedType)
         .actualTypeArguments
 

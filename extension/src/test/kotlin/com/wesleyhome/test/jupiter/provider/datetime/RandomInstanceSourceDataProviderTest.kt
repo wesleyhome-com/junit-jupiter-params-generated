@@ -3,79 +3,91 @@ package com.wesleyhome.test.jupiter.provider.datetime
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.StringSource
 import com.wesleyhome.test.jupiter.annotations.datetime.RandomInstantSource
-import com.wesleyhome.test.jupiter.annotations.datetime.TruncateChronoUnit
 import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource
+import com.wesleyhome.test.jupiter.annotations.validation.datetime.TruncateChronoUnit
 import com.wesleyhome.test.jupiter.provider.AnnotatedParameterDataProviderTest
 import com.wesleyhome.test.jupiter.provider.TestParameter
+import com.wesleyhome.test.jupiter.temporalAmount
 import java.time.Instant
 import java.time.ZonedDateTime
 
 class RandomInstanceSourceDataProviderTest :
     AnnotatedParameterDataProviderTest<RandomInstanceSourceDataProvider, Instant, RandomInstantSource>() {
 
+    companion object {
+        private val offsetList = listOf("-P1D", "-P2D", "P1D", "P2D")
+        private val instantList =
+            listOf("2024-06-01T12:00:00Z", "2024-06-02T12:00:00Z", "2024-06-03T12:00:00Z", "2024-06-03T12:00:00Z")
+    }
+
     @GeneratedParametersTest
     fun testCreateParameterOptionsData(
-        @StringSource(["", "2024-06-01T12:00:00Z"])
-        minInstant: String,
-        @StringSource(["", "2024-06-02T12:00:00Z"])
-        maxInstant: String,
-        @StringSource(["", "-P1D"])
-        minOffset: String,
-        @StringSource(["", "-P1D"])
-        maxOffset: String,
+        @StringSource(["", "Unparseable", "2024-06-01T12:00:00Z", "2024-06-02T12:00:00Z", "-P1D", "-P2D"])
+        minString: String,
+        @StringSource(["", "Unparseable", "2024-06-03T12:00:00Z", "2024-06-03T12:00:00Z", "P1D", "P2D"])
+        maxString: String,
+        useOffset: Boolean,
         truncateTo: TruncateChronoUnit,
         @IntRangeSource(min = -10, max = 10)
         size: Int,
     ) {
         val testParameter = createAnnotatedTestParameter(
+            minString,
+            maxString,
+            useOffset,
             size,
-            minInstant,
-            maxInstant,
-            minOffset,
-            maxOffset,
             truncateTo
         )
-        when {
-            minInstant.isBlank() && minOffset.isBlank() -> {
-                testCreateParameterOptionsDataWithException(testParameter) {
-                    it.isInstanceOf(IllegalArgumentException::class.java)
-                        .hasMessage("Either [minInstant] or [minOffset] must be provided")
+        val expectedErrors = mutableListOf<String>()
+        if (minString.isBlank()) {
+            expectedErrors.add("Invalid [min] value: [$minString]")
+        }
+        if (maxString.isBlank()) {
+            expectedErrors.add("Invalid [max] value: [$maxString]")
+        }
+        if (expectedErrors.isNotEmpty()) {
+            testCreateParameterOptionsDataWithException(testParameter) {
+                it.isInstanceOf(IllegalArgumentException::class.java)
+                    .hasMessage(expectedErrors.joinToString("\n"))
+            }
+        } else {
+            if (useOffset) {
+                if (minString !in offsetList) {
+                    expectedErrors.add("Invalid [min] offset value: [$minString]")
+                }
+                if (maxString !in offsetList) {
+                    expectedErrors.add("Invalid [max] offset value: [$maxString]")
+                }
+            } else {
+                if (minString !in instantList) {
+                    expectedErrors.add("Invalid [min] value: [$minString]")
+                }
+                if (maxString !in instantList) {
+                    expectedErrors.add("Invalid [max] value: [$maxString]")
                 }
             }
-
-            minInstant.isNotBlank() && maxInstant.isBlank() -> {
+            if (size < 1) {
+                expectedErrors.add("[size] must be greater than 0")
+            }
+            if (expectedErrors.isNotEmpty()) {
                 testCreateParameterOptionsDataWithException(testParameter) {
                     it.isInstanceOf(IllegalArgumentException::class.java)
-                        .hasMessage("[maxInstant] must be provided when [minInstant] is provided")
+                        .hasMessage(expectedErrors.joinToString("\n"))
                 }
-            }
-
-            minOffset.isNotBlank() && maxOffset.isBlank() -> {
-                testCreateParameterOptionsDataWithException(testParameter) {
-                    it.isInstanceOf(IllegalArgumentException::class.java)
-                        .hasMessage("[maxOffset] must be provided when [minOffset] is provided")
-                }
-            }
-
-            size <= 0 -> {
-                testCreateParameterOptionsDataWithException(testParameter) {
-                    it.isInstanceOf(IllegalArgumentException::class.java)
-                        .hasMessage("[size] must be greater than 0")
-                }
-            }
-
-            else -> {
+            } else {
                 val now = ZonedDateTime.now()
-                val minValue = if (minInstant.isNotBlank()) minInstant.toInstant() else minOffset.toInstant(
-                    now,
-                    truncateTo.chronoUnit
-                )
-                val maxValue = if (maxInstant.isNotBlank()) maxInstant.toInstant() else maxOffset.toInstant(
-                    now,
-                    truncateTo.chronoUnit
-                )
+                val minValue = if (useOffset) {
+                    now.toInstant().plus(minString.temporalAmount())
+                } else {
+                    minString.toInstant()
+                }
+                val maxValue = if (useOffset) {
+                    now.toInstant().plus(maxString.temporalAmount())
+                } else {
+                    maxString.toInstant()
+                }
                 testCreateParameterOptionsData(testParameter, false) {
-                    it.allSatisfy { value ->
+                    it.allSatisfy() { value ->
                         value.isBetween(minValue, maxValue)
                     }
                 }
@@ -84,13 +96,11 @@ class RandomInstanceSourceDataProviderTest :
     }
 
     override fun createTrueProvidesForTestParameter(): TestParameter {
-        val size = 5
         return createAnnotatedTestParameter(
-            size,
             "2024-06-01T12:00:00Z",
             "2024-06-02T12:00:00Z",
-            "-P1D",
-            "-P1D",
+            false,
+            10,
             TruncateChronoUnit.SECONDS
         )
     }
