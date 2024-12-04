@@ -2,7 +2,7 @@ package com.wesleyhome.test.jupiter.provider.number
 
 import java.util.concurrent.atomic.AtomicReference
 
-class FloatProgression(
+internal class FloatProgression(
     min: Float,
     max: Float,
     private val step: Float

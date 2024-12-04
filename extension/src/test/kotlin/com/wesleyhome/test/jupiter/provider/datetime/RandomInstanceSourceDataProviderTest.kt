@@ -11,7 +11,7 @@ import com.wesleyhome.test.jupiter.temporalAmount
 import java.time.Instant
 import java.time.ZonedDateTime
 
-class RandomInstanceSourceDataProviderTest :
+internal class RandomInstanceSourceDataProviderTest :
     AnnotatedParameterDataProviderTest<RandomInstanceSourceDataProvider, Instant, RandomInstantSource>() {
 
     companion object {
@@ -106,6 +106,6 @@ class RandomInstanceSourceDataProviderTest :
     }
 }
 
-fun Instant?.isBetween(min: Instant, max: Instant): Boolean {
+internal fun Instant?.isBetween(min: Instant, max: Instant): Boolean {
     return this != null && (this == min || this == max || (isAfter(min) && isBefore(max)))
 }

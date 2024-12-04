@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test
 import java.time.LocalTime
 
 
-class LocalTimeValueSourceDataProviderTest :
+internal class LocalTimeValueSourceDataProviderTest :
     AnnotatedParameterDataProviderTest<LocalTimeValueSourceDataProvider, LocalTime, LocalTimeSource>() {
 
     @Test

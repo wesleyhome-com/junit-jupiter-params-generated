@@ -8,7 +8,7 @@ import java.time.temporal.TemporalAmount
 import java.util.concurrent.atomic.AtomicReference
 
 
-class LocalDateTimeProgression(
+internal class LocalDateTimeProgression(
     min: LocalDateTime, max: LocalDateTime, private val step: TemporalAmount
 ) : Iterable<LocalDateTime> {
 
@@ -26,7 +26,7 @@ class LocalDateTimeProgression(
     }
 }
 
-class LocalDateProgression(
+internal class LocalDateProgression(
     min: LocalDate, max: LocalDate, private val step: TemporalAmount
 ) : Iterable<LocalDate> {
 
@@ -45,7 +45,7 @@ class LocalDateProgression(
 }
 
 
-class LocalTimeProgression(
+internal class LocalTimeProgression(
     min: LocalTime, max: LocalTime, private val step: TemporalAmount
 ) : Iterable<LocalTime> {
 
@@ -63,7 +63,7 @@ class LocalTimeProgression(
     }
 }
 
-class InstantProgression(
+internal class InstantProgression(
     min: Instant, max: Instant, private val step: TemporalAmount
 ) : Iterable<Instant> {
 

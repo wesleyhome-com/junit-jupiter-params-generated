@@ -6,7 +6,7 @@ import com.wesleyhome.test.jupiter.provider.AnnotatedParameterDataProviderTest
 import com.wesleyhome.test.jupiter.provider.TestParameter
 import java.time.Instant
 
-class InstantValueSourceAbstractParameterDataProviderTest :
+internal class InstantValueSourceAbstractParameterDataProviderTest :
     AnnotatedParameterDataProviderTest<InstantValueSourceDataProvider, Instant, InstantSource>() {
 
     @GeneratedParametersTest

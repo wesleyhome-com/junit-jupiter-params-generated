@@ -4,7 +4,7 @@ import com.wesleyhome.test.jupiter.typeArguments
 import com.wesleyhome.test.jupiter.kotlinType
 import kotlin.reflect.KClass
 
-abstract class AnnotatedParameterDataProviderTest<P : AbstractAnnotatedParameterDataProvider<T, A>, T : Any, A : Annotation> :
+internal abstract class AnnotatedParameterDataProviderTest<P : AbstractAnnotatedParameterDataProvider<T, A>, T : Any, A : Annotation> :
     AbstractParameterDataProviderTest<P, T>() {
     private val annotationType: KClass<A> by lazy { typeArguments[2].kotlinType() }
 

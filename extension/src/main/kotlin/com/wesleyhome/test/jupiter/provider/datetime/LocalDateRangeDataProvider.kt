@@ -5,7 +5,7 @@ import com.wesleyhome.test.jupiter.step
 import com.wesleyhome.test.jupiter.toLocalDate
 import java.time.LocalDate
 
-class LocalDateRangeDataProvider : AbstractAnnotatedDateTimeRangeDataProvider<LocalDate, LocalDateRangeSource>() {
+internal class LocalDateRangeDataProvider : AbstractAnnotatedDateTimeRangeDataProvider<LocalDate, LocalDateRangeSource>() {
     override val formatPropertyName: String = "dateFormat"
     override fun toList(min: LocalDate, max: LocalDate, increment: String): List<LocalDate> {
         return (min..max step increment).toList()

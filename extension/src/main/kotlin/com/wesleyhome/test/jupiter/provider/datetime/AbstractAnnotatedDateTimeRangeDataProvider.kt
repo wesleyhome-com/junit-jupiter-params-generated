@@ -5,7 +5,7 @@ import com.wesleyhome.test.jupiter.propertyValue
 import com.wesleyhome.test.jupiter.provider.AbstractAnnotatedParameterDataProvider
 import com.wesleyhome.test.jupiter.provider.TestParameter
 
-abstract class AbstractAnnotatedDateTimeRangeDataProvider<T : Comparable<T>, A : Annotation> :
+internal abstract class AbstractAnnotatedDateTimeRangeDataProvider<T : Comparable<T>, A : Annotation> :
     AbstractAnnotatedParameterDataProvider<T, A>() {
 
     open val formatPropertyName: String = ""

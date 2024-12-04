@@ -5,7 +5,7 @@ import com.wesleyhome.test.jupiter.provider.AnnotatedParameterDataProviderTest
 import com.wesleyhome.test.jupiter.provider.TestParameter
 import org.junit.jupiter.api.Test
 
-class IntValueSourceDataProviderTest :
+internal class IntValueSourceDataProviderTest :
     AnnotatedParameterDataProviderTest<IntValueSourceDataProvider, Int, IntSource>() {
 
     @Test

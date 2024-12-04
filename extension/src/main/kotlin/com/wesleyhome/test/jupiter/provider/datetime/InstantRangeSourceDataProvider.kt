@@ -4,7 +4,7 @@ import com.wesleyhome.test.jupiter.annotations.datetime.InstantRangeSource
 import com.wesleyhome.test.jupiter.step
 import java.time.Instant
 
-class InstantRangeSourceDataProvider : AbstractAnnotatedDateTimeRangeDataProvider<Instant, InstantRangeSource>() {
+internal class InstantRangeSourceDataProvider : AbstractAnnotatedDateTimeRangeDataProvider<Instant, InstantRangeSource>() {
     override fun toList(
         min: Instant,
         max: Instant,

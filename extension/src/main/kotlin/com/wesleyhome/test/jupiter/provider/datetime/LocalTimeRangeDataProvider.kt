@@ -5,7 +5,7 @@ import com.wesleyhome.test.jupiter.step
 import com.wesleyhome.test.jupiter.toLocalTime
 import java.time.LocalTime
 
-class LocalTimeRangeDataProvider : AbstractAnnotatedDateTimeRangeDataProvider<LocalTime, LocalTimeRangeSource>() {
+internal class LocalTimeRangeDataProvider : AbstractAnnotatedDateTimeRangeDataProvider<LocalTime, LocalTimeRangeSource>() {
 
     override val formatPropertyName: String = "timeFormat"
 

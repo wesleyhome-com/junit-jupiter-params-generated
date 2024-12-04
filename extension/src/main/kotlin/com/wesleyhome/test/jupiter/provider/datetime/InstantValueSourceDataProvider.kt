@@ -5,7 +5,7 @@ import com.wesleyhome.test.jupiter.provider.AbstractAnnotatedParameterDataProvid
 import com.wesleyhome.test.jupiter.provider.TestParameter
 import java.time.Instant
 
-class InstantValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<Instant, InstantSource>() {
+internal class InstantValueSourceDataProvider : AbstractAnnotatedParameterDataProvider<Instant, InstantSource>() {
 
     override fun createParameterOptionsData(testParameter: TestParameter): List<Instant?> {
         val instantSource = findAnnotation(testParameter)!!

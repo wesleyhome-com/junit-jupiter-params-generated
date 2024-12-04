@@ -8,7 +8,7 @@ import com.wesleyhome.test.jupiter.step
 import org.junit.jupiter.api.Disabled
 import java.time.Instant
 
-class InstantRangeSourceAbstractParameterDataProviderTest :
+internal class InstantRangeSourceAbstractParameterDataProviderTest :
     AnnotatedDateTimeRangeDataProviderTest<InstantRangeSourceDataProvider, Instant, InstantRangeSource>() {
 
     override val defaultIncrementString: String = "PT1h"

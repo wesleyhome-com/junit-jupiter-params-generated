@@ -6,7 +6,7 @@ import com.wesleyhome.test.jupiter.provider.TestParameter
 import com.wesleyhome.test.jupiter.toLocalDateTime
 import java.time.LocalDateTime
 
-class LocalDateTimeValueSourceDataProvider :
+internal class LocalDateTimeValueSourceDataProvider :
     AbstractAnnotatedParameterDataProvider<LocalDateTime, LocalDateTimeSource>() {
 
     override fun createParameterOptionsData(testParameter: TestParameter): List<LocalDateTime?> {

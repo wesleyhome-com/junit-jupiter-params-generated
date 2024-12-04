@@ -2,7 +2,7 @@ package com.wesleyhome.test.jupiter.provider.number
 
 import java.util.concurrent.atomic.AtomicReference
 
-class DoubleProgression(
+internal class DoubleProgression(
     min: Double,
     max: Double,
     private val step: Double

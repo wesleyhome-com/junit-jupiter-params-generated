@@ -4,7 +4,7 @@ import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.number.DoubleRangeSource
 import com.wesleyhome.test.jupiter.annotations.number.DoubleSource
 
-class DoubleRangeDataProviderTest :
+internal class DoubleRangeDataProviderTest :
     AnnotatedNumberRangeParameterDataProviderTest<DoubleRangeDataProvider, Double, DoubleRangeSource>() {
 
     @GeneratedParametersTest

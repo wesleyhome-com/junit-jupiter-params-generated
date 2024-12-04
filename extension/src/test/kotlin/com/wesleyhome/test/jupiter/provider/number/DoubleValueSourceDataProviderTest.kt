@@ -6,7 +6,7 @@ import com.wesleyhome.test.jupiter.provider.TestParameter
 import com.wesleyhome.test.jupiter.step
 import org.junit.jupiter.api.Test
 
-class DoubleValueSourceDataProviderTest :
+internal class DoubleValueSourceDataProviderTest :
     AnnotatedParameterDataProviderTest<DoubleValueSourceDataProvider, Double, DoubleSource>() {
 
     @Test

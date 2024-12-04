@@ -4,7 +4,7 @@ import com.wesleyhome.test.jupiter.provider.AnnotatedParameterDataProviderTest
 import com.wesleyhome.test.jupiter.provider.TestParameter
 import com.wesleyhome.test.jupiter.step
 
-abstract class AnnotatedNumberRangeParameterDataProviderTest
+internal abstract class AnnotatedNumberRangeParameterDataProviderTest
 <P : AbstractAnnotatedNumberRangeDataProvider<T, A>, T : Number, A : Annotation> :
     AnnotatedParameterDataProviderTest<P, T, A>() {
     protected fun assertParameters(

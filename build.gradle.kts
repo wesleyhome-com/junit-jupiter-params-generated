@@ -14,7 +14,7 @@ extra["isReleaseVersion"] = !version.toString().endsWith("SNAPSHOT")
 
 subprojects {
     val subProjectName = name
-    if(!subProjectName.contains("examples")) {
+    if (!subProjectName.contains("examples")) {
         apply(plugin = "org.jetbrains.dokka")
         tasks.register<Jar>("javadocJar") {
             dependsOn(tasks.dokkaJavadoc)
@@ -41,8 +41,33 @@ subprojects {
         }
     }
 }
+fun isOnCIServer() = System.getenv("CI") == "true"
 tasks.dokkaHtmlMultiModule {
+    doFirst {
+        delete("docs")
+    }
     includes.from("README.md")
+    outputDirectory.set(file("docs"))
+    doLast {
+        if(isOnCIServer()) {
+            exec {
+                commandLine("cmd", "/c", "git", "add", "docs/*")
+            }
+            exec {
+                commandLine(
+                    "cmd",
+                    "/c",
+                    "git",
+                    "commit",
+                    "-m",
+                    """"Updating Documentation for version $versionString""""
+                )
+            }
+            exec {
+                commandLine("cmd", "/c", "git", "push", "origin", "--tags")
+            }
+        }
+    }
 }
 
 tasks.register("clean") {

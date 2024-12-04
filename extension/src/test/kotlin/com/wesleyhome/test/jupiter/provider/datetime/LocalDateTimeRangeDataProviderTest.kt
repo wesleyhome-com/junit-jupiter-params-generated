@@ -7,7 +7,7 @@ import com.wesleyhome.test.jupiter.step
 import com.wesleyhome.test.jupiter.toLocalDateTime
 import java.time.LocalDateTime
 
-class LocalDateTimeRangeDataProviderTest :
+internal class LocalDateTimeRangeDataProviderTest :
     AnnotatedDateTimeRangeDataProviderTest<LocalDateTimeRangeDataProvider, LocalDateTime, LocalDateTimeRangeSource>() {
 
     override val defaultIncrementString: String = "PT1h"

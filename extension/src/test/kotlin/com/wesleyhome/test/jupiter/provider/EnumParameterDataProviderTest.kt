@@ -2,7 +2,8 @@ package com.wesleyhome.test.jupiter.provider
 
 import kotlin.reflect.KClass
 
-class EnumParameterDataProviderTest : ParameterDataProviderTest<EnumParameterDataProvider, Enum<*>>() {
+@Suppress("UNCHECKED_CAST")
+internal class EnumParameterDataProviderTest : ParameterDataProviderTest<EnumParameterDataProvider, Enum<*>>() {
 
     override val parameterType: KClass<Enum<*>> by lazy { StateValue::class as KClass<Enum<*>> }
 

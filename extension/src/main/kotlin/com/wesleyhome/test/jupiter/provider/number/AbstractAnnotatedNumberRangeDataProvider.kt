@@ -6,7 +6,7 @@ import com.wesleyhome.test.jupiter.provider.AbstractAnnotatedParameterDataProvid
 import com.wesleyhome.test.jupiter.provider.TestParameter
 import com.wesleyhome.test.jupiter.step
 
-abstract class AbstractAnnotatedNumberRangeDataProvider<T : Number, A : Annotation> :
+internal abstract class AbstractAnnotatedNumberRangeDataProvider<T : Number, A : Annotation> :
     AbstractAnnotatedParameterDataProvider<T, A>() {
 
     final override fun createParameterOptionsData(testParameter: TestParameter): List<T?> {

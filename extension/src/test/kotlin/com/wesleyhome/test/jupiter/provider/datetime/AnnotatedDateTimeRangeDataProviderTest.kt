@@ -7,7 +7,7 @@ import com.wesleyhome.test.jupiter.provider.TestParameter
 import com.wesleyhome.test.jupiter.temporalAmount
 import java.time.format.DateTimeParseException
 
-abstract class AnnotatedDateTimeRangeDataProviderTest
+internal abstract class AnnotatedDateTimeRangeDataProviderTest
 <P : AbstractAnnotatedDateTimeRangeDataProvider<T, A>, T : Comparable<T>, A : Annotation>
     : AnnotatedParameterDataProviderTest<P, T, A>() {
     open val defaultAscending: Boolean = true

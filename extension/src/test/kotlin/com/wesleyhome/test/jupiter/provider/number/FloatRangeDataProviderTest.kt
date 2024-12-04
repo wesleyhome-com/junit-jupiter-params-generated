@@ -4,7 +4,7 @@ import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.number.FloatRangeSource
 import com.wesleyhome.test.jupiter.annotations.number.FloatSource
 
-class FloatRangeDataProviderTest :
+internal class FloatRangeDataProviderTest :
     AnnotatedNumberRangeParameterDataProviderTest<FloatRangeDataProvider, Float, FloatRangeSource>() {
 
     @GeneratedParametersTest

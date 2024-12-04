@@ -10,7 +10,7 @@ import java.time.temporal.TemporalAmount
 import kotlin.random.Random
 import kotlin.random.nextLong
 
-abstract class AbstractAnnotatedRandomDateTimeDataProvider<T : Comparable<T>, A : Annotation>
+internal abstract class AbstractAnnotatedRandomDateTimeDataProvider<T : Comparable<T>, A : Annotation>
     : AbstractAnnotatedParameterDataProvider<T, A>() {
 
     open val formatPropertyName: String = ""

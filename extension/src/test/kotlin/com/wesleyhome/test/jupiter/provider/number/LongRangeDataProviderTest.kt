@@ -4,7 +4,7 @@ import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.number.LongRangeSource
 import com.wesleyhome.test.jupiter.annotations.number.LongSource
 
-class LongRangeDataProviderTest :
+internal class LongRangeDataProviderTest :
     AnnotatedNumberRangeParameterDataProviderTest<LongRangeDataProvider, Long, LongRangeSource>() {
 
     @GeneratedParametersTest

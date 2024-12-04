@@ -7,7 +7,7 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAmount
 
-class RandomInstanceSourceDataProvider : AbstractAnnotatedRandomDateTimeDataProvider<Instant, RandomInstantSource>() {
+internal class RandomInstanceSourceDataProvider : AbstractAnnotatedRandomDateTimeDataProvider<Instant, RandomInstantSource>() {
 
     override fun getFormatString(annotation: RandomInstantSource): String {
         return ""
@@ -44,4 +44,4 @@ class RandomInstanceSourceDataProvider : AbstractAnnotatedRandomDateTimeDataProv
 
 }
 
-fun String.toInstant(): Instant = Instant.parse(this)
+internal fun String.toInstant(): Instant = Instant.parse(this)
