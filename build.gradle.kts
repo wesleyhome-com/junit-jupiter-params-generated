@@ -43,35 +43,13 @@ subprojects {
 }
 fun isOnCIServer() = System.getenv("CI") == "true"
 tasks.dokkaHtmlMultiModule {
-    doFirst {
-        delete("docs")
-    }
     includes.from("README.md")
     outputDirectory.set(file("docs"))
-    doLast {
-        if(isOnCIServer()) {
-            exec {
-                commandLine("cmd", "/c", "git", "add", "docs/*")
-            }
-            exec {
-                commandLine(
-                    "cmd",
-                    "/c",
-                    "git",
-                    "commit",
-                    "-m",
-                    """"Updating Documentation for version $versionString""""
-                )
-            }
-            exec {
-                commandLine("cmd", "/c", "git", "push", "origin", "--tags")
-            }
-        }
-    }
 }
 
 tasks.register("clean") {
     delete("build")
+    delete("docs")
 }
 
 

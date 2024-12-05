@@ -1,6 +1,6 @@
 # JUnit Jupiter Parameterized Test Extension
 
-This project provides a powerful extension for JUnit Jupiter to enhance parameterized testing capabilities. It offers a flexible and type-safe way to generate test data for various parameter types, including numbers, dates, times, and enums.
+This project provides a powerful extension for JUnit Jupiter to enhance parameterized testing capabilities. It offers a flexible and type-safe way to generate test data for various parameter types, including numbers, dates, times, string, and enums.
 
 The JUnit Jupiter Parameterized Test Extension simplifies the process of creating comprehensive test suites by automating the generation of test data. This allows developers to focus on writing test logic while the extension handles the complexities of data provision.
 
@@ -58,7 +58,6 @@ The extension provides various annotations for different parameter types:
 - `@IntRangeSource`, `@LongRangeSource`, `@DoubleRangeSource`, `@FloatRangeSource`: For numeric ranges
 - `@InstantRangeSource`, `@LocalDateRangeSource`, `@LocalDateTimeRangeSource`, `@LocalTimeRangeSource`: For date and time ranges
 - `@StringSource`: For string values
-- `@EnumSource`: For enum values
 - `@InstantSource`, `@LocalDateSource`, `@LocalDateTimeSource`, `@LocalTimeSource`: For specific date and time values
 - `@RandomInstantSource`: For generating random Instant values
 - `@IntSource`, `@LongSource`, `@DoubleSource`, `@FloatSource`: For specific numeric values
@@ -76,6 +75,13 @@ fun testIntRange(@IntRangeSource(min = 1, max = 100, step = 10) value: Int) {
 }
 ```
 
+```java
+@GeneratedParametersTest
+void testIntRange(@IntRangeSource(min = 1, max = 100, step = 10) int value) {
+    assertTrue(value >= 1 && value <= 100 && (value - 1) % 10 == 0);
+}
+```
+
 2. Testing with date ranges:
 
 ```kotlin
@@ -85,12 +91,26 @@ fun testDateRange(@LocalDateRangeSource(min = "2023-01-01", max = "2023-12-31") 
 }
 ```
 
+```java
+@GeneratedParametersTest
+void testDateRange(@LocalDateRangeSource(min = "2023-01-01", max = "2023-12-31") LocalDate date) {
+    assertEquals(2023, date.getYear());
+}
+```
+
 3. Testing with enum values:
 
 ```kotlin
 @GeneratedParametersTest
-fun testEnumValues(@EnumSource(TestEnum::class) value: TestEnum) {
+fun testEnumValues(value: TestEnum) {
     assertNotNull(value)
+}
+```
+
+```java
+@GeneratedParametersTest
+void testEnumValues(TestEnum value) {
+    assertNotNull(value);
 }
 ```
 

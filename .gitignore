@@ -16,3 +16,4 @@ build/
 /buildSrc/.gradle/buildOutputCleanup/outputFiles.bin
 /buildSrc/.gradle/file-system.probe
 /buildSrc/.gradle/
+/docs/**
