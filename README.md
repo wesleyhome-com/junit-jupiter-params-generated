@@ -123,7 +123,7 @@ The JUnit Jupiter Parameterized Test Extension includes an annotation processor 
 To use the annotation processor, add the following dependency to your project:
 
 ```gradle
-annotationProcessor("com.wesleyhome:junit-jupiter-params-generated-processor:1.0.0")
+annotationProcessor("com.wesleyhome:junit-jupiter-params-generated-processor:3.0.0")
 ```
 
 For Maven projects, add the following to your `pom.xml`:
@@ -132,7 +132,7 @@ For Maven projects, add the following to your `pom.xml`:
 <dependency>
     <groupId>com.wesleyhome</groupId>
     <artifactId>junit-jupiter-params-generated-processor</artifactId>
-    <version>1.0.0</version>
+    <version>3.0.0</version>
     <scope>provided</scope>
 </dependency>
 ```
