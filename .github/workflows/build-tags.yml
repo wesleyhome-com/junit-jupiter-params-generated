@@ -3,7 +3,7 @@ name: Build Tags Gradle project
 on:
   push:
     tags:
-      - '*'
+      - '**'
 permissions:
   contents: read
   pages: write
