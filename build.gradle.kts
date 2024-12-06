@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.wesleyhome.test"
-val versionString = providers.gradleProperty("version").get()
+var versionString = providers.gradleProperty("version").get()
 version = versionString
 description = "junit-jupiter-params-generated"
 extra["isReleaseVersion"] = !version.toString().endsWith("SNAPSHOT")
@@ -61,10 +61,36 @@ nexusPublishing {
     }
 }
 
+task("release") {
+    doFirst {
+        val currentVersion = versionString.toString()
+        val isSnapshot = currentVersion.endsWith("-SNAPSHOT")
+        val nextVersion = if (isSnapshot) {
+            currentVersion.removeSuffix("-SNAPSHOT")
+        } else {
+            val versionParts = currentVersion.split(".")
+            val lastVersion = versionParts.last()
+            versionParts.subList(0, versionParts.size - 1)
+                .plus((lastVersion.toInt() + 1).toString())
+                .joinToString(separator = ".")
+        }
+        versionString = nextVersion
+        releaseVersion(nextVersion)
+    }
+}
+
+fun releaseVersion(version: String) {
+    val propsFile = File("gradle.properties")
+    propsFile.bufferedWriter().use {
+        it.write("version=$version%n".format())
+    }
+}
+
 task<Copy>("updateReadme") {
+    println(versionString)
     doNotTrackState("This task does not support up-to-date checks.")
     from("README.template.md")
     into(".")
     rename { "README.md" }
-    expand(mapOf("version" to project.version))
+    expand(mapOf("version" to versionString))
 }
