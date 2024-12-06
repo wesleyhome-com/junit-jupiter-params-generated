@@ -1,4 +1,4 @@
-name: Build Tags Gradle project
+name: Build Gradle project
 
 on:
   push:
