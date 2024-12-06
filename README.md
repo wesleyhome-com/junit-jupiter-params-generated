@@ -26,7 +26,7 @@ Key Files:
 To use this extension in your JUnit Jupiter tests, add the following dependency to your project:
 
 ```gradle
-testImplementation("com.wesleyhome:junit-jupiter-params-generated:1.0.0")
+testImplementation("com.wesleyhome:junit-jupiter-params-generated:3.0.0")
 ```
 
 Ensure you have JUnit Jupiter 5.7.0 or later in your project dependencies.
