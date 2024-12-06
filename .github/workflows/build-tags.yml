@@ -10,7 +10,7 @@ permissions:
   id-token: write
 
 jobs:
-  build-snapshot-gradle-project:
+  build-tags-gradle-project:
     runs-on: ubuntu-latest
     env:
       ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPE_USERNAME }}
