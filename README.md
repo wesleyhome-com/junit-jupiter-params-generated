@@ -4,21 +4,6 @@ This project provides a powerful extension for JUnit Jupiter to enhance paramete
 
 The JUnit Jupiter Parameterized Test Extension simplifies the process of creating comprehensive test suites by automating the generation of test data. This allows developers to focus on writing test logic while the extension handles the complexities of data provision.
 
-## Repository Structure
-
-The repository is organized into several key directories:
-
-- `annotation-processor`: Contains the annotation processor for validating at compile-time.
-- `docs`: Holds the documentation files, including API references and usage guides.
-- `examples`: Provides sample code demonstrating how to use the extension.
-- `extension`: Contains the core extension code, including data providers and test generators.
-- `validation`: Includes validation logic for the generated test data.
-
-Key Files:
-- `gradlew` and `gradlew.bat`: Gradle wrapper scripts for building the project.
-- `renovate.json`: Configuration file for the Renovate dependency update bot.
-- `settings.gradle.kts`: Gradle settings file for the project.
-
 ## Usage Instructions
 
 ### Installation
@@ -26,13 +11,15 @@ Key Files:
 To use this extension in your JUnit Jupiter tests, add the following dependency to your project:
 
 ```gradle
-testImplementation("com.wesleyhome:junit-jupiter-params-generated:<latestVersion>")
+dependencies {
+    testImplementation("com.wesleyhome.test:junit-jupiter-params-generated:<latestVersion>")
+}
 ```
 For Maven projects, add the following to your `pom.xml`:
 
 ```xml
 <dependency>
-    <groupId>com.wesleyhome</groupId>
+    <groupId>com.wesleyhome.test</groupId>
     <artifactId>junit-jupiter-params-generated</artifactId>
     <version>${<latestVersion>}</version>
     <scope>provided</scope>
@@ -40,7 +27,7 @@ For Maven projects, add the following to your `pom.xml`:
 ```
 
 
-Ensure you have JUnit Jupiter 5.7.0 or later in your project dependencies.
+Ensure you have JUnit Jupiter 5.11.4 or later in your project dependencies.
 
 ### Getting Started
 

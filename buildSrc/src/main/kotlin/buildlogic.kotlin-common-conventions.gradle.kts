@@ -7,6 +7,7 @@ plugins {
     `java-library`
     `maven-publish`
     signing
+    id("org.jetbrains.dokka-javadoc")
 }
 group = "com.wesleyhome.test"
 val versionString = providers.gradleProperty("version").get()
@@ -16,6 +17,11 @@ repositories {
     // Use Maven Central for resolving dependencies.
     mavenLocal()
     mavenCentral()
+}
+val dokkaJavadocJar: Jar by tasks.register<Jar>("javadocJar") {
+    dependsOn(tasks.dokkaGenerateModuleJavadoc)
+    from(tasks.dokkaGenerateModuleJavadoc.flatMap { it.outputDirectory })
+    archiveClassifier.set("javadoc")
 }
 
 kotlin {
@@ -44,6 +50,7 @@ publishing {
 
         create<MavenPublication>("mavenJava") {
             from(components["java"])
+            artifact(dokkaJavadocJar)
             pom {
                 this.description.set(description)
                 this.name = "Generated JUnit Jupiter Parameters"

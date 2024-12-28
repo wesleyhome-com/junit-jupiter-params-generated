@@ -4,6 +4,7 @@
 plugins {
     id("buildlogic.kotlin-common-conventions")
     jacoco
+    id("org.jetbrains.dokka")
 }
 
 dependencies {
@@ -17,6 +18,15 @@ dependencies {
     testImplementation("io.mockk:mockk:1.13.14")
     testImplementation("org.assertj:assertj-core:3.27.0")
     testImplementation("com.willowtreeapps.assertk:assertk:0.28.1")
+}
+
+dokka {
+    dokkaSourceSets {
+        main {
+            val paths = "$rootDir/examples/src/main/kotlin/examples/Examples.kt"
+            samples.from(paths)
+        }
+    }
 }
 
 tasks.test {
