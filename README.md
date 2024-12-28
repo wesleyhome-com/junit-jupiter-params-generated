@@ -26,7 +26,7 @@ Key Files:
 To use this extension in your JUnit Jupiter tests, add the following dependency to your project:
 
 ```gradle
-testImplementation("com.wesleyhome:junit-jupiter-params-generated:3.0.1")
+testImplementation("com.wesleyhome:junit-jupiter-params-generated:<latestVersion>")
 ```
 For Maven projects, add the following to your `pom.xml`:
 
@@ -34,7 +34,7 @@ For Maven projects, add the following to your `pom.xml`:
 <dependency>
     <groupId>com.wesleyhome</groupId>
     <artifactId>junit-jupiter-params-generated</artifactId>
-    <version>3.0.1</version>
+    <version>${<latestVersion>}</version>
     <scope>provided</scope>
 </dependency>
 ```
@@ -134,7 +134,7 @@ The JUnit Jupiter Parameterized Test Extension includes an annotation processor 
 To use the annotation processor, add the following dependency to your project:
 
 ```gradle
-annotationProcessor("com.wesleyhome:junit-jupiter-params-generated-processor:3.0.1")
+annotationProcessor("com.wesleyhome:junit-jupiter-params-generated-processor:3.0.0-SNAPSHOT")
 ```
 
 For Maven projects, add the following to your `pom.xml`:
@@ -143,7 +143,7 @@ For Maven projects, add the following to your `pom.xml`:
 <dependency>
     <groupId>com.wesleyhome</groupId>
     <artifactId>junit-jupiter-params-generated-processor</artifactId>
-    <version>3.0.1</version>
+    <version>3.0.0-SNAPSHOT</version>
     <scope>provided</scope>
 </dependency>
 ```

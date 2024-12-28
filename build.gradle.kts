@@ -4,6 +4,7 @@ import org.jetbrains.dokka.gradle.DokkaTaskPartial
 plugins {
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
     id("org.jetbrains.dokka") version "2.0.0"
+    id("net.researchgate.release") version "3.1.0"
 }
 
 group = "com.wesleyhome.test"
@@ -26,32 +27,37 @@ subprojects {
                 enabled = false
             }
         } else {
-            dependencies {
-                dokkaHtmlPlugin("org.jetbrains.dokka:versioning-plugin:1.9.20")
-            }
             tasks.withType<DokkaTaskPartial>().configureEach {
                 dokkaSourceSets {
                     configureEach {
                         val paths = "$rootDir/examples/src/main/kotlin/examples/Examples.kt"
                         samples.from(paths)
-                        displayName = subProjectName.split("-").map { it.capitalized() }.joinToString(separator = " ")
+                        displayName = subProjectName.split("-").joinToString(separator = " ") { it.capitalized() }
                     }
                 }
             }
         }
     }
 }
-fun isOnCIServer() = System.getenv("CI") == "true"
+
+release {
+    tagTemplate = "'$name-$version'"
+
+}
+
+
+
 tasks.dokkaHtmlMultiModule {
     includes.from("README.md")
-    outputDirectory.set(file("docs"))
+    outputDirectory = projectDir.resolve("docs")
 }
 
-tasks.register("clean") {
-    delete("build")
-    delete("docs")
+tasks.named("clean") {
+    doLast {
+        delete("build")
+        delete("docs")
+    }
 }
-
 
 repositories { mavenCentral() }
 
@@ -59,38 +65,4 @@ nexusPublishing {
     this.repositories {
         sonatype()
     }
-}
-
-task("release") {
-    doFirst {
-        val currentVersion = versionString.toString()
-        val isSnapshot = currentVersion.endsWith("-SNAPSHOT")
-        val nextVersion = if (isSnapshot) {
-            currentVersion.removeSuffix("-SNAPSHOT")
-        } else {
-            val versionParts = currentVersion.split(".")
-            val lastVersion = versionParts.last()
-            versionParts.subList(0, versionParts.size - 1)
-                .plus((lastVersion.toInt() + 1).toString())
-                .joinToString(separator = ".")
-        }
-        versionString = nextVersion
-        releaseVersion(nextVersion)
-    }
-}
-
-fun releaseVersion(version: String) {
-    val propsFile = File("gradle.properties")
-    propsFile.bufferedWriter().use {
-        it.write("version=$version%n".format())
-    }
-}
-
-task<Copy>("updateReadme") {
-    println(versionString)
-    doNotTrackState("This task does not support up-to-date checks.")
-    from("README.template.md")
-    into(".")
-    rename { "README.md" }
-    expand(mapOf("version" to versionString))
 }
