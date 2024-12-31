@@ -210,7 +210,14 @@ To create a custom data provider:
 
 Example:
 
+
 ```kotlin
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+@SourceProvider(CustomSourceDataProvider::class)
+@MustBeDocumented
+annotation class CustomSource(val min: Int, val max: Int, val step: Int) : Annotation
+
 class CustomSourceDataProvider : ParameterDataProvider<Int> {
 
     override fun createParameterOptionsData(testParameter: TestParameter): List<Int> {
