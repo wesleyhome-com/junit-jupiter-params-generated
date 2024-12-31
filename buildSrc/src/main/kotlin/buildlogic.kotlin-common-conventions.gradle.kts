@@ -54,7 +54,7 @@ publishing {
             pom {
                 this.description.set(description)
                 this.name = "Generated JUnit Jupiter Parameters"
-                this.url = "https://github.com/justin-wesley/junit-jupiter-params-generated"
+                this.url = "https://junit-params.wesleyhome.com/"
                 scm {
                     connection = "scm:git:https://github.com/justin-wesley/junit-jupiter-params-generated.git"
                     developerConnection = "scm:git:https://github.com/justin-wesley/junit-jupiter-params-generated.git"
