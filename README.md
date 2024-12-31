@@ -200,9 +200,6 @@ To create a custom annotation:
 
 Example:
 
-```kotlin
-
-
 ### Creating a Custom Data Provider
 
 To create a custom data provider:
