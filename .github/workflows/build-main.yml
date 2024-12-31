@@ -25,7 +25,7 @@ jobs:
           java-version: '17'
           distribution: 'corretto'
       - name: Run build with Gradle Wrapper
-        run: ./gradlew build javadocJar dokkaHtmlMultiModule publishToSonatype closeAndReleaseSonatypeStagingRepository
+        run: ./gradlew build javadocJar dokkaGenerate publishToSonatype closeAndReleaseSonatypeStagingRepository
       - name: Update documentation
         uses: actions/upload-pages-artifact@v3
         with:
