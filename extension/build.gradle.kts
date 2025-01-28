@@ -13,10 +13,10 @@ dependencies {
     implementation(kotlin("reflect"))
     implementation(kotlin("stdlib"))
     testRuntimeOnly(libs.junit.platform.launcher)
-    testImplementation("org.mockito:mockito-core:5.14.2")
-    testImplementation("org.mockito:mockito-junit-jupiter:5.14.2")
-    testImplementation("io.mockk:mockk:1.13.14")
-    testImplementation("org.assertj:assertj-core:3.27.1")
+    testImplementation("org.mockito:mockito-core:5.15.2")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.15.2")
+    testImplementation("io.mockk:mockk:1.13.16")
+    testImplementation("org.assertj:assertj-core:3.27.3")
     testImplementation("com.willowtreeapps.assertk:assertk:0.28.1")
 }
 
