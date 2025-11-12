@@ -4,7 +4,7 @@
 
 plugins {
     id("buildlogic.kotlin-common-conventions")
-    id("com.google.devtools.ksp") version "2.1.20-1.0.31"
+    id("com.google.devtools.ksp") version "2.3.2"
 }
 
 dependencies {
