@@ -17,3 +17,4 @@ build/
 /buildSrc/.gradle/file-system.probe
 /buildSrc/.gradle/
 /docs/**
+/buildSrc/.kotlin/
