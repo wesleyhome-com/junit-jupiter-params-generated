@@ -32,7 +32,7 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
     override fun provideTestTemplateInvocationContexts(extensionContext: ExtensionContext): Stream<TestTemplateInvocationContext> {
         val methodContext =
             getStore(extensionContext).get(METHOD_CONTEXT_KEY, GeneratedParametersTestMethodContext::class.java)
-        val arguments = methodContext.generator.arguments()
+        val arguments = methodContext?.generator?.arguments() ?: emptyList()
         val invocationCount = AtomicInteger(0)
         return StreamSupport.stream(arguments.spliterator(), false)
             .map {

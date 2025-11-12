@@ -7,7 +7,7 @@ import org.junit.jupiter.api.extension.ParameterResolver
 import org.junit.jupiter.api.extension.TestTemplateInvocationContext
 
 internal class GeneratedParametersTestInvocationContext(
-    private val arguments: List<Any>
+    private val arguments: List<Any?>
 ) : TestTemplateInvocationContext {
 
     override fun getDisplayName(invocationIndex: Int): String {
@@ -24,7 +24,7 @@ internal class GeneratedParametersTestInvocationContext(
             override fun resolveParameter(
                 parameterContext: ParameterContext,
                 extensionContext: ExtensionContext
-            ): Any {
+            ): Any? {
                 return arguments[parameterContext.index]
             }
 
