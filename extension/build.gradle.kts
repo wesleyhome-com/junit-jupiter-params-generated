@@ -15,7 +15,7 @@ dependencies {
     testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation("org.mockito:mockito-core:5.20.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.20.0")
-    testImplementation("io.mockk:mockk:1.14.6")
+    testImplementation("io.mockk:mockk:1.14.7")
     testImplementation("org.assertj:assertj-core:3.27.6")
     testImplementation("com.willowtreeapps.assertk:assertk:0.28.1")
 }
