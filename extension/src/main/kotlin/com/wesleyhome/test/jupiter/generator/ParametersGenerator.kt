@@ -25,7 +25,7 @@ internal class ParametersGenerator(
                 if (sourceProvider != null) {
                     val providerClass: KClass<*> = sourceProvider.value
                     if (providerClass.isSubclassOf(ParameterDataProvider::class)) {
-                        createInstance(className, providerClass as KClass<ParameterDataProvider<Any?>>)
+                        createInstance(className, providerClass as KClass<ParameterDataProvider<Any>>)
                     } else {
                         throw InvalidParameterException(testParameter)
                     }
