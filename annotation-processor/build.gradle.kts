@@ -8,5 +8,5 @@ plugins {
 dependencies {
     implementation(project(":validation"))
     implementation(project(":junit-jupiter-params-generated"))
-    implementation("com.google.devtools.ksp:symbol-processing-api:2.3.3")
+    implementation("com.google.devtools.ksp:symbol-processing-api:2.3.4")
 }
