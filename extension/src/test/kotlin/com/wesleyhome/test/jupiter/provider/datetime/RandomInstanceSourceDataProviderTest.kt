@@ -8,6 +8,8 @@ import com.wesleyhome.test.jupiter.annotations.validation.datetime.TruncateChron
 import com.wesleyhome.test.jupiter.provider.AnnotatedParameterDataProviderTest
 import com.wesleyhome.test.jupiter.provider.TestParameter
 import com.wesleyhome.test.jupiter.temporalAmount
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.time.ZonedDateTime
 
@@ -103,6 +105,22 @@ internal class RandomInstanceSourceDataProviderTest :
             10,
             TruncateChronoUnit.SECONDS
         )
+    }
+
+    @Test
+    fun randomSourceIsDeterministicForSameInputs() {
+        val testParameter = createAnnotatedTestParameter(
+            "2024-06-01T12:00:00Z",
+            "2024-06-02T12:00:00Z",
+            false,
+            10,
+            TruncateChronoUnit.SECONDS
+        )
+
+        val first = provider.createParameterOptionsData(testParameter)
+        val second = provider.createParameterOptionsData(testParameter)
+
+        assertThat(first).containsExactlyElementsOf(second)
     }
 }
 

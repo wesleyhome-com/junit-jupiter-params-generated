@@ -13,6 +13,10 @@ import kotlin.random.nextLong
 internal abstract class AbstractAnnotatedRandomDateTimeDataProvider<T : Comparable<T>, A : Annotation>
     : AbstractAnnotatedParameterDataProvider<T, A>() {
 
+    companion object {
+        private const val DEFAULT_RANDOM_SEED: Long = 32416190071L
+    }
+
     open val formatPropertyName: String = ""
 
     final override fun createParameterOptionsData(testParameter: TestParameter): List<T?> {
@@ -45,8 +49,9 @@ internal abstract class AbstractAnnotatedRandomDateTimeDataProvider<T : Comparab
             max = temp
         }
         val range = longRange(min..max)
+        val random = Random(DEFAULT_RANDOM_SEED)
         return (1..size)
-            .map { Random.nextLong(range) }
+            .map { random.nextLong(range) }
             .map { it -> convert(it) }
             .toList()
     }
