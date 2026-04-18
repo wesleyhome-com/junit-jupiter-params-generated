@@ -138,6 +138,33 @@ Practical guidance:
 | Range/date convenience | Manual list/stream construction | Built-in numeric and date/time sources |
 | Compile-time validation | Limited by default | Supported via optional annotation processor |
 
+### `@CsvSource` vs Generated Parameters
+
+`@CsvSource` for a range-style check:
+
+```java
+@ParameterizedTest
+@CsvSource({
+    "1,true",
+    "2,true",
+    "3,true",
+    "4,true",
+    "5,true"
+})
+void valuesAreInRange(int value, boolean expected) {
+    assertEquals(expected, value >= 1 && value <= 5);
+}
+```
+
+Equivalent generated-parameter test:
+
+```java
+@GeneratedParametersTest
+void valuesAreInRange(@IntRangeSource(min = 1, max = 5) int value) {
+    assertTrue(value >= 1 && value <= 5);
+}
+```
+
 ## Annotation Processor
 
 The optional annotation processor validates supported annotation configurations at compile time.
