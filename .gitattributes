@@ -1,0 +1,6 @@
+# Default to LF for text files in this repository.
+* text=auto eol=lf
+
+# Keep Windows command scripts CRLF for compatibility.
+*.bat text eol=crlf
+*.cmd text eol=crlf
