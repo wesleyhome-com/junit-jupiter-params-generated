@@ -140,28 +140,35 @@ Practical guidance:
 
 ### `@CsvSource` vs Generated Parameters
 
-`@CsvSource` for a range-style check:
+`@CsvSource` for a combinatorial check requires manually listing every pair:
 
 ```java
 @ParameterizedTest
 @CsvSource({
-    "1,true",
-    "2,true",
-    "3,true",
-    "4,true",
-    "5,true"
+    "1,10",
+    "1,20",
+    "1,30",
+    "2,10",
+    "2,20",
+    "2,30",
+    "3,10",
+    "3,20",
+    "3,30"
 })
-void valuesAreInRange(int value, boolean expected) {
-    assertEquals(expected, value >= 1 && value <= 5);
+void multipliesAllPairs(int left, int right) {
+    assertTrue((left * right) > 0);
 }
 ```
 
-Equivalent generated-parameter test:
+Equivalent generated-parameter test (same 3 x 3 Cartesian product, no manual tuple list):
 
 ```java
 @GeneratedParametersTest
-void valuesAreInRange(@IntRangeSource(min = 1, max = 5) int value) {
-    assertTrue(value >= 1 && value <= 5);
+void multipliesAllPairs(
+    @IntRangeSource(min = 1, max = 3) int left,
+    @IntRangeSource(min = 10, max = 30, increment = 10) int right
+) {
+    assertTrue((left * right) > 0);
 }
 ```
 
