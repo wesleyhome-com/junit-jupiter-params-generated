@@ -52,11 +52,15 @@ Maven:
 </dependency>
 ```
 
-## Supported Runtime
+## Compatibility Matrix
 
-- Java: 17+
-- Kotlin/JVM: 2.3.x
-- JUnit Jupiter: 6.0.3+
+| Component | Supported |
+| --- | --- |
+| Java | 17+ |
+| Kotlin/JVM | 2.3.x |
+| JUnit Jupiter | 6.0.3+ |
+| Gradle | Supported (`testImplementation`, optional `ksp`) |
+| Maven | Supported (`test` scope for extension) |
 
 ## Getting Started
 
@@ -104,6 +108,14 @@ fun combinations(
 
 CI warning: two larger ranges can multiply quickly (for example, `100 x 100 = 10,000` invocations).
 
+## Generated vs Random Values
+
+- Range and explicit-value sources are deterministic by definition.
+- `@RandomInstantSource` is deterministic by default in this library (fixed internal seed).
+- Invocation display names include resolved argument values, so failures show the generated value directly.
+
+Because random generation is deterministic by default, rerunning the same test configuration reproduces the same sequence.
+
 ## Performance and Memory
 
 Generation model:
@@ -116,6 +128,15 @@ Practical guidance:
 - Keep ranges intentional.
 - Prefer smaller random `size` values.
 - Split high-cardinality tests into targeted suites.
+
+## Why Not `@MethodSource`?
+
+| Concern | `@MethodSource` | Generated Sources |
+| --- | --- | --- |
+| Boilerplate | Requires separate provider methods | Inlined annotation configuration |
+| Type safety | Depends on method return wiring | Annotation-driven parameter typing |
+| Range/date convenience | Manual list/stream construction | Built-in numeric and date/time sources |
+| Compile-time validation | Limited by default | Supported via optional annotation processor |
 
 ## Annotation Processor
 
