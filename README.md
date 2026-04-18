@@ -1,202 +1,147 @@
 # JUnit Jupiter Parameterized Test Extension
 
-This project provides a powerful extension for JUnit Jupiter to enhance parameterized testing capabilities. It offers a flexible and type-safe way to generate test data for various parameter types, including numbers, dates, times, string, and enums.
+This project extends JUnit Jupiter parameterized tests with generated parameter values for numbers, date/time types, strings, booleans, and enums.
 
-The JUnit Jupiter Parameterized Test Extension simplifies the process of creating comprehensive test suites by automating the generation of test data. This allows developers to focus on writing test logic while the extension handles the complexities of data provision.
+It is designed to reduce `@MethodSource` boilerplate while preserving type safety and adding compile-time validation for supported annotations.
 
-## Usage Instructions
+## Installation
 
-### Installation
+### Runtime Extension
 
-To use this extension in your JUnit Jupiter tests, add the following dependency to your project:
+Gradle:
 
-```gradle
+```kotlin
 dependencies {
     testImplementation("com.wesleyhome.test:junit-jupiter-params-generated:<latestVersion>")
 }
 ```
-For Maven projects, add the following to your `pom.xml`:
+
+Maven:
 
 ```xml
 <dependency>
     <groupId>com.wesleyhome.test</groupId>
     <artifactId>junit-jupiter-params-generated</artifactId>
-    <version>${<latestVersion>}</version>
+    <version>${latestVersion}</version>
+    <scope>test</scope>
+</dependency>
+```
+
+### Annotation Processor (Optional, recommended)
+
+Gradle (KSP):
+
+```kotlin
+plugins {
+    id("com.google.devtools.ksp") version "<kspVersion>"
+}
+
+dependencies {
+    ksp("com.wesleyhome.test:annotation-processor:<latestVersion>")
+}
+```
+
+Maven:
+
+```xml
+<dependency>
+    <groupId>com.wesleyhome.test</groupId>
+    <artifactId>annotation-processor</artifactId>
+    <version>${latestVersion}</version>
     <scope>provided</scope>
 </dependency>
 ```
 
+## Supported Runtime
 
-Ensure you have JUnit Jupiter 5.11.4 or later in your project dependencies.
+- Java: 17+
+- Kotlin/JVM: 2.3.x
+- JUnit Jupiter: 6.0.3+
 
-### Getting Started
-
-1. Import the necessary annotations and classes:
+## Getting Started
 
 ```kotlin
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource
-```
+import kotlin.test.assertTrue
 
-2. Create a test method using the `@GeneratedParametersTest` annotation:
-
-```kotlin
 @GeneratedParametersTest
 fun testWithGeneratedParameters(@IntRangeSource(min = 1, max = 10) value: Int) {
     assertTrue(value in 1..10)
 }
 ```
 
-3. Run your tests as usual with JUnit Jupiter.
+## Core Sources
 
-### Configuration Options
+- Numeric ranges: `@IntRangeSource`, `@LongRangeSource`, `@DoubleRangeSource`, `@FloatRangeSource`
+- Numeric explicit values: `@IntSource`, `@LongSource`, `@DoubleSource`, `@FloatSource`
+- Date/time ranges: `@InstantRangeSource`, `@LocalDateRangeSource`, `@LocalDateTimeRangeSource`, `@LocalTimeRangeSource`
+- Date/time explicit values: `@InstantSource`, `@LocalDateSource`, `@LocalDateTimeSource`, `@LocalTimeSource`
+- Random date/time: `@RandomInstantSource`
+- Other types: `@StringSource`, enums, booleans
 
-The extension provides various annotations for different parameter types:
+## Parameter Combinations
 
-- `@IntRangeSource`, `@LongRangeSource`, `@DoubleRangeSource`, `@FloatRangeSource`: For numeric ranges
-- `@InstantRangeSource`, `@LocalDateRangeSource`, `@LocalDateTimeRangeSource`, `@LocalTimeRangeSource`: For date and time ranges
-- `@StringSource`: For string values
-- `@InstantSource`, `@LocalDateSource`, `@LocalDateTimeSource`, `@LocalTimeSource`: For specific date and time values
-- `@RandomInstantSource`: For generating random Instant values
-- `@IntSource`, `@LongSource`, `@DoubleSource`, `@FloatSource`: For specific numeric values
+When multiple parameters are generated, the extension uses a **Cartesian product**.
 
-Each annotation has specific configuration options. Refer to the documentation for detailed information on each annotation.
+Invocation count:
 
-### Common Use Cases
+```text
+totalInvocations = product(parameterOptionCounts)
+```
 
-1. Testing with a range of integers:
+Example:
 
 ```kotlin
 @GeneratedParametersTest
-fun testIntRange(@IntRangeSource(min = 1, max = 100, step = 10) value: Int) {
-    assertTrue(value in 1..100 step 10)
+fun combinations(
+    @IntRangeSource(min = 1, max = 3) first: Int,      // 3 values
+    @IntRangeSource(min = 10, max = 12) second: Int    // 3 values
+) {
+    // Runs 9 times (3 * 3)
 }
 ```
 
-```java
-@GeneratedParametersTest
-void testIntRange(@IntRangeSource(min = 1, max = 100, step = 10) int value) {
-    assertTrue(value >= 1 && value <= 100 && (value - 1) % 10 == 0);
-}
-```
+CI warning: two larger ranges can multiply quickly (for example, `100 x 100 = 10,000` invocations).
 
-2. Testing with date ranges:
+## Performance and Memory
 
-```kotlin
-@GeneratedParametersTest
-fun testDateRange(@LocalDateRangeSource(min = "2023-01-01", max = "2023-12-31") date: LocalDate) {
-    assertTrue(date.year == 2023)
-}
-```
+Generation model:
 
-```java
-@GeneratedParametersTest
-void testDateRange(@LocalDateRangeSource(min = "2023-01-01", max = "2023-12-31") LocalDate date) {
-    assertEquals(2023, date.getYear());
-}
-```
+- Parameter value lists are generated eagerly per parameter.
+- Test invocations are iterated lazily across the Cartesian product.
 
-3. Testing with enum values:
+Practical guidance:
 
-```kotlin
-@GeneratedParametersTest
-fun testEnumValues(value: TestEnum) {
-    assertNotNull(value)
-}
-```
-
-```java
-@GeneratedParametersTest
-void testEnumValues(TestEnum value) {
-    assertNotNull(value);
-}
-```
+- Keep ranges intentional.
+- Prefer smaller random `size` values.
+- Split high-cardinality tests into targeted suites.
 
 ## Annotation Processor
 
-The JUnit Jupiter Parameterized Test Extension includes an annotation processor that can be used for compile-time validation of your test parameters. This helps catch potential issues early in the development process, improving the overall quality and reliability of your tests.
+The optional annotation processor validates supported annotation configurations at compile time.
 
-### Setting up the Annotation Processor
-
-To use the annotation processor, add the following dependency to your project:
-
-```gradle
-annotationProcessor("com.wesleyhome:junit-jupiter-params-generated-processor:<latestVersion>")
-```
-
-For Maven projects, add the following to your `pom.xml`:
-
-```xml
-<dependency>
-    <groupId>com.wesleyhome</groupId>
-    <artifactId>junit-jupiter-params-generated-processor</artifactId>
-    <version>${<latestVersion>}</version>
-    <scope>provided</scope>
-</dependency>
-```
-
-### Using the Annotation Processor
-
-The annotation processor automatically validates the usage of parameter annotations in your test classes. Here's an example of how it works with Java:
+Example (compile-time error when `min > max`):
 
 ```java
-import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest;
-import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource;
-import org.junit.jupiter.api.Assertions;
-
-public class AnnotationProcessorExampleTest {
-
-    @GeneratedParametersTest
-    void testWithValidRange(@IntRangeSource(min = 1, max = 10) int value) {
-        Assertions.assertTrue(value >= 1 && value <= 10);
-    }
-
-    @GeneratedParametersTest
-    void testWithInvalidRange(@IntRangeSource(min = 10, max = 1) int value) {
-        // This will cause a compile-time error
-        Assertions.fail("This test should not compile");
-    }
+@GeneratedParametersTest
+void invalid(@IntRangeSource(min = 10, max = 1) int value) {
 }
 ```
 
-In the example above, the second test method will cause a compile-time error because the `min` value is greater than the `max` value in the `@IntRangeSource` annotation. The annotation processor detects this issue and reports it during compilation, preventing invalid test configurations from making it into your test suite.
-
-### Benefits of Using the Annotation Processor
-
-1. Early detection of configuration errors
-2. Improved test reliability
-3. Faster feedback loop during development
-4. Reduced runtime errors related to parameter generation
-
-By leveraging the annotation processor, you can ensure that your parameterized tests are correctly configured before they are even executed, saving time and improving the overall quality of your test suite.
-
 ## Data Flow
 
-The JUnit Jupiter Parameterized Test Extension processes test methods in the following way:
-
-1. The `@GeneratedParametersTest` annotation is detected by JUnit Jupiter.
-2. The extension scans the test method parameters for supported annotations.
-3. For each annotated parameter, the corresponding data provider is invoked to generate test data.
-4. The generated data is used to create test invocations, each with a unique set of parameter values.
-5. JUnit Jupiter executes the test method for each set of generated parameter values.
-
-```
-[Test Method] -> [Parameter Scan] -> [Data Generation] -> [Test Invocations] -> [Test Execution]
+```text
+[Test Method] -> [Parameter Scan] -> [Per-Parameter Data Generation] -> [Invocation Iteration] -> [Test Execution]
 ```
 
-This flow allows for efficient and flexible parameterized testing, with the extension handling the complexities of data generation and test invocation.
+## Custom Annotations and Providers
 
-## Creating Custom Annotations and Data Providers
+You can create custom providers by:
 
-The JUnit Jupiter Parameterized Test Extension is designed to be extensible, allowing developers to create custom annotations and data providers for specific testing needs. This section explains how to create your own annotations and corresponding data providers.
-
-### Creating a Custom Annotation
-
-To create a custom annotation:
-
-1. Define a new annotation class in your project.
-2. Annotate your custom annotation with `@Target(AnnotationTarget.VALUE_PARAMETER)` to specify that it can be used on method parameters.
-3. Add any necessary attributes to your annotation.
+1. Defining a parameter annotation.
+2. Mapping it with `@SourceProvider(...)`.
+3. Implementing `ParameterDataProvider<T>`.
 
 Example:
 
@@ -204,68 +149,20 @@ Example:
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
 @SourceProvider(CustomSourceDataProvider::class)
-@MustBeDocumented
-annotation class CustomSource(val min: Int, val max: Int, val step: Int) : Annotation
-```
-
-### Creating a Custom Data Provider
-
-To create a custom data provider:
-
-1. Create a new class that implements the `ParameterDataProvider<T>` interface, where `T` is the type of data your provider will generate.
-2. Implement the `providesDataFor` method to determine if your provider can handle a given `TestParameter`.
-3. Implement the `createParameterOptionsData` method to generate the test data based on the annotation attributes.
-
-Example:
-
-
-```kotlin
+annotation class CustomSource(val min: Int, val max: Int, val increment: Int)
 
 class CustomSourceDataProvider : ParameterDataProvider<Int> {
-
     override fun createParameterOptionsData(testParameter: TestParameter): List<Int> {
         val annotation = testParameter.annotations.filterIsInstance<CustomSource>().first()
-        return (annotation.min..annotation.max step annotation.step).toList()
+        return (annotation.min..annotation.max step annotation.increment).toList()
     }
 }
 ```
 
-### Integrating Custom Annotations and Data Providers
+## Testing
 
-To integrate your custom annotation and data provider:
+Run all tests:
 
-1. Use your custom annotation in your test methods:
-
-```kotlin
-@GeneratedParametersTest
-fun testWithCustomSource(@CustomSource(min = 1, max = 10, step = 2) value: Int) {
-    assertTrue(value in listOf(1, 3, 5, 7, 9))
-}
-```
-
-By following these steps, you can extend the JUnit Jupiter Parameterized Test Extension with your own custom annotations and data providers, tailoring it to your specific testing requirements.
-
-## Testing & Quality
-
-To run the tests for this project:
-
-```
+```bash
 ./gradlew test
-```
-
-### Troubleshooting
-
-1. Issue: Tests are not picking up the generated parameters
-   - Ensure that you have added the correct dependency to your project.
-   - Verify that you are using the `@GeneratedParametersTest` annotation on your test methods.
-   - Check that your parameter annotations are correctly configured.
-
-2. Issue: Compilation errors with annotation processor
-   - Make sure you have the annotation processor correctly set up in your build configuration.
-   - Clean and rebuild your project to ensure the annotation processor runs.
-
-For more detailed troubleshooting, enable debug logging by adding the following to your `logback-test.xml` or `log4j2-test.xml`:
-
-```xml
-<logger name="com.wesleyhome.test.jupiter" level="DEBUG"/>
 ```
