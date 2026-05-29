@@ -1,8 +1,7 @@
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 
 plugins {
-    id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
-    id("net.researchgate.release") version "3.1.0"
+    id("net.researchgate.release") version "3.1.0" apply false
     id("org.jetbrains.dokka")
     id("com.github.ben-manes.versions") version "0.54.0"
 }
@@ -13,9 +12,17 @@ version = versionString
 description = "junit-jupiter-params-generated"
 extra["isReleaseVersion"] = !version.toString().endsWith("SNAPSHOT")
 
+val isReleaseInvocation = gradle.startParameter.taskNames
+    .any { it.substringAfterLast(":").contains("release", ignoreCase = true) }
 
-release {
-    tagTemplate = "$name-$version"
+if (isReleaseInvocation) {
+    apply(plugin = "net.researchgate.release")
+}
+
+pluginManager.withPlugin("net.researchgate.release") {
+    extensions.configure<net.researchgate.release.ReleaseExtension>("release") {
+        tagTemplate = "$name-$version"
+    }
 }
 
 dependencies {
@@ -23,6 +30,11 @@ dependencies {
 }
 
 dokka {
+    pluginsConfiguration {
+        html {
+            customAssets.from(projectDir.resolve("dokka-assets/version-selector.js"))
+        }
+    }
     dokkaPublications {
         html {
             outputDirectory = projectDir.resolve("docs")
@@ -40,10 +52,28 @@ tasks.named("clean") {
 
 repositories { mavenCentral() }
 
-nexusPublishing {
-    this.repositories {
-        sonatype()
-    }
+tasks.register("publishProjectToMavenCentral") {
+    group = "publishing"
+    description = "Publishes all release modules to Maven Central."
+    dependsOn(
+        listOf(
+            ":validation:publishAndReleaseToMavenCentral",
+            ":annotation-processor:publishAndReleaseToMavenCentral",
+            ":junit-jupiter-params-generated:publishAndReleaseToMavenCentral"
+        )
+    )
+}
+
+tasks.register("publishProjectSnapshotsToMavenCentral") {
+    group = "publishing"
+    description = "Publishes all SNAPSHOT modules to Maven Central."
+    dependsOn(
+        listOf(
+            ":validation:publishToMavenCentral",
+            ":annotation-processor:publishToMavenCentral",
+            ":junit-jupiter-params-generated:publishToMavenCentral"
+        )
+    )
 }
 
 fun isNonStable(version: String): Boolean {

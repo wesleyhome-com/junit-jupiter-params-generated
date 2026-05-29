@@ -1,0 +1,72 @@
+name: Publish Versioned Docs
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version label for docs path (for example: 3.0.0)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  publish-versioned-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project sources
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+
+      - name: Resolve documentation version
+        id: version
+        shell: bash
+        run: |
+          INPUT_VERSION="${{ github.event.inputs.version }}"
+          TAG_VERSION="${GITHUB_REF_NAME}"
+          if [[ -n "${INPUT_VERSION}" ]]; then
+            VERSION="${INPUT_VERSION}"
+          else
+            if [[ "${TAG_VERSION}" =~ ([0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z]+)*) ]]; then
+              VERSION="${BASH_REMATCH[1]}"
+            else
+              VERSION="$(grep '^version=' gradle.properties | cut -d'=' -f2)"
+            fi
+          fi
+          if [[ "${VERSION}" == *SNAPSHOT* ]]; then
+            echo "Refusing to publish versioned docs for snapshot version: ${VERSION}"
+            exit 1
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate documentation
+        run: ./gradlew dokkaGenerate
+
+      - name: Checkout gh-pages (for versioned docs state)
+        uses: actions/checkout@v6
+        with:
+          ref: gh-pages
+          path: gh-pages
+        continue-on-error: true
+
+      - name: Build site artifact with release version
+        run: bash .github/scripts/build-pages-site.sh release docs gh-pages site "${{ steps.version.outputs.version }}"
+
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./site
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4

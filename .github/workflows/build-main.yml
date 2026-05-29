@@ -13,9 +13,10 @@ jobs:
   build-snapshot-gradle-project:
     runs-on: ubuntu-latest
     env:
-      ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPE_USERNAME }}
-      ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
-      ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_SECRETKEY }}
+      ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+      ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+      ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+      ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
     steps:
       - name: Checkout project sources
         uses: actions/checkout@v6
@@ -25,10 +26,32 @@ jobs:
           java-version: '17'
           distribution: 'corretto'
       - name: Run build with Gradle Wrapper
-        run: ./gradlew build javadocJar dokkaGenerate publishToSonatype closeAndReleaseSonatypeStagingRepository
+        run: ./gradlew build dokkaGenerate --no-daemon
+      - name: Detect snapshot version
+        id: version
+        shell: bash
+        run: |
+          VERSION="$(grep '^version=' gradle.properties | cut -d'=' -f2)"
+          echo "value=${VERSION}" >> "$GITHUB_OUTPUT"
+          if [[ "${VERSION}" == *SNAPSHOT ]]; then
+            echo "is_snapshot=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_snapshot=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Publish SNAPSHOT artifacts to Maven Central
+        if: steps.version.outputs.is_snapshot == 'true'
+        run: ./gradlew publishProjectSnapshotsToMavenCentral --no-daemon
+      - name: Checkout gh-pages (for versioned docs state)
+        uses: actions/checkout@v6
+        with:
+          ref: gh-pages
+          path: gh-pages
+        continue-on-error: true
+      - name: Build site artifact
+        run: bash .github/scripts/build-pages-site.sh latest docs gh-pages site
       - name: Update documentation
         uses: actions/upload-pages-artifact@v5
         with:
-          path: ./docs
+          path: ./site
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v5

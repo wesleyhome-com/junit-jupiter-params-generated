@@ -5,8 +5,7 @@ plugins {
     // Apply the org.jetbrains.kotlin.jvm Plugin to add support for Kotlin.
     kotlin("jvm")
     `java-library`
-    `maven-publish`
-    signing
+    id("com.vanniktech.maven.publish")
     id("org.jetbrains.dokka-javadoc")
 }
 group = "com.wesleyhome.test"
@@ -41,54 +40,31 @@ tasks.named<Test>("test") {
     useJUnitPlatform()
 }
 
-publishing {
-    publications {
-        val description = """
-            Library to help generate test parameter permutations for parameterized tests in JUnit.
-            This version is an initial attempt to convert to building with Gradle.
-        """.trimIndent()
-
-        create<MavenPublication>("mavenJava") {
-            from(components["java"])
-            artifact(dokkaJavadocJar)
-            pom {
-                this.description.set(description)
-                this.name = "Generated JUnit Jupiter Parameters"
-                this.url = "https://junit-params.wesleyhome.com/"
-                scm {
-                    connection = "scm:git:https://github.com/justin-wesley/junit-jupiter-params-generated.git"
-                    developerConnection = "scm:git:https://github.com/justin-wesley/junit-jupiter-params-generated.git"
-                    url = "https://github.com/justin-wesley/junit-jupiter-params-generated.git"
-                    tag = "HEAD"
-                }
-                developers {
-                    developer {
-                        id = "justin"
-                        name = "Justin Wesley"
-                        roles = listOf("Software Development Engineer")
-                    }
-                }
-                licenses {
-                    license {
-                        name = "The Apache Software License, Version 2.0"
-                        url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
-                    }
-                }
+mavenPublishing {
+    publishToMavenCentral(automaticRelease = true)
+    signAllPublications()
+    pom {
+        name.set("Generated JUnit Jupiter Parameters")
+        description.set("Library to help generate test parameter permutations for parameterized tests in JUnit.")
+        url.set("https://junit-params.wesleyhome.com/")
+        scm {
+            connection.set("scm:git:https://github.com/justin-wesley/junit-jupiter-params-generated.git")
+            developerConnection.set("scm:git:https://github.com/justin-wesley/junit-jupiter-params-generated.git")
+            url.set("https://github.com/justin-wesley/junit-jupiter-params-generated.git")
+        }
+        developers {
+            developer {
+                id.set("justin")
+                name.set("Justin Wesley")
+            }
+        }
+        licenses {
+            license {
+                name.set("The Apache Software License, Version 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
             }
         }
     }
-}
-
-signing {
-    setRequired { !project.version.toString().endsWith("-SNAPSHOT") && !project.hasProperty("skipSigning") }
-    if(isOnCIServer()) {
-        val signingKey: String? by project
-        if((signingKey?.length ?: 0) <= 0){
-            throw RuntimeException("No Signing Key")
-        }
-        useInMemoryPgpKeys(signingKey, "")
-    }
-    sign(publishing.publications["mavenJava"])
 }
 
 tasks.withType<JavaCompile>() {
@@ -106,4 +82,3 @@ tasks.withType<Javadoc>() {
     }
 }
 
-fun isOnCIServer() = System.getenv("CI") == "true"
