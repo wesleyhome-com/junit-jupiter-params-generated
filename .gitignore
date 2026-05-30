@@ -18,3 +18,6 @@ build/
 /buildSrc/.gradle/
 /docs/**
 /buildSrc/.kotlin/
+/*.md
+!/README.md
+!/DEVELOPERS.md
