@@ -4,8 +4,8 @@
 [versions]
 kotlin-gradle-plugin = "2.3.21"
 dokka-gradle-plugin = "2.2.0"
-junit-jupiter = "6.0.3"
-junit-platform-launcher = "6.0.3"
+junit-jupiter = "6.1.0"
+junit-platform-launcher = "6.1.0"
 
 [libraries]
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin-gradle-plugin" }
