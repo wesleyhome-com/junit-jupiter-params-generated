@@ -21,7 +21,13 @@ if (isReleaseInvocation) {
 
 pluginManager.withPlugin("net.researchgate.release") {
     extensions.configure<net.researchgate.release.ReleaseExtension>("release") {
-        tagTemplate = "$name-$version"
+        tagTemplate = "v$version"
+        preTagCommitMessage = "[Gradle Release Plugin] - pre tag commit: v$version"
+        newVersionCommitMessage = "[Gradle Release Plugin] - new version commit: v$version"
+    }
+
+    tasks.named("afterReleaseBuild") {
+        dependsOn("build", "dokkaGenerate", "publishProjectToMavenCentral")
     }
 }
 

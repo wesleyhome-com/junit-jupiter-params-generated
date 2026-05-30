@@ -3,6 +3,10 @@ name: Release To Maven Central
 on:
   workflow_dispatch:
     inputs:
+      release_version:
+        description: 'Release version to publish, e.g. 4.0.2'
+        required: true
+        type: string
       next_version:
         description: 'Next version to write after release, e.g. 0.2.1-SNAPSHOT'
         required: true
@@ -51,7 +55,6 @@ jobs:
       - name: Run release plugin and publish
         run: >-
           ./gradlew release
-          -Prelease.useAutomaticVersion=true
+          -Prelease.releaseVersion=${{ inputs.release_version }}
           -Prelease.newVersion=${{ inputs.next_version }}
-          -Prelease.buildTasks="build dokkaGenerate publishProjectToMavenCentral"
           --no-daemon
