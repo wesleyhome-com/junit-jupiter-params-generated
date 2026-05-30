@@ -3,7 +3,7 @@ package com.wesleyhome.test.jupiter.annotations.validation.datetime
 import java.time.temporal.ChronoUnit
 
 /**
- * Valid [java.time.temporal.ChronoUnit] values to use with [truncateTo] properties
+ * Valid [java.time.temporal.ChronoUnit] values to use with `truncateTo` properties.
  */
 enum class TruncateChronoUnit(val chronoUnit: ChronoUnit) {
     NANOS(ChronoUnit.NANOS),

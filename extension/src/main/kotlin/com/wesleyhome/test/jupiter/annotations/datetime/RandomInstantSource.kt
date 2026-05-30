@@ -42,7 +42,7 @@ annotation class RandomInstantSource(
     val size: Int,
     /**
      * The truncation unit that the starting instant will be truncated to. This is only
-     * used if [minOffset] is provided.
+     * used if [min] is provided as an offset.
      */
     val truncateTo: TruncateChronoUnit = TruncateChronoUnit.MINUTES
 )
