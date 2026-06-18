@@ -19,7 +19,7 @@ jobs:
       ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
     steps:
       - name: Checkout project sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
@@ -42,7 +42,7 @@ jobs:
         if: steps.version.outputs.is_snapshot == 'true'
         run: ./gradlew publishProjectSnapshotsToMavenCentral --no-daemon
       - name: Checkout gh-pages (for versioned docs state)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: gh-pages
           path: gh-pages
