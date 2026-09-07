@@ -37,8 +37,8 @@ object DateTimeRangeValidator {
             errors.add("Unable to parse max string [$maxString] using format [$format]")
             null
         }
-        if (min != null && max != null && min >= max) {
-            errors.add("Min value [$minString] must be less than max value [$maxString]")
+        if (min != null && max != null && min > max) {
+            errors.add("Min value [$minString] cannot be greater than max value [$maxString]")
         }
         if (increment != null) {
             try {

@@ -11,8 +11,8 @@ object NumberRangeValidator {
         if(increment != null && increment <= 0) {
             errors.add("Increment must be greater than zero")
         }
-        if(min >= max) {
-            errors.add("Min value cannot be greater than max value")
+        if(min > max) {
+            errors.add("Min value [$min] cannot be greater than max value [$max]")
         }
         return errors.toList()
     }
