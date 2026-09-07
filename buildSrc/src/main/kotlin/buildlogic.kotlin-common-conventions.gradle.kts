@@ -17,7 +17,7 @@ repositories {
     mavenLocal()
     mavenCentral()
 }
-val dokkaJavadocJar: Jar by tasks.register<Jar>("javadocJar") {
+tasks.register<Jar>("javadocJar") {
     dependsOn(tasks.dokkaGenerateModuleJavadoc)
     from(tasks.dokkaGenerateModuleJavadoc.flatMap { it.outputDirectory })
     archiveClassifier.set("javadoc")
