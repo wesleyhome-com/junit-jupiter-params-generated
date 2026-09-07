@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 
 internal object DataProviderRegistry {
-    val defaultDataProviders by lazy {
+    val defaultDataProviders: List<ParameterDataProvider<*>> by lazy {
         listOf(BooleanParameterDataProvider(), EnumParameterDataProvider())
     }
 
