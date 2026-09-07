@@ -7,7 +7,8 @@ import com.wesleyhome.test.jupiter.annotations.ext.SourceProvider
 import com.wesleyhome.test.jupiter.provider.AbstractAnnotatedParameterDataProvider
 import com.wesleyhome.test.jupiter.provider.AbstractParameterDataProvider
 import com.wesleyhome.test.jupiter.provider.TestParameter
-import org.junit.jupiter.api.AfterAll
+import com.wesleyhome.test.jupiter.testkit.invocationNames
+import org.junit.jupiter.api.Test
 
 /**
  * Stands in for a consumer of the published artifacts: everything here is written against the
@@ -16,25 +17,26 @@ import org.junit.jupiter.api.AfterAll
  */
 class CustomProviderTest {
 
-    @GeneratedParametersTest
-    fun testProviderBehindAGenericIntermediate(@EvenSource(max = 6) value: Int) {
-        evens += value
+    @Test
+    fun testProviderBehindAGenericIntermediate() {
+        assertThat(invocationNames(Fixture::class.java, "annotatedCustomSource"))
+            .isEqualTo(listOf("0", "2", "4", "6"))
     }
 
-    @GeneratedParametersTest
-    fun testProviderBehindAnIntermediateThatFixesTheType(@GreetingSource value: String) {
-        greetings += value
+    @Test
+    fun testProviderBehindAnIntermediateThatFixesTheType() {
+        assertThat(invocationNames(Fixture::class.java, "typeOnlyCustomSource"))
+            .isEqualTo(listOf("hei", "hola"))
     }
 
-    companion object {
-        private val evens = mutableListOf<Int>()
-        private val greetings = mutableListOf<String>()
+    class Fixture {
 
-        @JvmStatic
-        @AfterAll
-        fun assertGeneratedValues() {
-            assertThat(evens).isEqualTo(listOf(0, 2, 4, 6))
-            assertThat(greetings).isEqualTo(listOf("hei", "hola"))
+        @GeneratedParametersTest(name = "{arguments}")
+        fun annotatedCustomSource(@EvenSource(max = 6) value: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun typeOnlyCustomSource(@GreetingSource value: String) {
         }
     }
 }
