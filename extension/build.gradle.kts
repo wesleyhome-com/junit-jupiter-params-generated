@@ -13,7 +13,7 @@ dependencies {
     implementation(kotlin("reflect"))
     implementation(kotlin("stdlib"))
     testRuntimeOnly(libs.junit.platform.launcher)
-    testImplementation("org.junit.platform:junit-platform-testkit:6.1.0")
+    testImplementation(libs.junit.platform.testkit)
     testImplementation("org.mockito:mockito-core:5.23.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.23.0")
     testImplementation("io.mockk:mockk:1.14.11")
