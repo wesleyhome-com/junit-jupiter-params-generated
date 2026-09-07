@@ -192,13 +192,10 @@ void invalid(@IntRangeSource(min = 10, max = 1) int value) {
 
 ## Custom Annotations and Providers
 
-You can create custom providers by:
-
-1. Defining a parameter annotation.
-2. Mapping it with `@SourceProvider(...)`.
-3. Implementing `ParameterDataProvider<T>`.
-
-Example:
+Define a parameter annotation, point it at a provider with `@SourceProvider`, and implement the
+provider. `AbstractAnnotatedParameterDataProvider<T, A>` recovers both the parameter type `T` and
+the annotation type `A` from the type arguments you supply, so it decides on its own which
+parameters to claim:
 
 ```kotlin
 @Target(AnnotationTarget.VALUE_PARAMETER)
@@ -206,7 +203,28 @@ Example:
 @SourceProvider(CustomSourceDataProvider::class)
 annotation class CustomSource(val min: Int, val max: Int, val increment: Int)
 
+class CustomSourceDataProvider : AbstractAnnotatedParameterDataProvider<Int, CustomSource>() {
+    override fun createParameterOptionsData(testParameter: TestParameter): List<Int> {
+        val annotation = findAnnotation(testParameter)!!
+        return (annotation.min..annotation.max step annotation.increment).toList()
+    }
+}
+```
+
+Intermediate classes of your own between the provider and the library base are supported, so shared
+behaviour across several providers can live in a base class you control.
+
+For a provider that claims a parameter by type alone, without an annotation, extend
+`AbstractParameterDataProvider<T>` instead and override only `createParameterOptionsData`.
+
+To decide for yourself which parameters to claim, implement `ParameterDataProvider<T>` directly and
+supply both members:
+
+```kotlin
 class CustomSourceDataProvider : ParameterDataProvider<Int> {
+    override fun providesDataFor(testParameter: TestParameter): Boolean =
+        testParameter.annotations.any { it is CustomSource }
+
     override fun createParameterOptionsData(testParameter: TestParameter): List<Int> {
         val annotation = testParameter.annotations.filterIsInstance<CustomSource>().first()
         return (annotation.min..annotation.max step annotation.increment).toList()
