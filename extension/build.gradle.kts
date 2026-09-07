@@ -13,6 +13,7 @@ dependencies {
     implementation(kotlin("reflect"))
     implementation(kotlin("stdlib"))
     testRuntimeOnly(libs.junit.platform.launcher)
+    testImplementation("org.junit.platform:junit-platform-testkit:6.1.0")
     testImplementation("org.mockito:mockito-core:5.23.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.23.0")
     testImplementation("io.mockk:mockk:1.14.11")
@@ -30,6 +31,8 @@ dokka {
 }
 
 tasks.test {
+    // Fixture classes exist to be driven by EngineTestKit; the test task must not run them itself.
+    exclude("**/*Fixture.class")
     finalizedBy(tasks.jacocoTestReport)
 }
 
