@@ -54,13 +54,21 @@ Maven:
 
 ## Compatibility Matrix
 
-| Component | Supported |
-| --- | --- |
-| Java | 17+ |
-| Kotlin/JVM | 2.3.x |
-| JUnit Jupiter | 6.0.3+ |
-| Gradle | Supported (`testImplementation`, optional `ksp`) |
-| Maven | Supported (`test` scope for extension) |
+| Component | Supported | Verified against |
+| --- | --- | --- |
+| Java | 17+ | 17 (class file major version 61) |
+| Kotlin/JVM | 2.4+ | 2.4.20 |
+| JUnit Jupiter | 6.0.3+ | 6.1.3, with the full suite re-run against 6.0.3 |
+| Gradle | any version supporting the above | 9.7.1 |
+| Maven | `test` scope for the extension | - |
+
+Kotlin 2.4 is a floor rather than a preference: the published classes carry Kotlin metadata v2.4,
+and earlier compilers refuse to read it. Consuming this library from a Kotlin 2.3 build fails with
+"compiled with an incompatible version of Kotlin".
+
+The optional annotation processor runs under KSP, so compile-time validation applies to Kotlin
+sources only. Java sources get the full runtime behaviour, but misconfigured annotations surface
+when the test runs rather than when it compiles.
 
 ## Getting Started
 
