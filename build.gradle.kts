@@ -3,7 +3,7 @@ import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 plugins {
     id("net.researchgate.release") version "3.1.0" apply false
     id("org.jetbrains.dokka")
-    id("com.github.ben-manes.versions") version "0.54.0"
+    id("com.github.ben-manes.versions") version "0.61.0"
 }
 
 group = "com.wesleyhome.test"
