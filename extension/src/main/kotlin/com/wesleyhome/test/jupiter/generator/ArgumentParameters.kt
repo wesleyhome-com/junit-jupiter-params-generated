@@ -4,9 +4,7 @@ import org.junit.jupiter.params.provider.Arguments
 import java.util.concurrent.atomic.AtomicLong
 
 internal class ArgumentParameters(private val options: List<List<Any?>>) : Iterable<Arguments> {
-    private val totalPermutations: Long = options.map { it.size }
-        .map { it.toLong() }
-        .reduce { acc, i -> acc * i }
+    private val totalPermutations: Long = options.fold(1L) { acc, list -> acc * list.size }
     private val pointers: Array<Int> = Array(options.size) { 0 }
     private val current = AtomicLong(0)
 
