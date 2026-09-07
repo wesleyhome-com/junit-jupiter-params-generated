@@ -7,7 +7,6 @@ import org.junit.jupiter.api.extension.TestTemplateInvocationContext
 import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.platform.commons.util.Preconditions
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
 import kotlin.reflect.full.hasAnnotation
@@ -32,12 +31,12 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
     override fun provideTestTemplateInvocationContexts(extensionContext: ExtensionContext): Stream<TestTemplateInvocationContext> {
         val methodContext =
             getStore(extensionContext).get(METHOD_CONTEXT_KEY, GeneratedParametersTestMethodContext::class.java)
-        val arguments = methodContext?.generator?.arguments() ?: emptyList()
-        val invocationCount = AtomicInteger(0)
-        return StreamSupport.stream(arguments.spliterator(), false)
-            .map {
-                invocationCount.incrementAndGet()
-                GeneratedParametersTestInvocationContext(it.get().toList())
+                ?: return Stream.empty()
+        val generator = methodContext.generator
+        val parameterIndices = generator.parameterIndices
+        return StreamSupport.stream(generator.arguments().spliterator(), false)
+            .map { arguments ->
+                GeneratedParametersTestInvocationContext(parameterIndices.zip(arguments.get()).toMap())
             }
     }
 
@@ -52,4 +51,3 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
 
     }
 }
-
