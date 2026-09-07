@@ -2,7 +2,7 @@ package com.wesleyhome.test.jupiter.provider.number
 
 import com.wesleyhome.test.jupiter.provider.AnnotatedParameterDataProviderTest
 import com.wesleyhome.test.jupiter.provider.TestParameter
-import com.wesleyhome.test.jupiter.step
+import java.math.BigDecimal
 
 internal abstract class AnnotatedNumberRangeParameterDataProviderTest
 <P : AbstractAnnotatedNumberRangeDataProvider<T, A>, T : Number, A : Annotation> :
@@ -29,7 +29,7 @@ internal abstract class AnnotatedNumberRangeParameterDataProviderTest
             }
             return
         } else {
-            val expected = (minDouble..maxDouble step incrementDouble).map { convert(it) }.toList().let {
+            val expected = expectedRange(min, max, increment).let {
                 if (ascending) {
                     it
                 } else {
@@ -40,6 +40,22 @@ internal abstract class AnnotatedNumberRangeParameterDataProviderTest
                 it.isEqualTo(expected)
             }
         }
+    }
+
+    /**
+     * Derived independently of the provider: walk indices outward from [min] and stop once the
+     * value passes [max]. Computing the expectation with the same accumulate-and-add loop the
+     * provider used made this assertion a tautology that drifted along with it.
+     */
+    private fun expectedRange(min: T, max: T, increment: T): List<T> {
+        val minDecimal = BigDecimal(min.toString())
+        val maxDecimal = BigDecimal(max.toString())
+        val incrementDecimal = BigDecimal(increment.toString())
+        return generateSequence(0L) { it + 1 }
+            .map { index -> minDecimal + incrementDecimal * BigDecimal.valueOf(index) }
+            .takeWhile { it <= maxDecimal }
+            .map { convert(it) }
+            .toList()
     }
 
     override fun createTrueProvidesForTestParameter(): TestParameter {
