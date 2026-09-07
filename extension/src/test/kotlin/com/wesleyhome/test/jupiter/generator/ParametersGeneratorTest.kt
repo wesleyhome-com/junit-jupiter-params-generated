@@ -3,9 +3,11 @@ package com.wesleyhome.test.jupiter.generator
 import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.hasMessage
+import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.size
 import com.wesleyhome.test.jupiter.annotations.ext.SourceProvider
+import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource
 import com.wesleyhome.test.jupiter.provider.TestModel
 import com.wesleyhome.test.jupiter.provider.TestParameter
 import org.junit.jupiter.api.Test
@@ -43,7 +45,22 @@ class ParametersGeneratorTest {
     }
 
     @Test
-    fun testInvalidAnnotation() {
+    fun testSourceAnnotationOnUnsupportedTypeIsAnError() {
+        val testModel = TestModel(
+            testParameters = listOf(
+                TestParameter(
+                    name = "Parameter",
+                    type = String::class,
+                    annotations = listOf(IntRangeSource(min = 1, max = 10))
+                )
+            )
+        )
+        assertFailure { ParametersGenerator(testModel).arguments() }
+            .hasMessage("Unable to find a suitable data provider for parameter [Parameter] with type 'kotlin.String'")
+    }
+
+    @Test
+    fun testUnrecognizedAnnotationLeavesParameterToOtherResolvers() {
         val testModel = TestModel(
             testParameters = listOf(
                 TestParameter(
@@ -53,12 +70,11 @@ class ParametersGeneratorTest {
                 )
             )
         )
-        assertFailure { ParametersGenerator(testModel).arguments() }
-            .hasMessage("Unable to find a suitable data provider for parameter [Parameter] with type 'com.wesleyhome.test.jupiter.generator.TestClass'")
+        assertThat(ParametersGenerator(testModel).parameterIndices).isEmpty()
     }
 
     @Test
-    fun testBadArguments() {
+    fun testUnannotatedUnsupportedTypeLeavesParameterToOtherResolvers() {
         val testModel = TestModel(
             testParameters = listOf(
                 TestParameter(
@@ -67,8 +83,22 @@ class ParametersGeneratorTest {
                 )
             )
         )
-        assertFailure { ParametersGenerator(testModel).arguments() }
-            .hasMessage("Unable to find a suitable data provider for parameter [Parameter] with type 'com.wesleyhome.test.jupiter.generator.TestClass'")
+        assertThat(ParametersGenerator(testModel).parameterIndices).isEmpty()
+    }
+
+    @Test
+    fun testOnlyGeneratedParametersAreClaimed() {
+        val testModel = TestModel(
+            testParameters = listOf(
+                TestParameter(name = "notOurs", type = TestClass::class),
+                TestParameter(name = "flag", type = Boolean::class),
+                TestParameter(name = "alsoNotOurs", type = TestClass::class),
+            )
+        )
+        val generator = ParametersGenerator(testModel)
+        assertThat(generator.parameterIndices).isEqualTo(listOf(1))
+        assertThat(generator.arguments().toList().map { it.get().toList() })
+            .isEqualTo(listOf(listOf(true), listOf(false)))
     }
 }
 

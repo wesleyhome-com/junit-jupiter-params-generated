@@ -15,41 +15,52 @@ internal class ParametersGenerator(
     testModel: TestModel
 ) {
 
-    private val options: List<List<Any?>> by lazy {
-        testModel.testParameters.map { testParameter: TestParameter ->
-            val dataProviderList = testParameter.annotations.map { annotation ->
-                val annotationClass = annotation.annotationClass
-                val className = annotationClass.qualifiedName!!
-                val sourceProvider: SourceProvider? = annotationClass
-                    .findAnnotation<SourceProvider>()
-                if (sourceProvider != null) {
-                    val providerClass: KClass<*> = sourceProvider.value
-                    if (providerClass.isSubclassOf(ParameterDataProvider::class)) {
-                        createInstance(className, providerClass as KClass<ParameterDataProvider<Any>>)
-                    } else {
-                        throw InvalidParameterException(testParameter)
-                    }
-                } else {
-                    null
-                }
-            }.filterNotNull()
-            dataProviderList
-                .ifEmpty { DataProviderRegistry.defaultDataProviders }
-                .filter { it.providesDataFor(testParameter) }
-                .ifEmpty { throw InvalidParameterException(testParameter) }
-                .flatMap {
-                    it.createParameterOptionsData(testParameter)
-                }.let { list ->
-                    if (testParameter.isNullable) {
-                        list + null
-                    } else {
-                        list
-                    }
-                }
+    /**
+     * The generated parameters, paired with the index of the test method parameter they belong to.
+     *
+     * Parameters this extension does not generate values for are absent, leaving them to whatever
+     * other [org.junit.jupiter.api.extension.ParameterResolver] is registered for the test.
+     */
+    private val generated: List<Pair<Int, List<Any?>>> by lazy {
+        testModel.testParameters.mapIndexedNotNull { index, testParameter ->
+            optionsFor(testParameter)?.let { index to it }
         }
     }
 
-    fun arguments(): Iterable<Arguments> {
-        return ArgumentParameters(options)
+    /** Indices of the test method parameters this generator supplies values for, in declaration order. */
+    val parameterIndices: List<Int>
+        get() = generated.map { it.first }
+
+    fun arguments(): Iterable<Arguments> = ArgumentParameters(generated.map { it.second })
+
+    /**
+     * Returns the values to generate for [testParameter], or `null` when the parameter is not ours.
+     *
+     * A parameter carrying an explicit source annotation is always ours: if no provider accepts it the
+     * annotation is misapplied and that is reported. A parameter with no source annotation that none of
+     * the default providers handle belongs to another resolver, not to us.
+     */
+    private fun optionsFor(testParameter: TestParameter): List<Any?>? {
+        val annotatedProviders = testParameter.annotations.mapNotNull { annotation ->
+            val annotationClass = annotation.annotationClass
+            val sourceProvider: SourceProvider = annotationClass.findAnnotation() ?: return@mapNotNull null
+            val providerClass: KClass<*> = sourceProvider.value
+            if (!providerClass.isSubclassOf(ParameterDataProvider::class)) {
+                throw InvalidParameterException(testParameter)
+            }
+            @Suppress("UNCHECKED_CAST")
+            createInstance(annotationClass.qualifiedName!!, providerClass as KClass<ParameterDataProvider<Any>>)
+        }
+        val providers = annotatedProviders
+            .ifEmpty { DataProviderRegistry.defaultDataProviders }
+            .filter { it.providesDataFor(testParameter) }
+        if (providers.isEmpty()) {
+            if (annotatedProviders.isEmpty()) {
+                return null
+            }
+            throw InvalidParameterException(testParameter)
+        }
+        val values = providers.flatMap { it.createParameterOptionsData(testParameter) }
+        return if (testParameter.isNullable) values + null else values
     }
 }
