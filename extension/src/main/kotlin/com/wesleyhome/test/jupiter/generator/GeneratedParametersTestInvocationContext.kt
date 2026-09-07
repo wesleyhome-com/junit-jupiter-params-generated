@@ -7,12 +7,13 @@ import org.junit.jupiter.api.extension.ParameterResolver
 import org.junit.jupiter.api.extension.TestTemplateInvocationContext
 
 internal class GeneratedParametersTestInvocationContext(
-    private val argumentsByParameterIndex: Map<Int, Any?>
+    private val namePattern: String,
+    private val methodDisplayName: String,
+    private val arguments: List<GeneratedArgument>
 ) : TestTemplateInvocationContext {
 
-    override fun getDisplayName(invocationIndex: Int): String {
-        return super.getDisplayName(invocationIndex) + argumentsByParameterIndex.values.toList()
-    }
+    override fun getDisplayName(invocationIndex: Int): String =
+        InvocationDisplayNameFormatter.format(namePattern, invocationIndex, arguments, methodDisplayName)
 
     override fun getAdditionalExtensions(): List<Extension> {
         return listOf(object : ParameterResolver {
@@ -24,15 +25,16 @@ internal class GeneratedParametersTestInvocationContext(
             override fun supportsParameter(
                 parameterContext: ParameterContext,
                 extensionContext: ExtensionContext
-            ): Boolean = argumentsByParameterIndex.containsKey(parameterContext.index)
+            ): Boolean = argumentFor(parameterContext.index) != null
 
             override fun resolveParameter(
                 parameterContext: ParameterContext,
                 extensionContext: ExtensionContext
-            ): Any? {
-                return argumentsByParameterIndex[parameterContext.index]
-            }
+            ): Any? = argumentFor(parameterContext.index)?.value
 
         })
     }
+
+    private fun argumentFor(parameterIndex: Int): GeneratedArgument? =
+        arguments.firstOrNull { it.parameterIndex == parameterIndex }
 }

@@ -25,6 +25,11 @@ val dokkaJavadocJar: Jar by tasks.register<Jar>("javadocJar") {
 
 kotlin {
     jvmToolchain(17)
+    compilerOptions {
+        // Emit Java parameter names alongside Kotlin metadata, so tools reading the class files
+        // through plain Java reflection see the declared names rather than arg0, arg1.
+        javaParameters = true
+    }
 }
 
 java {
@@ -69,6 +74,9 @@ mavenPublishing {
 
 tasks.withType<JavaCompile>() {
     options.encoding = "UTF-8"
+    // Record parameter names in the class file so generated display names read
+    // `value=1` rather than `arg0=1` for Java test methods.
+    options.compilerArgs.add("-parameters")
 }
 
 tasks.withType<Javadoc>() {
@@ -81,4 +89,3 @@ tasks.withType<Javadoc>() {
         }
     }
 }
-

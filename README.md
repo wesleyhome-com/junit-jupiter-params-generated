@@ -108,6 +108,62 @@ fun combinations(
 
 CI warning: two larger ranges can multiply quickly (for example, `100 x 100 = 10,000` invocations).
 
+## Invocation Display Names
+
+Each invocation is named the way `@ParameterizedTest` names its own, so IDEs and test reports read
+generated invocations the same way:
+
+```text
+[1] value=1
+[2] value=2
+```
+
+Override the pattern with `name`:
+
+```kotlin
+@GeneratedParametersTest(name = "{index}: {0} squared is {1}")
+fun squares(
+    @IntRangeSource(min = 1, max = 3) value: Int,
+    @IntRangeSource(min = 1, max = 9) square: Int
+) {
+}
+```
+
+| Placeholder | Renders |
+| --- | --- |
+| `{index}` | the 1-based invocation number |
+| `{arguments}` | the generated values, comma separated |
+| `{argumentsWithNames}` | the generated values as `name=value`, comma separated |
+| `{displayName}` | the test method's own display name |
+| `{0}`, `{1}`, ... | a single generated value, by position |
+
+Only generated parameters are listed. A parameter resolved by another extension - `TestInfo`,
+`@TempDir`, an injected mock - is not named and does not shift the `{0}`, `{1}` positions.
+
+### Parameter Names
+
+`{argumentsWithNames}` needs the declared parameter names to be present in the compiled class file.
+Kotlin records them in its own metadata, so Kotlin test sources need nothing. Java test sources must
+be compiled with `-parameters`, or the names fall back to `arg0`, `arg1`:
+
+```kotlin
+// Gradle
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.add("-parameters")
+}
+```
+
+```xml
+<!-- Maven -->
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <configuration>
+        <parameters>true</parameters>
+    </configuration>
+</plugin>
+```
+
 ## Generated vs Random Values
 
 - Range and explicit-value sources are deterministic by definition.

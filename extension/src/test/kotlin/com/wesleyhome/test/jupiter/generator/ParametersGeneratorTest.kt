@@ -70,7 +70,7 @@ class ParametersGeneratorTest {
                 )
             )
         )
-        assertThat(ParametersGenerator(testModel).parameterIndices).isEmpty()
+        assertThat(ParametersGenerator(testModel).parameters).isEmpty()
     }
 
     @Test
@@ -83,7 +83,7 @@ class ParametersGeneratorTest {
                 )
             )
         )
-        assertThat(ParametersGenerator(testModel).parameterIndices).isEmpty()
+        assertThat(ParametersGenerator(testModel).parameters).isEmpty()
     }
 
     @Test
@@ -96,7 +96,7 @@ class ParametersGeneratorTest {
             )
         )
         val generator = ParametersGenerator(testModel)
-        assertThat(generator.parameterIndices).isEqualTo(listOf(1))
+        assertThat(generator.parameters.map { it.index }).isEqualTo(listOf(1))
         assertThat(generator.arguments().toList().map { it.get().toList() })
             .isEqualTo(listOf(listOf(true), listOf(false)))
     }
