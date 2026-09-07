@@ -16,22 +16,18 @@ internal class ParametersGenerator(
 ) {
 
     /**
-     * The generated parameters, paired with the index of the test method parameter they belong to.
+     * The parameters this extension generates values for, in declaration order.
      *
-     * Parameters this extension does not generate values for are absent, leaving them to whatever
-     * other [org.junit.jupiter.api.extension.ParameterResolver] is registered for the test.
+     * Parameters it does not generate are absent, leaving them to whatever other
+     * [org.junit.jupiter.api.extension.ParameterResolver] is registered for the test.
      */
-    private val generated: List<Pair<Int, List<Any?>>> by lazy {
+    val parameters: List<GeneratedParameter> by lazy {
         testModel.testParameters.mapIndexedNotNull { index, testParameter ->
-            optionsFor(testParameter)?.let { index to it }
+            optionsFor(testParameter)?.let { GeneratedParameter(index, testParameter.name, it) }
         }
     }
 
-    /** Indices of the test method parameters this generator supplies values for, in declaration order. */
-    val parameterIndices: List<Int>
-        get() = generated.map { it.first }
-
-    fun arguments(): Iterable<Arguments> = ArgumentParameters(generated.map { it.second })
+    fun arguments(): Iterable<Arguments> = ArgumentParameters(parameters.map { it.options })
 
     /**
      * Returns the values to generate for [testParameter], or `null` when the parameter is not ours.
@@ -64,3 +60,10 @@ internal class ParametersGenerator(
         return if (testParameter.isNullable) values + null else values
     }
 }
+
+/** A test method parameter this extension generates values for, and the values it generates. */
+internal data class GeneratedParameter(
+    val index: Int,
+    val name: String,
+    val options: List<Any?>
+)

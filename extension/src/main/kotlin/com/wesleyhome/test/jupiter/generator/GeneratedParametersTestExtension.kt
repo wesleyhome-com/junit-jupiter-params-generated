@@ -32,11 +32,19 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
         val methodContext =
             getStore(extensionContext).get(METHOD_CONTEXT_KEY, GeneratedParametersTestMethodContext::class.java)
                 ?: return Stream.empty()
-        val generator = methodContext.generator
-        val parameterIndices = generator.parameterIndices
-        return StreamSupport.stream(generator.arguments().spliterator(), false)
+        val parameters = methodContext.generator.parameters
+        val namePattern = methodContext.namePattern
+        val methodDisplayName = extensionContext.displayName
+        return StreamSupport.stream(methodContext.generator.arguments().spliterator(), false)
             .map { arguments ->
-                GeneratedParametersTestInvocationContext(parameterIndices.zip(arguments.get()).toMap())
+                val values = arguments.get()
+                GeneratedParametersTestInvocationContext(
+                    namePattern,
+                    methodDisplayName,
+                    parameters.mapIndexed { slot, parameter ->
+                        GeneratedArgument(parameter.index, parameter.name, values[slot])
+                    }
+                )
             }
     }
 
