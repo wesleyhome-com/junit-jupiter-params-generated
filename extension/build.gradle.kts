@@ -31,8 +31,10 @@ dokka {
 }
 
 tasks.test {
-    // Fixture classes exist to be driven by EngineTestKit; the test task must not run them itself.
-    exclude("**/*Fixture.class")
+    // Every test class in this module ends in Test. Restricting discovery to that keeps Gradle from
+    // also running the EngineTestKit fixtures directly - they are nested classes with test methods,
+    // and some of them fail on purpose.
+    include("**/*Test.class")
     finalizedBy(tasks.jacocoTestReport)
 }
 
