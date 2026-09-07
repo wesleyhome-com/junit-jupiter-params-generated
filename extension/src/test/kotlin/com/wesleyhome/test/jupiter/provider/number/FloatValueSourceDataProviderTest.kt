@@ -3,7 +3,6 @@ package com.wesleyhome.test.jupiter.provider.number
 import com.wesleyhome.test.jupiter.annotations.number.FloatSource
 import com.wesleyhome.test.jupiter.provider.AnnotatedParameterDataProviderTest
 import com.wesleyhome.test.jupiter.provider.TestParameter
-import com.wesleyhome.test.jupiter.step
 import org.junit.jupiter.api.Test
 
 internal class FloatValueSourceDataProviderTest :
@@ -22,7 +21,7 @@ internal class FloatValueSourceDataProviderTest :
     }
 
     private fun parameterPair(): Pair<FloatArray, TestParameter> {
-        val values = (1f..10f step 1f).toList().toFloatArray()
+        val values = (1..10).map { it.toFloat() }.toFloatArray()
         val testParameter = createAnnotatedTestParameter(values)
         return Pair(values, testParameter)
     }
