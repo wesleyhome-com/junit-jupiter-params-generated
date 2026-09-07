@@ -19,8 +19,8 @@ internal abstract class AnnotatedNumberRangeParameterDataProviderTest
         val maxDouble = max.toDouble()
         val errors = mutableListOf<String>().addIf("Increment must be greater than zero") {
             incrementDouble <= 0.0
-        }.addIf("Min value cannot be greater than max value") {
-            minDouble >= maxDouble
+        }.addIf("Min value [$min] cannot be greater than max value [$max]") {
+            minDouble > maxDouble
         }.toList()
         if (errors.isNotEmpty()) {
             testCreateParameterOptionsDataWithException(testParameter) {

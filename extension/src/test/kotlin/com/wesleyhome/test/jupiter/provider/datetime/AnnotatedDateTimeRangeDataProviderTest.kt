@@ -75,8 +75,8 @@ internal abstract class AnnotatedDateTimeRangeDataProviderTest
         val (min: T, max: T) = if (errorList.isEmpty()) {
             val min = convert(minString, dateFormat)
             val max = convert(maxString, dateFormat)
-            if (min >= max) {
-                errorList += "Min value [$minString] must be less than max value [$maxString]"
+            if (min > max) {
+                errorList += "Min value [$minString] cannot be greater than max value [$maxString]"
             }
             min to max
         } else {
