@@ -1,6 +1,8 @@
 package com.wesleyhome.test.jupiter.generator
 
+import com.wesleyhome.test.jupiter.DEFAULT_MAX_PERMUTATIONS
 import com.wesleyhome.test.jupiter.InvalidParameterException
+import com.wesleyhome.test.jupiter.TooManyPermutationsException
 import com.wesleyhome.test.jupiter.annotations.ext.SourceProvider
 import com.wesleyhome.test.jupiter.generator.DataProviderRegistry.createInstance
 import com.wesleyhome.test.jupiter.provider.ParameterDataProvider
@@ -30,7 +32,17 @@ internal class ParametersGenerator(
         GeneratedParameterLayout.of(parameters, testModel.testParameters.size)
     }
 
-    fun arguments(): ArgumentParameters = ArgumentParameters(parameters.map { it.options })
+    fun arguments(maxPermutations: Long = DEFAULT_MAX_PERMUTATIONS): ArgumentParameters {
+        val arguments = ArgumentParameters(parameters.map { it.options })
+        if (arguments.totalPermutations > maxPermutations) {
+            throw TooManyPermutationsException(
+                parameters.map { it.name to it.options.size },
+                arguments.totalPermutations,
+                maxPermutations
+            )
+        }
+        return arguments
+    }
 
     /**
      * Returns the values to generate for [testParameter], or `null` when the parameter is not ours.

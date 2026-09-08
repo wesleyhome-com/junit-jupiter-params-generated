@@ -12,12 +12,18 @@ import org.junit.platform.testkit.engine.EngineTestKit
  * a call to one of these helpers. That is what lets a fixture fail on purpose, which is the only way
  * to assert on what a user actually sees when an annotation is misconfigured.
  */
-internal fun executeFixture(fixture: Class<*>, methodName: String): EngineExecutionResults {
+internal fun executeFixture(
+    fixture: Class<*>,
+    methodName: String,
+    vararg configurationParameters: Pair<String, String>
+): EngineExecutionResults {
     val method = fixture.declaredMethods.firstOrNull { it.name == methodName }
         ?: error("No method named [$methodName] on ${fixture.name}")
-    return EngineTestKit.engine("junit-jupiter")
-        .selectors(selectMethod(fixture, method))
-        .execute()
+    var builder = EngineTestKit.engine("junit-jupiter").selectors(selectMethod(fixture, method))
+    for ((key, value) in configurationParameters) {
+        builder = builder.configurationParameter(key, value)
+    }
+    return builder.execute()
 }
 
 /**
@@ -35,8 +41,12 @@ internal fun invocationNames(fixture: Class<*>, methodName: String): List<String
         .map { it.testDescriptor.displayName }
 
 /** How many invocations started and how many passed. */
-internal fun invocationCounts(fixture: Class<*>, methodName: String): Pair<Long, Long> {
-    val events = executeFixture(fixture, methodName).testEvents()
+internal fun invocationCounts(
+    fixture: Class<*>,
+    methodName: String,
+    vararg configurationParameters: Pair<String, String>
+): Pair<Long, Long> {
+    val events = executeFixture(fixture, methodName, *configurationParameters).testEvents()
     return events.started().count() to events.succeeded().count()
 }
 
@@ -45,8 +55,12 @@ internal fun invocationCounts(fixture: Class<*>, methodName: String): Pair<Long,
  * where generation errors land, since they happen before any invocation exists - or against an
  * individual invocation.
  */
-internal fun executionFailure(fixture: Class<*>, methodName: String): Throwable {
-    val results = executeFixture(fixture, methodName)
+internal fun executionFailure(
+    fixture: Class<*>,
+    methodName: String,
+    vararg configurationParameters: Pair<String, String>
+): Throwable {
+    val results = executeFixture(fixture, methodName, *configurationParameters)
     val events = results.allEvents().failed().list()
     return events
         .mapNotNull { it.getPayload(TestExecutionResult::class.java).orElse(null) }
