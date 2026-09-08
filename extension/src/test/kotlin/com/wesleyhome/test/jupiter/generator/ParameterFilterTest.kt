@@ -12,6 +12,10 @@ import com.wesleyhome.test.jupiter.annotations.number.IntSource
 import com.wesleyhome.test.jupiter.testkit.executionFailure
 import com.wesleyhome.test.jupiter.testkit.invocationNames
 import org.junit.jupiter.api.Test
+import java.util.concurrent.atomic.AtomicInteger
+
+/** Counts calls to `duplicated_filter`, to prove naming a filter twice does not apply it twice. */
+private val duplicateCalls = AtomicInteger(0)
 
 /**
  * A Cartesian product generates combinations that are invalid rather than merely uninteresting.
@@ -65,6 +69,44 @@ class ParameterFilterTest {
         assertThat(invocationNames(SubclassFixture::class.java, "inherited")).isEqualTo(
             listOf("1, 1", "1, 2", "2, 2")
         )
+    }
+
+    @Test
+    fun testTheBareConventionalFilterAppliesAlongsideSuffixedOnes() {
+        assertThat(invocationNames(Fixture::class.java, "bareAndSuffixed")).isEqualTo(listOf("1, 2"))
+    }
+
+    @Test
+    fun testSeveralConventionalAndSeveralExplicitFiltersAllApply() {
+        assertThat(invocationNames(Fixture::class.java, "manyFilters")).isEqualTo(listOf("2, 3"))
+    }
+
+    /**
+     * A conventional filter belongs to its own test. Nothing else in this class would catch a leak,
+     * because every other conventional filter here happens to agree with the explicit ones.
+     */
+    @Test
+    fun testAConventionalFilterDoesNotLeakToASiblingTest() {
+        assertThat(invocationNames(Fixture::class.java, "sibling")).isEqualTo(
+            listOf("1, 1", "1, 2", "2, 1", "2, 2")
+        )
+        assertThat(invocationNames(Fixture::class.java, "siblingWithFilter")).isEqualTo(listOf("1, 1", "1, 2"))
+    }
+
+    /** Naming a conventional filter explicitly must not apply it twice. */
+    @Test
+    fun testAFilterNamedBothWaysRunsOnce() {
+        duplicateCalls.set(0)
+        assertThat(invocationNames(Fixture::class.java, "duplicated")).isEqualTo(
+            listOf("1, 1", "1, 2", "2, 2")
+        )
+        assertThat(duplicateCalls.get()).isEqualTo(4)
+    }
+
+    @Test
+    fun testAConventionalFilterInheritedFromABaseClassApplies() {
+        assertThat(invocationNames(SubclassFixture::class.java, "inheritedByConvention"))
+            .isEqualTo(listOf("1, 1", "1, 2", "2, 2"))
     }
 
     @Test
@@ -151,6 +193,9 @@ class ParameterFilterTest {
         companion object {
             @JvmStatic
             fun sharedStartBeforeEnd(start: Int, end: Int): Boolean = start <= end
+
+            @JvmStatic
+            fun inheritedByConvention_filter(start: Int, end: Int): Boolean = start <= end
         }
     }
 
@@ -158,6 +203,13 @@ class ParameterFilterTest {
 
         @GeneratedParametersTest(name = "{arguments}", filters = ["sharedStartBeforeEnd"])
         fun inherited(
+            @IntRangeSource(min = 1, max = 2) start: Int,
+            @IntRangeSource(min = 1, max = 2) end: Int
+        ) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun inheritedByConvention(
             @IntRangeSource(min = 1, max = 2) start: Int,
             @IntRangeSource(min = 1, max = 2) end: Int
         ) {
@@ -205,6 +257,42 @@ class ParameterFilterTest {
 
         @GeneratedParametersTest(name = "{arguments}", filters = ["startBeforeEnd"])
         fun conventionAndExplicit(
+            @IntRangeSource(min = 1, max = 2) start: Int,
+            @IntRangeSource(min = 1, max = 2) end: Int
+        ) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun bareAndSuffixed(
+            @IntRangeSource(min = 1, max = 2) start: Int,
+            @IntRangeSource(min = 1, max = 2) end: Int
+        ) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["startBeforeEnd", "endIsOdd"])
+        fun manyFilters(
+            @IntRangeSource(min = 1, max = 3) start: Int,
+            @IntRangeSource(min = 1, max = 3) end: Int
+        ) {
+        }
+
+        /** No filter of its own; a sibling's conventional filter must not reach it. */
+        @GeneratedParametersTest(name = "{arguments}")
+        fun sibling(
+            @IntRangeSource(min = 1, max = 2) start: Int,
+            @IntRangeSource(min = 1, max = 2) end: Int
+        ) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun siblingWithFilter(
+            @IntRangeSource(min = 1, max = 2) start: Int,
+            @IntRangeSource(min = 1, max = 2) end: Int
+        ) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["duplicated_filter"])
+        fun duplicated(
             @IntRangeSource(min = 1, max = 2) start: Int,
             @IntRangeSource(min = 1, max = 2) end: Int
         ) {
@@ -273,6 +361,31 @@ class ParameterFilterTest {
 
             @JvmStatic
             fun conventionAndExplicit_filter(start: Int, end: Int): Boolean = start != end
+
+            @JvmStatic
+            fun bareAndSuffixed_filter(start: Int, end: Int): Boolean = start <= end
+
+            @JvmStatic
+            fun bareAndSuffixed_filter_distinct(start: Int, end: Int): Boolean = start != end
+
+            @JvmStatic
+            fun manyFilters_filter_startIsEven(start: Int): Boolean = start % 2 == 0
+
+            @JvmStatic
+            fun manyFilters_filter_endAboveTwo(end: Int): Boolean = end > 2
+
+            @JvmStatic
+            fun endIsOdd(end: Int): Boolean = end % 2 == 1
+
+            /** Belongs to siblingWithFilter only; `sibling` must be unaffected by it. */
+            @JvmStatic
+            fun siblingWithFilter_filter(start: Int): Boolean = start == 1
+
+            @JvmStatic
+            fun duplicated_filter(start: Int, end: Int): Boolean {
+                duplicateCalls.incrementAndGet()
+                return start <= end
+            }
 
             @JvmStatic
             fun never(start: Int): Boolean = false
