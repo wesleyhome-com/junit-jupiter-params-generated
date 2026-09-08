@@ -27,7 +27,9 @@ internal class ParametersGenerator(
     val parameters: List<GeneratedParameter> by lazy {
         testModel.testParameters.mapIndexedNotNull { index, declared ->
             val testParameter = declared.copy(clock = clock)
-            optionsFor(testParameter)?.let { GeneratedParameter(index, testParameter.name, it) }
+            optionsFor(testParameter)?.let {
+                GeneratedParameter(index, testParameter.name, testParameter.type, testParameter.isNullable, it)
+            }
         }
     }
 
@@ -83,5 +85,7 @@ internal class ParametersGenerator(
 internal data class GeneratedParameter(
     val index: Int,
     val name: String,
+    val type: KClass<*>,
+    val isNullable: Boolean,
     val options: List<Any?>
 )

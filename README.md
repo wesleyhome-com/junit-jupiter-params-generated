@@ -124,6 +124,63 @@ parameter and its option count. Raise or lower that with a configuration paramet
 com.wesleyhome.test.jupiter.max.permutations=5000000
 ```
 
+## Filtering Combinations
+
+A Cartesian product generates combinations that are invalid, not merely uninteresting - a `start`
+after its `end`, a currency that does not exist in the selected country. Skipping those in the test
+body with `Assumptions.assumeTrue` still generates, schedules and runs them, and reports them as
+skipped. A filter removes them before an invocation exists.
+
+Name a method after the test and it applies automatically:
+
+```kotlin
+@GeneratedParametersTest
+fun ordered(
+    @IntRangeSource(min = 1, max = 3) start: Int,
+    @IntRangeSource(min = 1, max = 3) end: Int
+) {
+    // runs 6 times, not 9
+}
+
+companion object {
+    @JvmStatic
+    fun ordered_filter(start: Int, end: Int): Boolean = start <= end
+}
+```
+
+A filter declares only the parameters it is about, matched **by name**, so several small rules
+compose instead of one predicate that has to know about everything. A combination runs only if every
+filter accepts it. Use a suffix when a test has more than one:
+
+```kotlin
+@JvmStatic fun prices_filter_ordered(start: Int, end: Int): Boolean = start <= end
+@JvmStatic fun prices_filter_currency(currency: Currency, country: Country): Boolean =
+    currency in country.currencies
+```
+
+Name filters explicitly to share a rule between tests. Explicit and conventional filters both apply:
+
+```kotlin
+@GeneratedParametersTest(filters = ["startBeforeEnd"])
+fun prices(...)
+```
+
+### Rules
+
+- A filter must be **static**, or declared in a **companion object**. Filtering happens before the
+  test instance exists, which is the same constraint `@MethodSource` has. Filters may live in a
+  superclass.
+- Parameter types must match the generated parameter. A supertype is fine - `Number` accepts a
+  generated `Int` - but a filter declaring `Long` against a generated `Int` is rejected rather than
+  silently widened by reflection.
+- A filter must return `Boolean` and must not return null.
+- If every combination is rejected, the test fails and the message names the filters responsible.
+- Filtering reduces what *runs*, not what is *generated*, so the invocation ceiling still applies to
+  the full product and `generated.invocations` still reports it.
+
+The annotation processor warns about any `*_filter` method that matches no test in its class, so
+renaming a test cannot silently leave its rule unused.
+
 ## Invocation Display Names
 
 Each invocation is named the way `@ParameterizedTest` names its own, so IDEs and test reports read

@@ -15,10 +15,14 @@ import kotlin.reflect.jvm.kotlinFunction
 internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
     val testModel: TestModel
     val namePattern: String
+    val filterNames: Set<String>
 
     init {
         val requiredTestMethod = context.requiredTestMethod.kotlinFunction!!
-        namePattern = requiredTestMethod.findAnnotation<GeneratedParametersTest>()?.name ?: DEFAULT_DISPLAY_NAME
+        val generated = requiredTestMethod.findAnnotation<GeneratedParametersTest>()
+        namePattern = generated?.name ?: DEFAULT_DISPLAY_NAME
+        filterNames = conventionalFilterNames(context.requiredTestMethod) +
+            (generated?.filters?.toSet() ?: emptySet())
         val parameters = requiredTestMethod.parameters.filter { it.kind == KParameter.Kind.VALUE }
         testModel = TestModel(
             testParameters = parameters.mapIndexed { index, parameter ->
@@ -35,6 +39,29 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
     }
 
     /**
+     * Filters named `<test>_filter` and `<test>_filter_<something>` apply to their test without
+     * being listed, so the common case needs no attribute. They are unioned with any named
+     * explicitly rather than overridden by them, so adding one can never silently do nothing.
+     */
+    private fun conventionalFilterNames(testMethod: java.lang.reflect.Method): Set<String> {
+        val prefix = "${testMethod.name}$FILTER_SUFFIX"
+        return generateSequence(testMethod.declaringClass) { it.superclass }
+            .takeWhile { it != Any::class.java }
+            .flatMap { type -> type.declaredMethods.asSequence() + companionMethods(type) }
+            .map { it.name }
+            .filter { it == prefix || it.startsWith("${prefix}_") }
+            .toSet()
+    }
+
+    private fun companionMethods(type: Class<*>): Sequence<java.lang.reflect.Method> =
+        runCatching { type.getDeclaredField("Companion").apply { isAccessible = true }.get(null) }
+            .getOrNull()
+            ?.javaClass
+            ?.declaredMethods
+            ?.asSequence()
+            ?: emptySequence()
+
+    /**
      * A Kotlin nullable type still implies a null case, so tests written before [WithNull] keep
      * working. The annotation says it explicitly and is the only form Java can express, since
      * Kotlin reflection reports every Java type as platform-typed and never as nullable.
@@ -48,5 +75,9 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
             }
         }
         return withNull || parameter.type.isMarkedNullable
+    }
+
+    companion object {
+        const val FILTER_SUFFIX: String = "_filter"
     }
 }

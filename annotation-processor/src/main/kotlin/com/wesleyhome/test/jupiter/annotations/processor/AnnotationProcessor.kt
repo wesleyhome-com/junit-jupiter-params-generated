@@ -4,7 +4,9 @@ import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.KSAnnotated
+import com.google.devtools.ksp.getDeclaredFunctions
 import com.google.devtools.ksp.symbol.KSAnnotation
+import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
@@ -29,7 +31,51 @@ class AnnotationProcessor(private val environment: SymbolProcessorEnvironment) :
                 .forEach { parameter -> validate(parameter, simpleName) }
         }
         warnAboutInferredNulls(resolver)
+        warnAboutOrphanedFilters(resolver)
         return emptyList()
+    }
+
+    /**
+     * A filter named `<test>_filter` applies to its test without being declared anywhere, so
+     * renaming the test would otherwise leave the filter silently unused and the test running the
+     * full unfiltered product while still passing.
+     */
+    private fun warnAboutOrphanedFilters(resolver: Resolver) {
+        resolver.getSymbolsWithAnnotation(GeneratedParametersTest::class.qualifiedName ?: return)
+            .filterIsInstance<KSFunctionDeclaration>()
+            .mapNotNull { it.parentDeclaration as? KSClassDeclaration }
+            .distinct()
+            .forEach { testClass ->
+                val testNames = testClass.getDeclaredFunctions()
+                    .filter { function -> function.annotations.any { it.shortName.asString() == GENERATED_TEST } }
+                    .mapNotNull { it.simpleName.asString() }
+                    .toSet()
+                filterCandidates(testClass)
+                    .filterNot { candidate -> testNames.any { candidate.matches(it) } }
+                    .forEach { candidate ->
+                        environment.logger.warn(
+                            "[${candidate.simpleName.asString()}] looks like a filter but matches no " +
+                                "@GeneratedParametersTest method in ${testClass.simpleName.asString()}. " +
+                                "Rename it after the test it filters, or reference it with filters = [...].",
+                            candidate
+                        )
+                    }
+            }
+    }
+
+    private fun filterCandidates(testClass: KSClassDeclaration): Sequence<KSFunctionDeclaration> {
+        val companions = testClass.declarations
+            .filterIsInstance<KSClassDeclaration>()
+            .filter { it.isCompanionObject }
+            .flatMap { it.getDeclaredFunctions() }
+        return (testClass.getDeclaredFunctions() + companions)
+            .filter { it.simpleName.asString().contains(FILTER_SUFFIX) }
+    }
+
+    private fun KSFunctionDeclaration.matches(testName: String): Boolean {
+        val name = simpleName.asString()
+        val prefix = "$testName$FILTER_SUFFIX"
+        return name == prefix || name.startsWith("${prefix}_")
     }
 
     private fun validate(parameter: KSValueParameter, simpleName: String) {
@@ -71,6 +117,9 @@ class AnnotationProcessor(private val environment: SymbolProcessorEnvironment) :
         annotationType.resolve().declaration.annotations.any { it.shortName.asString() == "SourceProvider" }
 
     private companion object {
+        const val GENERATED_TEST: String = "GeneratedParametersTest"
+        const val FILTER_SUFFIX: String = "_filter"
+
         val RANGE_ANNOTATIONS: List<KClass<out Annotation>> = listOf(
             IntRangeSource::class,
             LongRangeSource::class,
