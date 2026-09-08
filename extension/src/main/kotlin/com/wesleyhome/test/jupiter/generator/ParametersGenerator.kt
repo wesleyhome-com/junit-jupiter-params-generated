@@ -6,13 +6,12 @@ import com.wesleyhome.test.jupiter.generator.DataProviderRegistry.createInstance
 import com.wesleyhome.test.jupiter.provider.ParameterDataProvider
 import com.wesleyhome.test.jupiter.provider.TestModel
 import com.wesleyhome.test.jupiter.provider.TestParameter
-import org.junit.jupiter.params.provider.Arguments
 import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.isSubclassOf
 
 internal class ParametersGenerator(
-    testModel: TestModel
+    private val testModel: TestModel
 ) {
 
     /**
@@ -27,7 +26,11 @@ internal class ParametersGenerator(
         }
     }
 
-    fun arguments(): Iterable<Arguments> = ArgumentParameters(parameters.map { it.options })
+    val layout: GeneratedParameterLayout by lazy {
+        GeneratedParameterLayout.of(parameters, testModel.testParameters.size)
+    }
+
+    fun arguments(): ArgumentParameters = ArgumentParameters(parameters.map { it.options })
 
     /**
      * Returns the values to generate for [testParameter], or `null` when the parameter is not ours.

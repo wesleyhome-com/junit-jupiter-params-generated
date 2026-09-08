@@ -1,51 +1,50 @@
 package com.wesleyhome.test.jupiter.generator
 
-import org.junit.jupiter.params.provider.Arguments
-import java.util.concurrent.atomic.AtomicLong
+import java.util.stream.LongStream
+import java.util.stream.Stream
 
-internal class ArgumentParameters(private val options: List<List<Any?>>) : Iterable<Arguments> {
-    private val totalPermutations: Long = options.fold(1L) { acc, list -> acc * list.size }
-    private val pointers: Array<Int> = Array(options.size) { 0 }
-    private val current = AtomicLong(0)
+internal class ArgumentParameters(private val options: List<List<Any?>>) : Iterable<Array<Any?>> {
 
-    override fun iterator(): Iterator<Arguments> {
-        return object : Iterator<Arguments> {
-            override fun hasNext(): Boolean {
-                return current.get() < totalPermutations
+    val totalPermutations: Long = run {
+        var total = 1L
+        for (option in options) {
+            if (option.isEmpty()) return@run 0L
+            total = try {
+                Math.multiplyExact(total, option.size.toLong())
+            } catch (_: ArithmeticException) {
+                return@run Long.MAX_VALUE
             }
+        }
+        total
+    }
 
-            override fun next(): Arguments {
-                return createArgument().also { increment() }
+    /** Right-most parameter advances every invocation, left-most only after a full sweep of the rest. */
+    private val strides: LongArray = LongArray(options.size).also { strides ->
+        var stride = 1L
+        for (i in options.indices.reversed()) {
+            strides[i] = stride
+            stride = try {
+                Math.multiplyExact(stride, options[i].size.toLong())
+            } catch (_: ArithmeticException) {
+                Long.MAX_VALUE
             }
         }
     }
 
-    fun createArgument(): Arguments {
-        val indexed = options
-            .mapIndexed { index, list ->
-                val paramIndex = pointers[index]
-                list[paramIndex]
-            }
-        return Arguments.of(*indexed.toTypedArray())
-    }
-
-    private fun increment() {
-        current.incrementAndGet()
-        incrementIndex(pointers.size - 1)
-    }
-
-    private fun incrementIndex(index: Int) {
-        if (index < 0) {
-            return
+    fun valuesAt(permutation: Long): Array<Any?> {
+        val values = arrayOfNulls<Any?>(options.size)
+        for (i in options.indices) {
+            val option = options[i]
+            values[i] = option[((permutation / strides[i]) % option.size).toInt()]
         }
-        val parameterIndex = pointers[index] + 1
-        val length = options[index].size
-        if (parameterIndex < length) {
-            pointers[index] = parameterIndex
-        } else {
-            pointers[index] = 0
-            incrementIndex(index - 1)
-        }
+        return values
     }
 
+    fun stream(): Stream<Array<Any?>> = LongStream.range(0, totalPermutations).mapToObj(::valuesAt)
+
+    override fun iterator(): Iterator<Array<Any?>> = object : Iterator<Array<Any?>> {
+        private var next = 0L
+        override fun hasNext(): Boolean = next < totalPermutations
+        override fun next(): Array<Any?> = valuesAt(next++)
+    }
 }

@@ -97,7 +97,7 @@ class ParametersGeneratorTest {
         )
         val generator = ParametersGenerator(testModel)
         assertThat(generator.parameters.map { it.index }).isEqualTo(listOf(1))
-        assertThat(generator.arguments().toList().map { it.get().toList() })
+        assertThat(generator.arguments().toList().map { it.toList() })
             .isEqualTo(listOf(listOf(true), listOf(false)))
     }
 }

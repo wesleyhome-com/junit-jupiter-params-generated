@@ -6,35 +6,33 @@ import org.junit.jupiter.api.extension.ParameterContext
 import org.junit.jupiter.api.extension.ParameterResolver
 import org.junit.jupiter.api.extension.TestTemplateInvocationContext
 
+/**
+ * Doubles as its own [ParameterResolver]. JUnit builds an extension registry per invocation and
+ * releases the context afterwards, so nothing is shared between parallel invocations.
+ */
 internal class GeneratedParametersTestInvocationContext(
-    private val namePattern: String,
-    private val methodDisplayName: String,
-    private val arguments: List<GeneratedArgument>
-) : TestTemplateInvocationContext {
+    private val formatter: InvocationDisplayNameFormatter,
+    private val layout: GeneratedParameterLayout,
+    private val values: Array<Any?>
+) : TestTemplateInvocationContext, ParameterResolver {
 
-    override fun getDisplayName(invocationIndex: Int): String =
-        InvocationDisplayNameFormatter.format(namePattern, invocationIndex, arguments, methodDisplayName)
+    private val extensions: List<Extension> = listOf(this)
 
-    override fun getAdditionalExtensions(): List<Extension> {
-        return listOf(object : ParameterResolver {
-            /**
-             * Only claims the parameters this extension generated a value for. Everything else -
-             * `TestInfo`, `@TempDir`, Mockito and Spring injection - falls through to the resolver
-             * that actually owns it.
-             */
-            override fun supportsParameter(
-                parameterContext: ParameterContext,
-                extensionContext: ExtensionContext
-            ): Boolean = argumentFor(parameterContext.index) != null
+    override fun getDisplayName(invocationIndex: Int): String = formatter.format(invocationIndex, values)
 
-            override fun resolveParameter(
-                parameterContext: ParameterContext,
-                extensionContext: ExtensionContext
-            ): Any? = argumentFor(parameterContext.index)?.value
+    override fun getAdditionalExtensions(): List<Extension> = extensions
 
-        })
-    }
+    /**
+     * Claims only the parameters this extension generated a value for, so `TestInfo`, `@TempDir`,
+     * Mockito and Spring injection fall through to the resolver that owns them.
+     */
+    override fun supportsParameter(
+        parameterContext: ParameterContext,
+        extensionContext: ExtensionContext
+    ): Boolean = layout.slotOf(parameterContext.index) != GeneratedParameterLayout.NO_SLOT
 
-    private fun argumentFor(parameterIndex: Int): GeneratedArgument? =
-        arguments.firstOrNull { it.parameterIndex == parameterIndex }
+    override fun resolveParameter(
+        parameterContext: ParameterContext,
+        extensionContext: ExtensionContext
+    ): Any? = values[layout.slotOf(parameterContext.index)]
 }
