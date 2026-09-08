@@ -5,45 +5,49 @@ import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSValueParameter
-import com.wesleyhome.test.jupiter.annotations.validation.number.NumberRangeValidator
+import com.wesleyhome.test.jupiter.annotations.datetime.InstantRangeSource
+import com.wesleyhome.test.jupiter.annotations.datetime.LocalDateRangeSource
+import com.wesleyhome.test.jupiter.annotations.datetime.LocalDateTimeRangeSource
+import com.wesleyhome.test.jupiter.annotations.datetime.LocalTimeRangeSource
+import com.wesleyhome.test.jupiter.annotations.number.DoubleRangeSource
+import com.wesleyhome.test.jupiter.annotations.number.FloatRangeSource
+import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource
+import com.wesleyhome.test.jupiter.annotations.number.LongRangeSource
+import kotlin.reflect.KClass
 
-class AnnotationProcessor(private val environment: SymbolProcessorEnvironment) :
-    SymbolProcessor {
+class AnnotationProcessor(private val environment: SymbolProcessorEnvironment) : SymbolProcessor {
+
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        val logger = environment.logger
-        val numberRangeAnnotations = listOf(
-            com.wesleyhome.test.jupiter.annotations.number.IntRangeSource::class,
-            com.wesleyhome.test.jupiter.annotations.number.LongRangeSource::class,
-            com.wesleyhome.test.jupiter.annotations.number.FloatRangeSource::class,
-            com.wesleyhome.test.jupiter.annotations.number.DoubleRangeSource::class
-        )
-//        val dateTimeRangeAnnotations = listOf(
-//            LocalDateRangeSource::class,
-//            LocalDateTimeRangeSource::class,
-//            LocalTimeSource::class,
-//            InstantRangeSource::class
-//        )
-        numberRangeAnnotations.map { annClass -> annClass to annClass.qualifiedName!! }
-            .map { (annClass, clsName) -> annClass to resolver.getSymbolsWithAnnotation(clsName) }
-            .forEach { (annClass, sequence) ->
-                sequence.forEach { p ->
-                    val parameter = p as KSValueParameter
-                    val annotations = parameter.annotations
-                    val annotation = annotations.first { ann ->
-                        ann.shortName.asString() == annClass.simpleName
-                    }
-                    val arguments = annotation.arguments
-                    val map: Map<String, Number> =
-                        arguments.filterNot { it.name!!.asString() == "ascending"}.associate { it.name!!.asString() to it.value!! as Number }
-                    val errors =
-                        NumberRangeValidator.validate(map.getValue("min"), map.getValue("max"), map["increment"])
-                    if (errors.isNotEmpty()) {
-                        errors.forEach { err -> logger.error(err, p) }
-                    }
-                }
-            }
-
+        RANGE_ANNOTATIONS.forEach { annotationClass ->
+            val simpleName = annotationClass.simpleName ?: return@forEach
+            resolver.getSymbolsWithAnnotation(annotationClass.qualifiedName ?: return@forEach)
+                .filterIsInstance<KSValueParameter>()
+                .forEach { parameter -> validate(parameter, simpleName) }
+        }
         return emptyList()
     }
 
+    private fun validate(parameter: KSValueParameter, simpleName: String) {
+        val annotation = parameter.annotations
+            .firstOrNull { it.shortName.asString() == simpleName }
+            ?: return
+        val arguments = annotation.arguments
+            .mapNotNull { argument -> argument.name?.asString()?.let { it to argument.value } }
+            .toMap()
+        RangeAnnotationValidator.validate(simpleName, arguments)
+            .forEach { error -> environment.logger.error(error, parameter) }
+    }
+
+    private companion object {
+        val RANGE_ANNOTATIONS: List<KClass<out Annotation>> = listOf(
+            IntRangeSource::class,
+            LongRangeSource::class,
+            FloatRangeSource::class,
+            DoubleRangeSource::class,
+            LocalDateRangeSource::class,
+            LocalDateTimeRangeSource::class,
+            LocalTimeRangeSource::class,
+            InstantRangeSource::class
+        )
+    }
 }
