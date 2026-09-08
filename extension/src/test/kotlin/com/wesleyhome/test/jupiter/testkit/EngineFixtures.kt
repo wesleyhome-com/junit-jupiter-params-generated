@@ -1,6 +1,7 @@
 package com.wesleyhome.test.jupiter.testkit
 
 import org.junit.platform.engine.TestExecutionResult
+import org.junit.platform.engine.reporting.ReportEntry
 import org.junit.platform.engine.discovery.DiscoverySelectors.selectMethod
 import org.junit.platform.testkit.engine.EngineExecutionResults
 import org.junit.platform.testkit.engine.EngineTestKit
@@ -72,3 +73,16 @@ internal fun executionFailure(
         .firstOrNull()
         ?: error("Expected [${fixture.name}#$methodName] to fail, but nothing failed")
 }
+
+/** Report entries published during the run, in order, each as its published key/value map. */
+internal fun reportEntries(
+    fixture: Class<*>,
+    methodName: String,
+    vararg configurationParameters: Pair<String, String>
+): List<Map<String, String>> =
+    executeFixture(fixture, methodName, *configurationParameters)
+        .allEvents()
+        .reportingEntryPublished()
+        .list()
+        .mapNotNull { it.getPayload(ReportEntry::class.java).orElse(null) }
+        .map { it.keyValuePairs }

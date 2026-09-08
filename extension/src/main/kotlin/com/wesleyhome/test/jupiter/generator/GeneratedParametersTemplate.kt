@@ -6,7 +6,8 @@ import java.lang.reflect.Method
 internal class GeneratedParametersTemplate(
     private val testMethod: Method,
     val formatter: InvocationDisplayNameFormatter,
-    private val layout: GeneratedParameterLayout
+    private val layout: GeneratedParameterLayout,
+    val reportValues: Boolean = false
 ) {
 
     /**
@@ -18,5 +19,10 @@ internal class GeneratedParametersTemplate(
             layout.slotOf(parameterContext.index)
         } else {
             GeneratedParameterLayout.NO_SLOT
+        }
+
+    fun valuesByName(values: Array<Any?>): Map<String, String> =
+        (0 until layout.size).associate { slot ->
+            "generated.${layout.nameOf(slot)}" to values[slot].toString()
         }
 }
