@@ -31,7 +31,12 @@ annotation class GeneratedParametersTest(
      * Filtering happens before the test instance exists, so a filter must be static or declared in
      * a companion object - the same constraint `@MethodSource` has.
      */
-    val filters: Array<String> = []
+    val filters: Array<String> = [],
+    /**
+     * How combinations are chosen. Opt in per test method: whether pairwise coverage is enough
+     * depends on what the test asserts, and only its author knows.
+     */
+    val strategy: GenerationStrategy = GenerationStrategy.CARTESIAN
 )
 
 /**

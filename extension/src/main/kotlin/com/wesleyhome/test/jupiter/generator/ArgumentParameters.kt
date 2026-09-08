@@ -31,6 +31,17 @@ internal class ArgumentParameters(private val options: List<List<Any?>>) : Itera
         }
     }
 
+    val parameterCount: Int get() = options.size
+
+    fun optionCount(parameter: Int): Int = options[parameter].size
+
+    /** Which value each parameter takes, by position in its own option list, into a reused buffer. */
+    fun indicesInto(permutation: Long, into: IntArray) {
+        for (i in options.indices) {
+            into[i] = ((permutation / strides[i]) % options[i].size).toInt()
+        }
+    }
+
     fun valuesAt(permutation: Long): Array<Any?> {
         val values = arrayOfNulls<Any?>(options.size)
         for (i in options.indices) {
