@@ -8,7 +8,6 @@ import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.platform.commons.util.Preconditions
 import java.util.stream.Stream
-import java.util.stream.StreamSupport
 import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.jvm.kotlinFunction
 
@@ -32,20 +31,14 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
         val methodContext =
             getStore(extensionContext).get(METHOD_CONTEXT_KEY, GeneratedParametersTestMethodContext::class.java)
                 ?: return Stream.empty()
-        val parameters = methodContext.generator.parameters
-        val namePattern = methodContext.namePattern
-        val methodDisplayName = extensionContext.displayName
-        return StreamSupport.stream(methodContext.generator.arguments().spliterator(), false)
-            .map { arguments ->
-                val values = arguments.get()
-                GeneratedParametersTestInvocationContext(
-                    namePattern,
-                    methodDisplayName,
-                    parameters.mapIndexed { slot, parameter ->
-                        GeneratedArgument(parameter.index, parameter.name, values[slot])
-                    }
-                )
-            }
+        val generator = methodContext.generator
+        val layout = generator.layout
+        val formatter = InvocationDisplayNameFormatter.compile(
+            methodContext.namePattern, extensionContext.displayName, layout
+        )
+        return generator.arguments()
+            .stream()
+            .map { values -> GeneratedParametersTestInvocationContext(formatter, layout, values) }
     }
 
     private fun getStore(context: ExtensionContext): ExtensionContext.Store {
