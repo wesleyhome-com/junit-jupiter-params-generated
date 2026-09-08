@@ -16,5 +16,3 @@ junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.re
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform-launcher"}
 junit-platform-testkit = { module = "org.junit.platform:junit-platform-testkit", version.ref = "junit-platform-launcher" }
 
-[bundles]
-junit = ["junit-jupiter-api", "junit-jupiter-engine","junit-jupiter-params"]
