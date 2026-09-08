@@ -63,6 +63,20 @@ class ReportEntryTest {
             .isEqualTo(listOf(mapOf("generated.invocations" to "1")))
     }
 
+    /** The count is what was generated; filters remove some afterwards, so they are named too. */
+    @Test
+    fun testSummaryNamesTheFiltersWhenThereAreAny() {
+        assertThat(reportEntries(ParameterFilterTest.Fixture::class.java, "ordered")).isEqualTo(
+            listOf(
+                mapOf(
+                    "generated.invocations" to "9",
+                    "generated.parameters" to "start=3 x end=3",
+                    "generated.filters" to "startBeforeEnd"
+                )
+            )
+        )
+    }
+
     @Test
     fun testAMalformedFlagIsReported() {
         assertThat(executionFailure(Fixture::class.java, "product", summary to "yes please"))

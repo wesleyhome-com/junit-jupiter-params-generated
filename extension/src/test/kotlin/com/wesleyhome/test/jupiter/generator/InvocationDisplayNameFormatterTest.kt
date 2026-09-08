@@ -12,12 +12,18 @@ class InvocationDisplayNameFormatterTest {
      * something JUnit resolves occupies index 1. That gap is deliberate: it proves `{0}` and `{1}`
      * count generated slots rather than method parameter positions.
      */
-    private val layout = GeneratedParameterLayout(
-        arrayOf("left", "right"),
-        intArrayOf(0, NO_SLOT, 1)
-    )
+    private val layout = layoutOf(intArrayOf(0, NO_SLOT, 1), "left", "right")
 
     private val values: Array<Any?> = arrayOf(1, "b")
+
+    /** Only names and slots matter for display formatting; types and nullability do not. */
+    private fun layoutOf(slotByParameterIndex: IntArray, vararg names: String) =
+        GeneratedParameterLayout(
+            arrayOf(*names),
+            Array(names.size) { Any::class },
+            BooleanArray(names.size),
+            slotByParameterIndex
+        )
 
     private fun format(
         pattern: String,
@@ -54,21 +60,21 @@ class InvocationDisplayNameFormatterTest {
 
     @Test
     fun testNullValueIsRendered() {
-        val single = GeneratedParameterLayout(arrayOf("value"), intArrayOf(0))
+        val single = layoutOf(intArrayOf(0), "value")
         assertThat(format("[{index}] {argumentsWithNames}", arrayOf(null), single))
             .isEqualTo("[7] value=null")
     }
 
     @Test
     fun testArrayValueIsRenderedByContent() {
-        val single = GeneratedParameterLayout(arrayOf("value"), intArrayOf(0))
+        val single = layoutOf(intArrayOf(0), "value")
         assertThat(format("[{index}] {arguments}", arrayOf(arrayOf(1, 2)), single))
             .isEqualTo("[7] [1, 2]")
     }
 
     @Test
     fun testNoGeneratedArgumentsLeavesNoTrailingSeparator() {
-        val none = GeneratedParameterLayout(emptyArray(), IntArray(0))
+        val none = layoutOf(IntArray(0))
         assertThat(format("[{index}] {argumentsWithNames}", emptyArray(), none)).isEqualTo("[7]")
     }
 }

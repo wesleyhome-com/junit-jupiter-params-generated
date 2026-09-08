@@ -2,6 +2,7 @@ package com.wesleyhome.test.jupiter.generator
 
 import com.wesleyhome.test.jupiter.DEFAULT_MAX_PERMUTATIONS
 import com.wesleyhome.test.jupiter.GeneratedParametersClock
+import com.wesleyhome.test.jupiter.InvalidFilterException
 import com.wesleyhome.test.jupiter.GeneratedParametersReport
 import com.wesleyhome.test.jupiter.MAX_PERMUTATIONS_PROPERTY
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.platform.commons.util.Preconditions
 import java.util.stream.Stream
+import java.util.stream.StreamSupport
 import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.jvm.kotlinFunction
 
@@ -44,20 +46,68 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
             GeneratedParametersReport.valuesEnabled(extensionContext)
         )
         val arguments = generator.arguments(maxPermutations(extensionContext))
+        val filters = ParameterFilter.resolve(
+            extensionContext.requiredTestClass, methodContext.filterNames, layout
+        )
         if (GeneratedParametersReport.summaryEnabled(extensionContext)) {
-            extensionContext.publishReportEntry(summary(generator, arguments))
+            extensionContext.publishReportEntry(summary(generator, arguments, methodContext.filterNames))
         }
-        return arguments
-            .stream()
+        return valuesOf(arguments, filters, methodContext.filterNames)
             .map { values -> GeneratedParametersTestInvocationContext(template, values) }
     }
 
-    // A report entry value may not be blank, so a method with no generated parameters omits the key.
-    private fun summary(generator: ParametersGenerator, arguments: ArgumentParameters): Map<String, String> {
+    /**
+     * Unfiltered generation streams straight off the odometer. Filtering goes through a sequence so
+     * that exhausting it having emitted nothing can say which filters rejected everything - JUnit
+     * otherwise reports only that the provider gave no invocation contexts, and advises overriding
+     * a method that means nothing to the author of the test.
+     */
+    private fun valuesOf(
+        arguments: ArgumentParameters,
+        filters: List<ParameterFilter>,
+        filterNames: Set<String>
+    ): Stream<Array<Any?>> {
+        if (filters.isEmpty()) {
+            return arguments.stream()
+        }
+        val accepted = sequence {
+            var emitted = false
+            for (permutation in 0 until arguments.totalPermutations) {
+                val values = arguments.valuesAt(permutation)
+                if (filters.all { it.accepts(values) }) {
+                    emitted = true
+                    yield(values)
+                }
+            }
+            if (!emitted) {
+                throw InvalidFilterException(
+                    "All ${arguments.totalPermutations} generated combinations were rejected by " +
+                        filterNames.sorted().joinToString(", ", "[", "]") +
+                        ". Relax a filter, or widen the values the parameters generate."
+                )
+            }
+        }
+        return StreamSupport.stream(accepted.asIterable().spliterator(), false)
+    }
+
+    /**
+     * `generated.invocations` counts what was generated, not what ran - filters remove combinations
+     * afterwards - so the filters are named when there are any, rather than leaving a reader to
+     * wonder why the count and the test tree disagree. A report entry value may not be blank, so a
+     * method with no generated parameters omits that key entirely.
+     */
+    private fun summary(
+        generator: ParametersGenerator,
+        arguments: ArgumentParameters,
+        filterNames: Set<String>
+    ): Map<String, String> {
         val summary = mutableMapOf("generated.invocations" to arguments.totalPermutations.toString())
         if (generator.parameters.isNotEmpty()) {
             summary["generated.parameters"] =
                 generator.parameters.joinToString(" x ") { "${it.name}=${it.options.size}" }
+        }
+        if (filterNames.isNotEmpty()) {
+            summary["generated.filters"] = filterNames.sorted().joinToString(", ")
         }
         return summary
     }

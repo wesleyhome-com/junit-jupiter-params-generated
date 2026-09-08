@@ -22,7 +22,16 @@ import org.junit.jupiter.api.extension.ExtendWith
 @TestTemplate
 @ExtendWith(value = [GeneratedParametersTestExtension::class])
 annotation class GeneratedParametersTest(
-    val name: String = DEFAULT_DISPLAY_NAME
+    val name: String = DEFAULT_DISPLAY_NAME,
+    /**
+     * Names of methods that decide which generated combinations run. Each is matched by parameter
+     * name to the generated parameters it declares, so a rule names only what it is about, and a
+     * combination runs only if every filter accepts it.
+     *
+     * Filtering happens before the test instance exists, so a filter must be static or declared in
+     * a companion object - the same constraint `@MethodSource` has.
+     */
+    val filters: Array<String> = []
 )
 
 /**
