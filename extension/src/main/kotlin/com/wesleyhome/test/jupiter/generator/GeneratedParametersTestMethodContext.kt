@@ -2,6 +2,7 @@ package com.wesleyhome.test.jupiter.generator
 
 import com.wesleyhome.test.jupiter.annotations.DEFAULT_DISPLAY_NAME
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
+import com.wesleyhome.test.jupiter.annotations.GenerationStrategy
 import com.wesleyhome.test.jupiter.annotations.WithNull
 import com.wesleyhome.test.jupiter.provider.TestModel
 import com.wesleyhome.test.jupiter.provider.TestParameter
@@ -16,6 +17,7 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
     val testModel: TestModel
     val namePattern: String
     val filterNames: Set<String>
+    val strategy: GenerationStrategy
 
     init {
         val requiredTestMethod = context.requiredTestMethod.kotlinFunction!!
@@ -23,6 +25,7 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
         namePattern = generated?.name ?: DEFAULT_DISPLAY_NAME
         filterNames = conventionalFilterNames(context.requiredTestMethod) +
             (generated?.filters?.toSet() ?: emptySet())
+        strategy = generated?.strategy ?: GenerationStrategy.CARTESIAN
         val parameters = requiredTestMethod.parameters.filter { it.kind == KParameter.Kind.VALUE }
         testModel = TestModel(
             testParameters = parameters.mapIndexed { index, parameter ->
