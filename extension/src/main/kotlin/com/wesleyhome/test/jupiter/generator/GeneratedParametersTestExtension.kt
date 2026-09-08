@@ -1,5 +1,7 @@
 package com.wesleyhome.test.jupiter.generator
 
+import com.wesleyhome.test.jupiter.DEFAULT_MAX_PERMUTATIONS
+import com.wesleyhome.test.jupiter.MAX_PERMUTATIONS_PROPERTY
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace.create
@@ -36,10 +38,18 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
         val formatter = InvocationDisplayNameFormatter.compile(
             methodContext.namePattern, extensionContext.displayName, layout
         )
-        return generator.arguments()
+        return generator.arguments(maxPermutations(extensionContext))
             .stream()
             .map { values -> GeneratedParametersTestInvocationContext(formatter, layout, values) }
     }
+
+    private fun maxPermutations(context: ExtensionContext): Long =
+        context.getConfigurationParameter(MAX_PERMUTATIONS_PROPERTY)
+            .map { raw ->
+                raw.trim().toLongOrNull()
+                    ?: throw IllegalArgumentException("$MAX_PERMUTATIONS_PROPERTY must be a number, but was [$raw]")
+            }
+            .orElse(DEFAULT_MAX_PERMUTATIONS)
 
     private fun getStore(context: ExtensionContext): ExtensionContext.Store {
         return context.getStore(
