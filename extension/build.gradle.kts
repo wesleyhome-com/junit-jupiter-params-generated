@@ -8,10 +8,14 @@ plugins {
 }
 
 dependencies {
-    api(libs.bundles.junit)
+    // GeneratedParametersTest is meta-annotated with TestTemplate and ExtendWith, so consumers
+    // compile against jupiter-api. They do not compile against the engine or against params.
+    api(libs.junit.jupiter.api)
     api(project(":validation"))
+    implementation(libs.junit.jupiter.params)
     implementation(kotlin("reflect"))
     implementation(kotlin("stdlib"))
+    testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.junit.platform.testkit)
     testImplementation("org.mockito:mockito-core:5.23.0")
