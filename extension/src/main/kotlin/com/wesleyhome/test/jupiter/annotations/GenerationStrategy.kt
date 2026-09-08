@@ -20,6 +20,19 @@ enum class GenerationStrategy {
      *
      * The saving comes from the number of parameters, not the number of values: with two parameters
      * it is identical to [CARTESIAN], because the single pair of parameters is the whole product.
+     *
+     * ```kotlin
+     * @GeneratedParametersTest(strategy = PAIRWISE)
+     * fun rendersEverywhere(
+     *     @StringSource(["chrome", "firefox", "safari"]) browser: String,
+     *     @StringSource(["windows", "mac", "linux"]) os: String,
+     *     @StringSource(["en", "fr"]) locale: String
+     * ) { ... }                                  // 9 invocations instead of 18
+     * ```
+     *
+     * The pairs to cover come from the combinations the filters accept, so a pair no accepted
+     * combination can contain is never demanded and a reachable one is still guaranteed to appear.
+     * `examples.Pairwise` in the `examples` module works that through, with Safari only on mac.
      */
     PAIRWISE
 }

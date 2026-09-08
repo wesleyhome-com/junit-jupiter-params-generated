@@ -28,8 +28,10 @@ dependencies {
 dokka {
     dokkaSourceSets {
         main {
-            val paths = "$rootDir/examples/src/main/kotlin/examples/Examples.kt"
-            samples.from(paths)
+            samples.from(
+                "$rootDir/examples/src/main/kotlin/examples/Examples.kt",
+                "$rootDir/examples/src/main/kotlin/examples/CombinationExamples.kt"
+            )
         }
     }
 }
