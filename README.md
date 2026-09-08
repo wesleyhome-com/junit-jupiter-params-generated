@@ -116,6 +116,14 @@ fun combinations(
 
 CI warning: two larger ranges can multiply quickly (for example, `100 x 100 = 10,000` invocations).
 
+A product above one million invocations is refused before any test runs, with a message naming each
+parameter and its option count. Raise or lower that with a configuration parameter:
+
+```properties
+# junit-platform.properties
+com.wesleyhome.test.jupiter.max.permutations=5000000
+```
+
 ## Invocation Display Names
 
 Each invocation is named the way `@ParameterizedTest` names its own, so IDEs and test reports read
@@ -175,10 +183,37 @@ tasks.withType<JavaCompile>().configureEach {
 ## Generated vs Random Values
 
 - Range and explicit-value sources are deterministic by definition.
-- `@RandomInstantSource` is deterministic by default in this library (fixed internal seed).
+- `@RandomInstantSource` draws from a fixed seed, so the same bounds produce the same sequence.
 - Invocation display names include resolved argument values, so failures show the generated value directly.
 
-Because random generation is deterministic by default, rerunning the same test configuration reproduces the same sequence.
+Change the seed to explore different values, deliberately rather than by accident:
+
+```kotlin
+@GeneratedParametersTest
+fun expiry(@RandomInstantSource(min = "2024-01-01T00:00:00Z", max = "2025-01-01T00:00:00Z", size = 10, seed = 99L) at: Instant)
+```
+
+### Offset bounds need a fixed clock
+
+A fixed seed only makes a sequence reproducible if the range it draws from is also fixed. With
+`useOffset = true` the bounds are resolved against the current instant, so by default they move with
+the wall clock and a rerun tomorrow draws from a different window.
+
+Fix the clock to make those reproducible:
+
+```properties
+# junit-platform.properties
+com.wesleyhome.test.jupiter.clock.fixed.at=2024-01-01T00:00:00Z
+com.wesleyhome.test.jupiter.clock.zone=UTC
+```
+
+or set one for a class or a run from an extension:
+
+```kotlin
+GeneratedParametersClock.set(extensionContext, Clock.fixed(instant, ZoneOffset.UTC))
+```
+
+Absolute bounds never depended on the clock and are unaffected by either.
 
 ## Performance and Memory
 
