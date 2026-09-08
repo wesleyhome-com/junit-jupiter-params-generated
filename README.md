@@ -180,6 +180,32 @@ tasks.withType<JavaCompile>().configureEach {
 </plugin>
 ```
 
+## Null Values
+
+Add `@WithNull` to generate a `null` case alongside a parameter's other values:
+
+```kotlin
+@GeneratedParametersTest
+fun handlesMissingName(@StringSource(["ada", "grace"]) @WithNull name: String?) {
+    // runs with "ada", "grace", null
+}
+```
+
+```java
+@GeneratedParametersTest
+void handlesMissingName(@StringSource(values = {"ada", "grace"}) @WithNull String name) {
+}
+```
+
+The null is generated last, after the parameter's other values.
+
+A Kotlin parameter declared nullable also gets a null case today, inferred from its type. That
+inference is Kotlin-only - a Java `Integer` is nullable and never receives one - and it says nothing
+at the use site about what the test will run. It still works, but the annotation processor warns
+where it is relied on, and it will be removed in a future release. Prefer `@WithNull`.
+
+`@WithNull` on a type that cannot hold null, such as a Kotlin `Int` or a Java `int`, is an error.
+
 ## Generated vs Random Values
 
 - Range and explicit-value sources are deterministic by definition.

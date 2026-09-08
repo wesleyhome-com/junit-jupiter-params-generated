@@ -4,7 +4,11 @@ import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.KSAnnotated
+import com.google.devtools.ksp.symbol.KSAnnotation
+import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
+import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
+import com.wesleyhome.test.jupiter.annotations.WithNull
 import com.wesleyhome.test.jupiter.annotations.datetime.InstantRangeSource
 import com.wesleyhome.test.jupiter.annotations.datetime.LocalDateRangeSource
 import com.wesleyhome.test.jupiter.annotations.datetime.LocalDateTimeRangeSource
@@ -24,6 +28,7 @@ class AnnotationProcessor(private val environment: SymbolProcessorEnvironment) :
                 .filterIsInstance<KSValueParameter>()
                 .forEach { parameter -> validate(parameter, simpleName) }
         }
+        warnAboutInferredNulls(resolver)
         return emptyList()
     }
 
@@ -37,6 +42,33 @@ class AnnotationProcessor(private val environment: SymbolProcessorEnvironment) :
         RangeAnnotationValidator.validate(simpleName, arguments)
             .forEach { error -> environment.logger.error(error, parameter) }
     }
+
+    /**
+     * A nullable Kotlin parameter gets a null case inferred from its type. That inference cannot be
+     * expressed in Java and is invisible at the use site, so it is due to be replaced by [WithNull].
+     * Warning now means the change does not silently drop a case later.
+     */
+    private fun warnAboutInferredNulls(resolver: Resolver) {
+        resolver.getSymbolsWithAnnotation(GeneratedParametersTest::class.qualifiedName ?: return)
+            .filterIsInstance<KSFunctionDeclaration>()
+            .flatMap { it.parameters }
+            .filter { it.type.resolve().isMarkedNullable }
+            .filterNot { parameter -> parameter.hasAnnotation(WithNull::class.simpleName) }
+            .filter { parameter -> parameter.annotations.any { it.isSourceAnnotation() } }
+            .forEach { parameter ->
+                environment.logger.warn(
+                    "[${parameter.name?.asString()}] gets a null case from its nullable type. Annotate it " +
+                        "@WithNull; nulls inferred from the type will stop being generated in a future release.",
+                    parameter
+                )
+            }
+    }
+
+    private fun KSValueParameter.hasAnnotation(simpleName: String?): Boolean =
+        annotations.any { it.shortName.asString() == simpleName }
+
+    private fun KSAnnotation.isSourceAnnotation(): Boolean =
+        annotationType.resolve().declaration.annotations.any { it.shortName.asString() == "SourceProvider" }
 
     private companion object {
         val RANGE_ANNOTATIONS: List<KClass<out Annotation>> = listOf(
