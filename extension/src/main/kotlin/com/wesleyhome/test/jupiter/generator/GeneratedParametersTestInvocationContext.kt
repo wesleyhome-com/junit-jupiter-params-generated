@@ -11,14 +11,14 @@ import org.junit.jupiter.api.extension.TestTemplateInvocationContext
  * releases the context afterwards, so nothing is shared between parallel invocations.
  */
 internal class GeneratedParametersTestInvocationContext(
-    private val formatter: InvocationDisplayNameFormatter,
-    private val layout: GeneratedParameterLayout,
+    private val template: GeneratedParametersTemplate,
     private val values: Array<Any?>
 ) : TestTemplateInvocationContext, ParameterResolver {
 
     private val extensions: List<Extension> = listOf(this)
 
-    override fun getDisplayName(invocationIndex: Int): String = formatter.format(invocationIndex, values)
+    override fun getDisplayName(invocationIndex: Int): String =
+        template.formatter.format(invocationIndex, values)
 
     override fun getAdditionalExtensions(): List<Extension> = extensions
 
@@ -29,10 +29,10 @@ internal class GeneratedParametersTestInvocationContext(
     override fun supportsParameter(
         parameterContext: ParameterContext,
         extensionContext: ExtensionContext
-    ): Boolean = layout.slotOf(parameterContext.index) != GeneratedParameterLayout.NO_SLOT
+    ): Boolean = template.slotOf(parameterContext) != GeneratedParameterLayout.NO_SLOT
 
     override fun resolveParameter(
         parameterContext: ParameterContext,
         extensionContext: ExtensionContext
-    ): Any? = values[layout.slotOf(parameterContext.index)]
+    ): Any? = values[template.slotOf(parameterContext)]
 }

@@ -35,12 +35,14 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
                 ?: return Stream.empty()
         val generator = methodContext.generator
         val layout = generator.layout
-        val formatter = InvocationDisplayNameFormatter.compile(
-            methodContext.namePattern, extensionContext.displayName, layout
+        val template = GeneratedParametersTemplate(
+            extensionContext.requiredTestMethod,
+            InvocationDisplayNameFormatter.compile(methodContext.namePattern, extensionContext.displayName, layout),
+            layout
         )
         return generator.arguments(maxPermutations(extensionContext))
             .stream()
-            .map { values -> GeneratedParametersTestInvocationContext(formatter, layout, values) }
+            .map { values -> GeneratedParametersTestInvocationContext(template, values) }
     }
 
     private fun maxPermutations(context: ExtensionContext): Long =
