@@ -10,6 +10,8 @@ import org.apiguardian.api.API.Status.EXPERIMENTAL
  * inference is Kotlin-only - a Java `Integer` is nullable and never received one - and it is
  * invisible at the use site, so a reader cannot tell from the test that a null is being generated.
  * Prefer this annotation, which reads the same in both languages and says so where it applies.
+ *
+ * @sample examples.NullValues.example
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)

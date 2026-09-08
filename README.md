@@ -163,10 +163,35 @@ still yields 10,000 rows.
 
 ### With filters
 
-The pairs to cover are taken from the combinations your filters accept, not from the value lists. A
-pair that no accepted combination contains is not treated as missing, and a pair that is reachable
-is still guaranteed to appear. Building a covering array first and filtering afterwards would drop
-whichever rows happened to carry those pairs and quietly stop honouring the guarantee.
+Say Safari only exists on mac:
+
+```kotlin
+@GeneratedParametersTest(strategy = PAIRWISE)
+fun rendersOnSupportedPlatforms(
+    @StringSource(["chrome", "firefox", "safari"]) browser: String,
+    @StringSource(["windows", "mac", "linux"]) os: String,
+    @StringSource(["en", "fr"]) locale: String
+) { ... }
+
+companion object {
+    @JvmStatic
+    fun rendersOnSupportedPlatforms_filter(browser: String, os: String): Boolean =
+        browser != "safari" || os == "mac"
+}
+```
+
+The pairs to cover are taken from the combinations the filter accepts, not from the value lists:
+
+- `safari + windows` is not a pair any accepted combination contains, so it is never demanded and
+  never reported as missing.
+- `safari + mac` **is** reachable, so it is still guaranteed to appear.
+
+Building a covering array first and filtering afterwards would instead drop whichever row happened
+to carry `safari + mac`, and the guarantee would quietly stop holding while still being advertised.
+That is the reason the two features are wired together rather than layered.
+
+A compiled version of this, checked by the annotation processor, is `examples.Pairwise` in the
+`examples` module.
 
 ### Notes
 
