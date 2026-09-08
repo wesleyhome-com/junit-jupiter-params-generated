@@ -44,5 +44,13 @@ annotation class RandomInstantSource(
      * The truncation unit that the starting instant will be truncated to. This is only
      * used if [min] is provided as an offset.
      */
-    val truncateTo: TruncateChronoUnit = TruncateChronoUnit.MINUTES
+    val truncateTo: TruncateChronoUnit = TruncateChronoUnit.MINUTES,
+    /**
+     * Seed for the generated sequence. Fixed by default so a run reproduces the previous one;
+     * change it to explore different values.
+     */
+    val seed: Long = DEFAULT_RANDOM_SEED
 )
+
+/** The seed random date and time sources use unless the annotation names another. */
+const val DEFAULT_RANDOM_SEED: Long = 32416190071L

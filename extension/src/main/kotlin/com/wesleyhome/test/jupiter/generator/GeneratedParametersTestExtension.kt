@@ -1,6 +1,7 @@
 package com.wesleyhome.test.jupiter.generator
 
 import com.wesleyhome.test.jupiter.DEFAULT_MAX_PERMUTATIONS
+import com.wesleyhome.test.jupiter.GeneratedParametersClock
 import com.wesleyhome.test.jupiter.MAX_PERMUTATIONS_PROPERTY
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -33,7 +34,7 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
         val methodContext =
             getStore(extensionContext).get(METHOD_CONTEXT_KEY, GeneratedParametersTestMethodContext::class.java)
                 ?: return Stream.empty()
-        val generator = methodContext.generator
+        val generator = ParametersGenerator(methodContext.testModel, GeneratedParametersClock.resolve(extensionContext))
         val layout = generator.layout
         val template = GeneratedParametersTemplate(
             extensionContext.requiredTestMethod,
