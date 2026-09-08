@@ -33,8 +33,12 @@ internal fun executeFixture(
  * this doubles as an assertion on the exact sequence of generated values - observed through the same
  * output a user reads in a test report rather than through shared mutable state.
  */
-internal fun invocationNames(fixture: Class<*>, methodName: String): List<String> =
-    executeFixture(fixture, methodName)
+internal fun invocationNames(
+    fixture: Class<*>,
+    methodName: String,
+    vararg configurationParameters: Pair<String, String>
+): List<String> =
+    executeFixture(fixture, methodName, *configurationParameters)
         .testEvents()
         .succeeded()
         .list()

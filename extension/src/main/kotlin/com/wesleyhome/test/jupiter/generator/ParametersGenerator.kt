@@ -8,12 +8,14 @@ import com.wesleyhome.test.jupiter.generator.DataProviderRegistry.createInstance
 import com.wesleyhome.test.jupiter.provider.ParameterDataProvider
 import com.wesleyhome.test.jupiter.provider.TestModel
 import com.wesleyhome.test.jupiter.provider.TestParameter
+import java.time.Clock
 import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.isSubclassOf
 
 internal class ParametersGenerator(
-    private val testModel: TestModel
+    private val testModel: TestModel,
+    private val clock: Clock = Clock.systemUTC()
 ) {
 
     /**
@@ -23,7 +25,8 @@ internal class ParametersGenerator(
      * [org.junit.jupiter.api.extension.ParameterResolver] is registered for the test.
      */
     val parameters: List<GeneratedParameter> by lazy {
-        testModel.testParameters.mapIndexedNotNull { index, testParameter ->
+        testModel.testParameters.mapIndexedNotNull { index, declared ->
+            val testParameter = declared.copy(clock = clock)
             optionsFor(testParameter)?.let { GeneratedParameter(index, testParameter.name, it) }
         }
     }

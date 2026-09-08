@@ -3,6 +3,7 @@ package com.wesleyhome.test.jupiter.provider.datetime
 import com.wesleyhome.test.jupiter.annotations.datetime.RandomInstantSource
 import com.wesleyhome.test.jupiter.annotations.validation.datetime.RandomDateTimeValidator
 import com.wesleyhome.test.jupiter.temporalAmount
+import java.time.Clock
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAmount
@@ -13,7 +14,8 @@ internal class RandomInstanceSourceDataProvider : AbstractAnnotatedRandomDateTim
         return ""
     }
 
-    override fun now(truncationUnit: ChronoUnit): Instant = Instant.now().truncatedTo(truncationUnit)
+    override fun now(clock: Clock, truncationUnit: ChronoUnit): Instant =
+        Instant.now(clock).truncatedTo(truncationUnit)
 
     override fun longRange(range: ClosedRange<Instant>): LongRange {
         return LongRange(range.start.toEpochMilli(), range.endInclusive.toEpochMilli())

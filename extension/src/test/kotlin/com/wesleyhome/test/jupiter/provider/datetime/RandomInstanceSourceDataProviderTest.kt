@@ -2,6 +2,7 @@ package com.wesleyhome.test.jupiter.provider.datetime
 
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.StringSource
+import com.wesleyhome.test.jupiter.annotations.datetime.DEFAULT_RANDOM_SEED
 import com.wesleyhome.test.jupiter.annotations.datetime.RandomInstantSource
 import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource
 import com.wesleyhome.test.jupiter.annotations.validation.datetime.TruncateChronoUnit
@@ -38,7 +39,8 @@ internal class RandomInstanceSourceDataProviderTest :
             maxString,
             useOffset,
             size,
-            truncateTo
+            truncateTo,
+            DEFAULT_RANDOM_SEED
         )
         val expectedErrors = mutableListOf<String>()
         if (minString.isBlank()) {
@@ -103,7 +105,8 @@ internal class RandomInstanceSourceDataProviderTest :
             "2024-06-02T12:00:00Z",
             false,
             10,
-            TruncateChronoUnit.SECONDS
+            TruncateChronoUnit.SECONDS,
+            DEFAULT_RANDOM_SEED
         )
     }
 
@@ -114,7 +117,8 @@ internal class RandomInstanceSourceDataProviderTest :
             "2024-06-02T12:00:00Z",
             false,
             10,
-            TruncateChronoUnit.SECONDS
+            TruncateChronoUnit.SECONDS,
+            DEFAULT_RANDOM_SEED
         )
 
         val first = provider.createParameterOptionsData(testParameter)

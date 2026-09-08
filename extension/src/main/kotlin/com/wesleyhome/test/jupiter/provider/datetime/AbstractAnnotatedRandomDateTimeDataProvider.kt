@@ -5,6 +5,7 @@ import com.wesleyhome.test.jupiter.propertyValue
 import com.wesleyhome.test.jupiter.provider.AbstractAnnotatedParameterDataProvider
 import com.wesleyhome.test.jupiter.provider.TestParameter
 import com.wesleyhome.test.jupiter.temporalAmount
+import java.time.Clock
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAmount
 import kotlin.random.Random
@@ -12,10 +13,6 @@ import kotlin.random.nextLong
 
 internal abstract class AbstractAnnotatedRandomDateTimeDataProvider<T : Comparable<T>, A : Annotation>
     : AbstractAnnotatedParameterDataProvider<T, A>() {
-
-    companion object {
-        private const val DEFAULT_RANDOM_SEED: Long = 32416190071L
-    }
 
     open val formatPropertyName: String = ""
 
@@ -32,7 +29,7 @@ internal abstract class AbstractAnnotatedRandomDateTimeDataProvider<T : Comparab
         val truncateTo = annotation.propertyValue<TruncateChronoUnit>("truncateTo")
         val format = getFormatString(annotation)
         val truncationUnit = if (useOffset) truncateTo.chronoUnit else ChronoUnit.MILLIS
-        val now: T = now(truncationUnit)
+        val now: T = now(testParameter.clock, truncationUnit)
         var min: T = if (useOffset) {
             addOffset(now, minString.temporalAmount())
         } else {
@@ -49,7 +46,7 @@ internal abstract class AbstractAnnotatedRandomDateTimeDataProvider<T : Comparab
             max = temp
         }
         val range = longRange(min..max)
-        val random = Random(DEFAULT_RANDOM_SEED)
+        val random = Random(annotation.propertyValue<Long>("seed"))
         return (1..size)
             .map { random.nextLong(range) }
             .map { it -> convert(it) }
@@ -62,7 +59,7 @@ internal abstract class AbstractAnnotatedRandomDateTimeDataProvider<T : Comparab
 
     abstract fun longRange(range: ClosedRange<T>): LongRange
 
-    abstract fun now(truncationUnit: ChronoUnit): T
+    abstract fun now(clock: Clock, truncationUnit: ChronoUnit): T
 
     abstract fun addOffset(value: T, offset: TemporalAmount): T
 
