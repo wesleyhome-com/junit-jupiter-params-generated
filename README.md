@@ -180,6 +180,34 @@ tasks.withType<JavaCompile>().configureEach {
 </plugin>
 ```
 
+## Report Entries
+
+Each test method publishes a summary of what it generated, which is what answers "why does this
+test have four thousand cases?" from the report rather than by reading the annotations:
+
+```text
+generated.invocations = 4320
+generated.parameters  = min=8 x max=6 x increment=5 x dateFormat=6 x ascending=3
+```
+
+The generated values themselves are in the display name. They can also be published as structured
+entries, one per invocation, for when the display name is truncated by a report viewer or when
+something downstream needs to read the values back:
+
+```properties
+# junit-platform.properties
+com.wesleyhome.test.jupiter.report.values=true
+```
+
+```text
+generated.left  = 501
+generated.right = 1
+```
+
+That is off by default because a ten thousand invocation product means ten thousand entries. The
+summary is on by default and costs one entry per test method; turn it off with
+`com.wesleyhome.test.jupiter.report.summary=false`.
+
 ## Null Values
 
 Add `@WithNull` to generate a `null` case alongside a parameter's other values:

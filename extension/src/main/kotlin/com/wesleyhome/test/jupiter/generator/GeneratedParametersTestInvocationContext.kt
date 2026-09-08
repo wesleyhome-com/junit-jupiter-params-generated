@@ -1,5 +1,6 @@
 package com.wesleyhome.test.jupiter.generator
 
+import org.junit.jupiter.api.extension.BeforeTestExecutionCallback
 import org.junit.jupiter.api.extension.Extension
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.ParameterContext
@@ -7,13 +8,13 @@ import org.junit.jupiter.api.extension.ParameterResolver
 import org.junit.jupiter.api.extension.TestTemplateInvocationContext
 
 /**
- * Doubles as its own [ParameterResolver]. JUnit builds an extension registry per invocation and
- * releases the context afterwards, so nothing is shared between parallel invocations.
+ * Doubles as its own [ParameterResolver] and reporter. JUnit builds an extension registry per
+ * invocation and releases the context afterwards, so nothing is shared between parallel invocations.
  */
 internal class GeneratedParametersTestInvocationContext(
     private val template: GeneratedParametersTemplate,
     private val values: Array<Any?>
-) : TestTemplateInvocationContext, ParameterResolver {
+) : TestTemplateInvocationContext, ParameterResolver, BeforeTestExecutionCallback {
 
     private val extensions: List<Extension> = listOf(this)
 
@@ -35,4 +36,10 @@ internal class GeneratedParametersTestInvocationContext(
         parameterContext: ParameterContext,
         extensionContext: ExtensionContext
     ): Any? = values[template.slotOf(parameterContext)]
+
+    override fun beforeTestExecution(context: ExtensionContext) {
+        if (template.reportValues) {
+            context.publishReportEntry(template.valuesByName(values))
+        }
+    }
 }

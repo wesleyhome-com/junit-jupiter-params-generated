@@ -2,6 +2,7 @@ package com.wesleyhome.test.jupiter.generator
 
 import com.wesleyhome.test.jupiter.DEFAULT_MAX_PERMUTATIONS
 import com.wesleyhome.test.jupiter.GeneratedParametersClock
+import com.wesleyhome.test.jupiter.GeneratedParametersReport
 import com.wesleyhome.test.jupiter.MAX_PERMUTATIONS_PROPERTY
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -39,11 +40,26 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
         val template = GeneratedParametersTemplate(
             extensionContext.requiredTestMethod,
             InvocationDisplayNameFormatter.compile(methodContext.namePattern, extensionContext.displayName, layout),
-            layout
+            layout,
+            GeneratedParametersReport.valuesEnabled(extensionContext)
         )
-        return generator.arguments(maxPermutations(extensionContext))
+        val arguments = generator.arguments(maxPermutations(extensionContext))
+        if (GeneratedParametersReport.summaryEnabled(extensionContext)) {
+            extensionContext.publishReportEntry(summary(generator, arguments))
+        }
+        return arguments
             .stream()
             .map { values -> GeneratedParametersTestInvocationContext(template, values) }
+    }
+
+    // A report entry value may not be blank, so a method with no generated parameters omits the key.
+    private fun summary(generator: ParametersGenerator, arguments: ArgumentParameters): Map<String, String> {
+        val summary = mutableMapOf("generated.invocations" to arguments.totalPermutations.toString())
+        if (generator.parameters.isNotEmpty()) {
+            summary["generated.parameters"] =
+                generator.parameters.joinToString(" x ") { "${it.name}=${it.options.size}" }
+        }
+        return summary
     }
 
     private fun maxPermutations(context: ExtensionContext): Long =
