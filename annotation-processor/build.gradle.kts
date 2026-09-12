@@ -8,7 +8,7 @@ plugins {
 dependencies {
     implementation(project(":validation"))
     implementation(project(":junit-jupiter-params-generated"))
-    implementation("com.google.devtools.ksp:symbol-processing-api:2.3.11")
+    implementation("com.google.devtools.ksp:symbol-processing-api:2.3.12")
     testImplementation(libs.junit.jupiter.api)
     testImplementation("com.willowtreeapps.assertk:assertk:0.28.1")
     testRuntimeOnly(libs.junit.jupiter.engine)
