@@ -1,9 +1,9 @@
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 
 plugins {
-    id("net.researchgate.release") version "3.1.0" apply false
+    id("net.researchgate.release") version "3.2.0" apply false
     id("org.jetbrains.dokka")
-    id("io.github.ben-manes.versions") version "0.62.0"
+    id("io.github.ben-manes.versions") version "0.65.0"
 }
 
 group = "com.wesleyhome.test"
