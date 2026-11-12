@@ -4,7 +4,8 @@ import com.wesleyhome.test.jupiter.annotations.ext.SourceProvider
 import com.wesleyhome.test.jupiter.provider.datetime.InstantRangeSourceDataProvider
 
 /**
- * Used to provide a range of instants to a test. The range is inclusive of the min and max values.
+ * Used to provide a range of instants to a test. The range is inclusive of the min and max values. [min] and
+ * [max] may be "MIN" or "MAX" for `Instant.MIN` or `Instant.MAX`.
  *
  * @param min The minimum value for the range. Should follow the ISO-8601 instant format e.g. "2022-01-01T00:00:00Z"
  * @param max The maximum value for the range. Should follow the ISO-8601 instant format e.g. "2022-01-01T00:00:00Z"

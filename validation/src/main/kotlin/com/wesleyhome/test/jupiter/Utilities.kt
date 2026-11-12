@@ -5,6 +5,7 @@ package com.wesleyhome.test.jupiter
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.time.Duration
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -50,14 +51,28 @@ fun String.formatter(): DateTimeFormatter = when (this) {
     else -> DateTimeFormatter.ofPattern(this)
 }
 
+/** Written in place of a value, stands for the type's `MIN`, whatever the format. */
+const val MIN_KEYWORD = "MIN"
+
+/** Written in place of a value, stands for the type's `MAX`, whatever the format. */
+const val MAX_KEYWORD = "MAX"
+
+private inline fun <T> String.minMaxOr(min: T, max: T, parse: (String) -> T): T = when (this) {
+    MIN_KEYWORD -> min
+    MAX_KEYWORD -> max
+    else -> parse(this)
+}
+
 fun String.toLocalDate(dateFormat: String = DEFAULT_DATE_FORMAT): LocalDate =
-    LocalDate.parse(this, dateFormat.formatter())
+    minMaxOr(LocalDate.MIN, LocalDate.MAX) { LocalDate.parse(it, dateFormat.formatter()) }
 
 fun String.toLocalDateTime(dateTimeFormat: String = DEFAULT_DATE_TIME_FORMAT): LocalDateTime =
-    LocalDateTime.parse(this, dateTimeFormat.formatter())
+    minMaxOr(LocalDateTime.MIN, LocalDateTime.MAX) { LocalDateTime.parse(it, dateTimeFormat.formatter()) }
 
 fun String.toLocalTime(timeFormat: String = "HH:mm"): LocalTime =
-    LocalTime.parse(this, timeFormat.formatter())
+    minMaxOr(LocalTime.MIN, LocalTime.MAX) { LocalTime.parse(it, timeFormat.formatter()) }
+
+fun String.toInstant(): Instant = minMaxOr(Instant.MIN, Instant.MAX, Instant::parse)
 
 fun <T> Annotation.propertyValue(propertyName: String): T =
     this::class.memberProperties.first { it.name == propertyName }.getter.call(this) as T

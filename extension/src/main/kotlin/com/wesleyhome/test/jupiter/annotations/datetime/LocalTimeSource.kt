@@ -9,7 +9,8 @@ import com.wesleyhome.test.jupiter.provider.datetime.LocalDateTimeValueSourceDat
  *
  * The [values] array should consist of time string values, formatted according to the [timeFormat] property.
  *
- * Default value for [timeFormat] is "HH:mm".
+ * Default value for [timeFormat] is "HH:mm". "MIN" and "MAX" stand for `LocalTime.MIN` and `LocalTime.MAX`
+ * in any format.
  *
  *
  * @sample examples.LocalTimeSource.example

@@ -5,6 +5,7 @@ import com.wesleyhome.test.jupiter.annotations.StringSource
 import com.wesleyhome.test.jupiter.annotations.datetime.InstantRangeSource
 import com.wesleyhome.test.jupiter.provider.TestParameter
 import com.wesleyhome.test.jupiter.step
+import com.wesleyhome.test.jupiter.toInstant
 import org.junit.jupiter.api.Disabled
 import java.time.Instant
 

@@ -5,6 +5,7 @@ import com.wesleyhome.test.jupiter.annotations.StringSource
 import com.wesleyhome.test.jupiter.annotations.datetime.LocalTimeRangeSource
 import com.wesleyhome.test.jupiter.step
 import com.wesleyhome.test.jupiter.toLocalTime
+import org.junit.jupiter.api.Test
 import java.time.LocalTime
 
 internal class LocalTimeRangeDataProviderTest :
@@ -26,6 +27,14 @@ internal class LocalTimeRangeDataProviderTest :
         ascending: Boolean?
     ) {
         createAndAssertTestParameter(min, max, increment, ascending, dateFormat)
+    }
+
+    /** Checked here rather than through the engine until @LocalTimeRangeSource names this provider. */
+    @Test
+    fun testRangeToMaxKeyword() {
+        testCreateParameterOptionsData(testParameter("22:00", "MAX", null, null, null), false) {
+            it.containsExactly(LocalTime.of(22, 0), LocalTime.of(23, 0))
+        }
     }
 
     override fun convert(valueString: String, format: String): LocalTime =

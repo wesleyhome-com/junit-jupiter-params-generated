@@ -5,6 +5,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isIn
 import assertk.assertions.isInstanceOf
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
+import com.wesleyhome.test.jupiter.annotations.datetime.InstantSource
 import com.wesleyhome.test.jupiter.annotations.datetime.LocalDateRangeSource
 import com.wesleyhome.test.jupiter.annotations.datetime.LocalDateSource
 import com.wesleyhome.test.jupiter.annotations.datetime.LocalDateTimeRangeSource
@@ -12,6 +13,7 @@ import com.wesleyhome.test.jupiter.annotations.datetime.LocalDateTimeSource
 import com.wesleyhome.test.jupiter.testkit.executionFailure
 import com.wesleyhome.test.jupiter.testkit.invocationNames
 import org.junit.jupiter.api.Test
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeParseException
@@ -84,6 +86,50 @@ class ExtremeDatesTest {
             .isEqualTo(listOf("+999999999-12-31T22:00", "+999999999-12-31T23:00"))
     }
 
+    @Test
+    fun testMinAndMaxKeywordsForLocalDate() {
+        assertThat(invocationNames(Fixture::class.java, "dateKeywords"))
+            .isEqualTo(listOf("-999999999-01-01", "2024-02-29", "+999999999-12-31"))
+    }
+
+    @Test
+    fun testKeywordsWorkWithACustomFormat() {
+        assertThat(invocationNames(Fixture::class.java, "dateKeywordsCustomFormat"))
+            .isEqualTo(listOf("-999999999-01-01", "2024-01-02"))
+    }
+
+    @Test
+    fun testKeywordsAreCaseSensitive() {
+        assertThat(executionFailure(Fixture::class.java, "lowercaseKeyword")).isInstanceOf(DateTimeParseException::class)
+    }
+
+    @Test
+    fun testLocalDateRangeBetweenKeywordAndDate() {
+        assertThat(invocationNames(Fixture::class.java, "dateRangeToMaxKeyword"))
+            .isEqualTo(listOf("+999999999-12-30", "+999999999-12-31"))
+        assertThat(invocationNames(Fixture::class.java, "dateRangeFromMinKeyword"))
+            .isEqualTo(listOf("-999999999-01-01", "-999999999-01-02"))
+    }
+
+    /** `MAX` is the real `LocalDateTime.MAX`, which the default `HH:mm` format cannot write. */
+    @Test
+    fun testMinAndMaxKeywordsForLocalDateTime() {
+        assertThat(invocationNames(Fixture::class.java, "dateTimeKeywords"))
+            .isEqualTo(listOf("-999999999-01-01T00:00", "+999999999-12-31T23:59:59.999999999"))
+    }
+
+    @Test
+    fun testLocalDateTimeRangeToMaxKeyword() {
+        assertThat(invocationNames(Fixture::class.java, "dateTimeRangeToMaxKeyword"))
+            .isEqualTo(listOf("+999999999-12-31T22:00", "+999999999-12-31T23:00"))
+    }
+
+    @Test
+    fun testMinAndMaxKeywordsForInstant() {
+        assertThat(invocationNames(Fixture::class.java, "instantKeywords"))
+            .isEqualTo(listOf("-1000000000-01-01T00:00:00Z", "+1000000000-12-31T23:59:59.999999999Z"))
+    }
+
     class Fixture {
 
         @GeneratedParametersTest(name = "{arguments}")
@@ -143,6 +189,42 @@ class ExtremeDatesTest {
             @LocalDateTimeRangeSource(min = "+999999999-12-31 22:00", max = "+999999999-12-31 23:00")
             dateTime: LocalDateTime
         ) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun dateKeywords(@LocalDateSource(["MIN", "2024-02-29", "MAX"]) date: LocalDate) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun dateKeywordsCustomFormat(@LocalDateSource(["MIN", "01/02/2024"], dateFormat = "MM/dd/yyyy") date: LocalDate) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun lowercaseKeyword(@LocalDateSource(["min"]) date: LocalDate) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun dateRangeToMaxKeyword(@LocalDateRangeSource(min = "+999999999-12-30", max = "MAX") date: LocalDate) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun dateRangeFromMinKeyword(@LocalDateRangeSource(min = "MIN", max = "-999999999-01-02") date: LocalDate) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun dateTimeKeywords(@LocalDateTimeSource(["MIN", "MAX"]) dateTime: LocalDateTime) {
+            assertThat(dateTime).isIn(LocalDateTime.MIN, LocalDateTime.MAX)
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun dateTimeRangeToMaxKeyword(
+            @LocalDateTimeRangeSource(min = "+999999999-12-31 22:00", max = "MAX") dateTime: LocalDateTime
+        ) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun instantKeywords(@InstantSource(["MIN", "MAX"]) instant: Instant) {
+            assertThat(instant).isIn(Instant.MIN, Instant.MAX)
         }
     }
 }

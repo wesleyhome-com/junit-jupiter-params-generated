@@ -37,13 +37,9 @@ internal class RandomInstanceSourceDataProvider : AbstractAnnotatedRandomDateTim
         size: Int,
         useOffset: Boolean
     ): List<String> {
-        return RandomDateTimeValidator.validate(minString, maxString, size, useOffset, { it ->
-            it.toInstant()
-        }) { it ->
+        return RandomDateTimeValidator.validate(minString, maxString, size, useOffset, { Instant.parse(it) }) { it ->
             it.temporalAmount()
         }
     }
 
 }
-
-internal fun String.toInstant(): Instant = Instant.parse(this)

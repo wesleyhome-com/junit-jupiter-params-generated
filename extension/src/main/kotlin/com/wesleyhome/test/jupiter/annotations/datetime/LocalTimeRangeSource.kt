@@ -6,7 +6,8 @@ import com.wesleyhome.test.jupiter.provider.datetime.LocalDateTimeRangeDataProvi
 /**
  * Annotation to mark that the given LocalTime parameter should be populated with a LocalTime range
  * starting from the minimum value [min] to the maximum value [max] with an [increment] in the direction specified by [ascending].
- * The default [increment] is 1 hour and the default [ascending] order is true.
+ * The default [increment] is 1 hour and the default [ascending] order is true. [min] and [max] may be
+ * "MIN" or "MAX" for `LocalTime.MIN` or `LocalTime.MAX`, in any format.
  *
  * @sample examples.LocalTimeRangeSource.example
  */

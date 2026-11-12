@@ -2,6 +2,7 @@ package com.wesleyhome.test.jupiter.provider.datetime
 
 import com.wesleyhome.test.jupiter.annotations.datetime.InstantRangeSource
 import com.wesleyhome.test.jupiter.step
+import com.wesleyhome.test.jupiter.toInstant
 import java.time.Instant
 
 internal class InstantRangeSourceDataProvider : AbstractAnnotatedDateTimeRangeDataProvider<Instant, InstantRangeSource>() {
@@ -12,5 +13,5 @@ internal class InstantRangeSourceDataProvider : AbstractAnnotatedDateTimeRangeDa
     ): List<Instant> =
         (min..max step increment).toList()
 
-    override fun convert(value: String, format: String): Instant = Instant.parse(value)
+    override fun convert(value: String, format: String): Instant = value.toInstant()
 }

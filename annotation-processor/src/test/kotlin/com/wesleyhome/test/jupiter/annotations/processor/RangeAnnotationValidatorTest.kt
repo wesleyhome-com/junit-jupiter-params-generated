@@ -110,6 +110,18 @@ class RangeAnnotationValidatorTest {
     }
 
     @Test
+    fun testMinAndMaxKeywordsInEveryDateTimeRange() {
+        listOf("LocalDateRangeSource", "LocalDateTimeRangeSource", "LocalTimeRangeSource", "InstantRangeSource")
+            .forEach { assertThat(validate(it, "min" to "MIN", "max" to "MAX")).isEmpty() }
+    }
+
+    @Test
+    fun testKeywordsAreComparedAsTheValuesTheyStandFor() {
+        assertThat(validate("LocalDateRangeSource", "min" to "MAX", "max" to "2024-01-01"))
+            .containsExactly("Min value [MAX] cannot be greater than max value [2024-01-01]")
+    }
+
+    @Test
     fun testCustomFormatIsUsedAsGiven() {
         assertThat(
             validate(
