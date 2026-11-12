@@ -4,6 +4,9 @@ import com.wesleyhome.test.jupiter.InvalidFilterException
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.lang.reflect.Parameter
+import kotlin.reflect.KClass
+import kotlin.reflect.full.valueParameters
+import kotlin.reflect.jvm.kotlinFunction
 
 /**
  * One filter bound to the generated slots its parameters name, so a rule declares only the
@@ -16,10 +19,15 @@ internal class ParameterFilter(
     private val slots: IntArray
 ) {
 
+    private val parameterTypes: Array<Class<*>> = method.parameterTypes
+
     fun accepts(values: Array<Any?>): Boolean {
         val arguments = arrayOfNulls<Any?>(slots.size)
         for (i in slots.indices) {
-            arguments[i] = values[slots[i]]
+            val value = values[slots[i]]
+            // Filtering this combination out would hide the rejection; letting it run reports it.
+            if (value is RejectedValue) return true
+            arguments[i] = value.adaptedTo(parameterTypes[i])
         }
         return method.invoke(receiver, *arguments) as? Boolean
             ?: throw InvalidFilterException("Filter [$name] returned null")
@@ -47,7 +55,7 @@ internal class ParameterFilter(
                     "Filter [$name] must return Boolean, but returns ${method.returnType.simpleName}"
                 )
             }
-            val slots = method.parameters.map { parameter -> slotFor(name, parameter, layout) }
+            val slots = method.parameters.mapIndexed { index, parameter -> slotFor(name, method, index, parameter, layout) }
             method.isAccessible = true
             return ParameterFilter(name, method, receiver, slots.toIntArray())
         }
@@ -55,15 +63,27 @@ internal class ParameterFilter(
         /**
          * Types are checked here rather than left to [Method.invoke], which reports a mismatch as a
          * bare "argument type mismatch" and silently widens a generated Int into a Long parameter.
+         *
+         * A value class compiles to its underlying type, so `amount: Money` and `amount: Long` are both
+         * a `long` in the signature; only the Kotlin declaration tells them apart.
          */
-        private fun slotFor(name: String, parameter: Parameter, layout: GeneratedParameterLayout): Int {
+        private fun slotFor(
+            name: String,
+            method: Method,
+            index: Int,
+            parameter: Parameter,
+            layout: GeneratedParameterLayout
+        ): Int {
             val slot = layout.slotOfName(parameter.name)
                 ?: throw InvalidFilterException(
                     "Filter [$name] declares [${parameter.name}], which is not a generated parameter of the test"
                 )
-            val generated = layout.typeOf(slot).javaObjectType
+            val generatedType = layout.typeOf(slot)
+            val generated = generatedType.javaObjectType
             val declared = parameter.type
-            if (!declared.boxed().isAssignableFrom(generated)) {
+            if (!declared.boxed().isAssignableFrom(generated) &&
+                !(generatedType.isValue && method.declaresKotlinType(index, generatedType))
+            ) {
                 throw InvalidFilterException(
                     "Filter [$name] declares [${parameter.name}] as ${declared.simpleName}, " +
                         "but the generated parameter is ${generated.simpleName}"
@@ -93,17 +113,17 @@ internal class ParameterFilter(
         private fun find(testClass: Class<*>, name: String): Pair<Method, Any?> {
             hierarchyOf(testClass).forEach { type ->
                 type.declaredMethods
-                    .firstOrNull { it.name == name && Modifier.isStatic(it.modifiers) }
+                    .firstOrNull { it.isNamed(name) && Modifier.isStatic(it.modifiers) }
                     ?.let { return it to null }
                 companionOf(type)?.let { companion ->
                     companion.javaClass.declaredMethods
-                        .firstOrNull { it.name == name }
+                        .firstOrNull { it.isNamed(name) }
                         ?.let { return it to companion }
                 }
             }
             val instanceMethod = hierarchyOf(testClass)
                 .flatMap { it.declaredMethods.asSequence() }
-                .firstOrNull { it.name == name }
+                .firstOrNull { it.isNamed(name) }
             throw InvalidFilterException(
                 if (instanceMethod != null) {
                     "Filter [$name] must be static or declared in a companion object, because filtering " +
@@ -113,6 +133,13 @@ internal class ParameterFilter(
                 }
             )
         }
+
+        private fun Method.declaresKotlinType(index: Int, type: KClass<*>): Boolean =
+            kotlinFunction?.let { it.valueParameters[index].type.classifier == type } == true
+
+        /** The prefix check keeps Kotlin reflection off every method that could not be a match. */
+        private fun Method.isNamed(name: String): Boolean =
+            this.name.startsWith(name) && kotlinName() == name
 
         /** Walks superclasses so a rule shared by several test classes can live in a base class. */
         private fun hierarchyOf(testClass: Class<*>): Sequence<Class<*>> =
