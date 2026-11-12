@@ -5,12 +5,15 @@ package com.wesleyhome.test.jupiter
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.time.Duration
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.Period
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatterBuilder
 import java.time.format.DateTimeParseException
+import java.time.format.ResolverStyle
 import java.time.temporal.TemporalAmount
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
@@ -25,16 +28,51 @@ fun String.temporalAmount(): TemporalAmount =
         this.duration()
     }
 
-fun String.formatter(): DateTimeFormatter = DateTimeFormatter.ofPattern(this)
+const val DEFAULT_DATE_FORMAT = "yyyy-MM-dd"
+const val DEFAULT_DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm"
 
-fun String.toLocalDate(dateFormat: String = "yyyy-MM-dd"): LocalDate =
-    LocalDate.parse(this, dateFormat.formatter())
+private val EXTENDED_DATE: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE.withResolverStyle(ResolverStyle.SMART)
 
-fun String.toLocalDateTime(dateTimeFormat: String = "yyyy-MM-dd HH:mm"): LocalDateTime =
-    LocalDateTime.parse(this, dateTimeFormat.formatter())
+private val EXTENDED_DATE_TIME: DateTimeFormatter = DateTimeFormatterBuilder()
+    .append(DateTimeFormatter.ISO_LOCAL_DATE)
+    .appendLiteral(' ')
+    .appendPattern("HH:mm")
+    .toFormatter()
+    .withResolverStyle(ResolverStyle.SMART)
+
+/**
+ * A formatter for this pattern. The two default patterns parse everything they always have, down to
+ * resolving `2024-02-30` to `2024-02-29`, and also the year 0 and negative years, so `LocalDate.MIN` can
+ * be written as `-999999999-01-01`.
+ */
+fun String.formatter(): DateTimeFormatter = when (this) {
+    DEFAULT_DATE_FORMAT -> EXTENDED_DATE
+    DEFAULT_DATE_TIME_FORMAT -> EXTENDED_DATE_TIME
+    else -> DateTimeFormatter.ofPattern(this)
+}
+
+/** Written in place of a value, stands for the type's `MIN`, whatever the format. */
+const val MIN_KEYWORD = "MIN"
+
+/** Written in place of a value, stands for the type's `MAX`, whatever the format. */
+const val MAX_KEYWORD = "MAX"
+
+private inline fun <T> String.minMaxOr(min: T, max: T, parse: (String) -> T): T = when (this) {
+    MIN_KEYWORD -> min
+    MAX_KEYWORD -> max
+    else -> parse(this)
+}
+
+fun String.toLocalDate(dateFormat: String = DEFAULT_DATE_FORMAT): LocalDate =
+    minMaxOr(LocalDate.MIN, LocalDate.MAX) { LocalDate.parse(it, dateFormat.formatter()) }
+
+fun String.toLocalDateTime(dateTimeFormat: String = DEFAULT_DATE_TIME_FORMAT): LocalDateTime =
+    minMaxOr(LocalDateTime.MIN, LocalDateTime.MAX) { LocalDateTime.parse(it, dateTimeFormat.formatter()) }
 
 fun String.toLocalTime(timeFormat: String = "HH:mm"): LocalTime =
-    LocalTime.parse(this, timeFormat.formatter())
+    minMaxOr(LocalTime.MIN, LocalTime.MAX) { LocalTime.parse(it, timeFormat.formatter()) }
+
+fun String.toInstant(): Instant = minMaxOr(Instant.MIN, Instant.MAX, Instant::parse)
 
 fun <T> Annotation.propertyValue(propertyName: String): T =
     this::class.memberProperties.first { it.name == propertyName }.getter.call(this) as T

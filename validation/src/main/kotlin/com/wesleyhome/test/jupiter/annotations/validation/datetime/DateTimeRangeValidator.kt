@@ -1,5 +1,6 @@
 package com.wesleyhome.test.jupiter.annotations.validation.datetime
 
+import com.wesleyhome.test.jupiter.DEFAULT_DATE_FORMAT
 import com.wesleyhome.test.jupiter.formatter
 import com.wesleyhome.test.jupiter.temporalAmount
 import java.time.format.DateTimeParseException
@@ -23,7 +24,7 @@ object DateTimeRangeValidator {
                 return errors.toList()
             }
         } else {
-            "yyyy-MM-dd"
+            DEFAULT_DATE_FORMAT
         }
         val min = try {
             transformer(minString, format)

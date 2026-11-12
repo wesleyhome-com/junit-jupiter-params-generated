@@ -323,6 +323,15 @@ class LocalDateSource {
         ) {
             assertThat(value).isLessThan(LocalDate.now())
         }
+
+        /**
+         * This will generate 3 tests with the values LocalDate.MIN, "2024-02-29" and LocalDate.MAX.
+         * "MIN" and "MAX" work in every date and time source, whatever the format.
+         */
+        @GeneratedParametersTest
+        fun testLocalDateSourceWithMinAndMax(@LocalDateSource(values = ["MIN", "2024-02-29", "MAX"]) value: LocalDate) {
+            assertThat(value).isBetween(LocalDate.MIN, LocalDate.MAX)
+        }
     }
 }
 

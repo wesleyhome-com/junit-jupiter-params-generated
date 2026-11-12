@@ -23,7 +23,8 @@ annotation class LocalDateSource(
     val values: Array<String>,
 
     /**
-     * The format to use when parsing the date string.
+     * The format to use when parsing the date string. "MIN" and "MAX" in [values] stand for `LocalDate.MIN` and
+     * `LocalDate.MAX` in any format. The default format also accepts negative years, such as `-0500-03-15`.
      * @return the date format
      * @see java.time.format.DateTimeFormatter
      */

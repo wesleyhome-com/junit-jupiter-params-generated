@@ -8,7 +8,7 @@ import com.wesleyhome.test.jupiter.provider.datetime.InstantValueSourceDataProvi
  * value will be populated with a randomized value derived from the provided [values] array.
  *
  * The [values] array should consist of instant string values, formatted according to the [java.time.format.DateTimeFormatter.ISO_INSTANT]
- * standard.
+ * standard. "MIN" and "MAX" stand for `Instant.MIN` and `Instant.MAX`.
  *
  * @sample examples.InstantSource.example
  */

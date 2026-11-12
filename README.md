@@ -93,6 +93,39 @@ fun testWithGeneratedParameters(@IntRangeSource(min = 1, max = 10) value: Int) {
 - Other types: `@StringSource`, enums, booleans
 - Values from a function, for data classes and nested objects: `@ValuesFrom` (see [Values From a Function](#values-from-a-function))
 
+### Date and Time Formats
+
+Dates are read as `yyyy-MM-dd`, date-times as `yyyy-MM-dd HH:mm` and times as `HH:mm`, unless `dateFormat`,
+`dateTimeFormat` or `timeFormat` says otherwise. Instants are always ISO-8601.
+
+Write `MIN` or `MAX` in place of a value for the type's own `MIN` or `MAX`. This works in every date and time value
+and range source, whatever the format:
+
+```kotlin
+@GeneratedParametersTest
+fun acceptsEveryDate(@LocalDateSource(["MIN", "2024-02-29", "MAX"]) date: LocalDate) {
+    // LocalDate.MIN, an ordinary date, LocalDate.MAX
+}
+
+@GeneratedParametersTest
+fun lastWeekOfTime(@LocalDateRangeSource(min = "+999999999-12-25", max = "MAX") date: LocalDate) {
+    // the last seven days LocalDate can hold
+}
+```
+
+- `MAX` is the type's exact maximum, such as `LocalDateTime.MAX` at `23:59:59.999999999`, which `HH:mm` can't write.
+- Only the uppercase words are keywords; `min` and `Max` are parsed like any other value.
+- A range can run all the way to `MAX` and stops at the last value instead of overflowing. Mind the step, though:
+  `min = "MIN", max = "MAX"` a day at a time is about 730 billion dates.
+- Dates near the edges can be written out too. The default formats accept the year 0 and negative years, as in
+  `-0500-03-15`. A year always has at least four digits, and one with more than four needs its sign, as in
+  `+10000-01-01`.
+- A custom format is used exactly as given. In a pattern, `yyyy` is the year of the era and can't be negative, so
+  write `uuuu` to reach negative years with your own format.
+- The annotation processor accepts the same values at compile time.
+- `@RandomInstantSource` doesn't take the keywords, because it picks values by epoch millisecond, which can't
+  reach `Instant.MIN` or `Instant.MAX`.
+
 ## Parameter Combinations
 
 When multiple parameters are generated, the extension uses a **Cartesian product**.

@@ -2,10 +2,12 @@ package com.wesleyhome.test.jupiter.annotations.processor
 
 import com.wesleyhome.test.jupiter.annotations.validation.datetime.DateTimeRangeValidator
 import com.wesleyhome.test.jupiter.annotations.validation.number.NumberRangeValidator
+import com.wesleyhome.test.jupiter.DEFAULT_DATE_FORMAT
+import com.wesleyhome.test.jupiter.DEFAULT_DATE_TIME_FORMAT
+import com.wesleyhome.test.jupiter.toInstant
 import com.wesleyhome.test.jupiter.toLocalDate
 import com.wesleyhome.test.jupiter.toLocalDateTime
 import com.wesleyhome.test.jupiter.toLocalTime
-import java.time.Instant
 
 /**
  * The compile-time half of range validation, expressed over plain argument values so it can be
@@ -27,11 +29,11 @@ internal object RangeAnnotationValidator {
     )
 
     private val DATE_TIME_RANGES = mapOf(
-        "LocalDateRangeSource" to DateTimeRange("dateFormat", "yyyy-MM-dd", "P1d", String::toLocalDate),
+        "LocalDateRangeSource" to DateTimeRange("dateFormat", DEFAULT_DATE_FORMAT, "P1d", String::toLocalDate),
         "LocalDateTimeRangeSource" to
-            DateTimeRange("dateTimeFormat", "yyyy-MM-dd HH:mm", "PT1h", String::toLocalDateTime),
+            DateTimeRange("dateTimeFormat", DEFAULT_DATE_TIME_FORMAT, "PT1h", String::toLocalDateTime),
         "LocalTimeRangeSource" to DateTimeRange("timeFormat", "HH:mm", "PT1h", String::toLocalTime),
-        "InstantRangeSource" to DateTimeRange(null, null, "PT1h") { value, _ -> Instant.parse(value) }
+        "InstantRangeSource" to DateTimeRange(null, null, "PT1h") { value, _ -> value.toInstant() }
     )
 
     private fun validateNumberRange(arguments: Map<String, Any?>): List<String> {

@@ -24,7 +24,9 @@ annotation class LocalDateTimeSource(
 
     /**
      * The format string used to parse the date and time strings in the [values] array.
-     * The default value is "yyyy-MM-dd HH:mm", which represents the format "2023-05-15 14:30".
+     * The default value is "yyyy-MM-dd HH:mm", which represents the format "2023-05-15 14:30". "MIN" and
+     * "MAX" in [values] stand for `LocalDateTime.MIN` and `LocalDateTime.MAX` in any format. The default format
+     * also accepts negative years, such as `-0500-03-15 12:00`.
      *
      *
      * @see values

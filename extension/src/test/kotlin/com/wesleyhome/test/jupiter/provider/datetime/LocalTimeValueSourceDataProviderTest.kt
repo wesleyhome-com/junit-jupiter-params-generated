@@ -21,6 +21,14 @@ internal class LocalTimeValueSourceDataProviderTest :
         }
     }
 
+    /** Checked here rather than through the engine until @LocalTimeSource names this provider. */
+    @Test
+    fun testMinAndMaxKeywords() {
+        testCreateParameterOptionsData(createAnnotatedTestParameter(arrayOf("MIN", "12:30", "MAX"), DATE_FORMAT), false) {
+            it.containsExactly(LocalTime.MIN, LocalTime.of(12, 30), LocalTime.MAX)
+        }
+    }
+
     override fun createTrueProvidesForTestParameter(): TestParameter {
         val (_, testParameter) = parameterPair()
         return testParameter

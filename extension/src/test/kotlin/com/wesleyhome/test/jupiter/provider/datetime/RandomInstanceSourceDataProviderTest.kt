@@ -9,6 +9,7 @@ import com.wesleyhome.test.jupiter.annotations.validation.datetime.TruncateChron
 import com.wesleyhome.test.jupiter.provider.AnnotatedParameterDataProviderTest
 import com.wesleyhome.test.jupiter.provider.TestParameter
 import com.wesleyhome.test.jupiter.temporalAmount
+import com.wesleyhome.test.jupiter.toInstant
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.Instant
