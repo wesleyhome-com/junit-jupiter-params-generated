@@ -38,7 +38,12 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
         val methodContext =
             getStore(extensionContext).get(METHOD_CONTEXT_KEY, GeneratedParametersTestMethodContext::class.java)
                 ?: return Stream.empty()
-        val generator = ParametersGenerator(methodContext.testModel, GeneratedParametersClock.resolve(extensionContext))
+        val generator = ParametersGenerator(
+            methodContext.testModel,
+            GeneratedParametersClock.resolve(extensionContext),
+            maxPermutations(extensionContext),
+            extensionContext.requiredTestClass
+        )
         val layout = generator.layout
         val template = GeneratedParametersTemplate(
             extensionContext.requiredTestMethod,
@@ -46,7 +51,7 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
             layout,
             GeneratedParametersReport.valuesEnabled(extensionContext)
         )
-        val arguments = generator.arguments(maxPermutations(extensionContext))
+        val arguments = generator.arguments()
         val filters = ParameterFilter.resolve(
             extensionContext.requiredTestClass, methodContext.filterNames, layout
         )

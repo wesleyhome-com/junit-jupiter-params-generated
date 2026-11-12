@@ -91,6 +91,7 @@ fun testWithGeneratedParameters(@IntRangeSource(min = 1, max = 10) value: Int) {
 - Date/time explicit values: `@InstantSource`, `@LocalDateSource`, `@LocalDateTimeSource`, `@LocalTimeSource`
 - Random date/time: `@RandomInstantSource`
 - Other types: `@StringSource`, enums, booleans
+- Values from a function, for data classes and nested objects: `@ValuesFrom` (see [Values From a Function](#values-from-a-function))
 
 ## Parameter Combinations
 
@@ -433,6 +434,83 @@ type such as `Boolean` that would otherwise be generated.
 A compiled version of these, checked by the annotation processor, is `examples.ValueClasses` in the
 `examples` module.
 
+## Values From a Function
+
+No annotation can spell out a data class or a nested object. `@ValuesFrom` takes a parameter's
+values from a function instead, and combines them with the other parameters like any other source:
+
+```kotlin
+data class DateRange(val start: LocalDate, val endInclusive: LocalDate) {
+    fun overlaps(other: DateRange): Boolean = start <= other.endInclusive && other.start <= endInclusive
+}
+
+class DateRangeTest {
+
+    @GeneratedParametersTest
+    fun overlapsIsSymmetric(@ValuesFrom("ranges") a: DateRange, @ValuesFrom("ranges") b: DateRange) {
+        // runs with every ordered pair of the three ranges: nine invocations
+        assertEquals(a.overlaps(b), b.overlaps(a))
+    }
+
+    companion object {
+        @JvmStatic
+        fun ranges(): List<DateRange> = listOf(
+            DateRange(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 1, 31)),
+            DateRange(LocalDate.of(2024, 1, 15), LocalDate.of(2024, 2, 15)),
+            DateRange(LocalDate.of(2024, 3, 1), LocalDate.of(2024, 3, 31))
+        )
+    }
+}
+```
+
+The function takes no arguments and returns a `List`, `Sequence` or array of the parameter's type.
+It is found by name the way a filter is: static, or in an object or companion object, on the test
+class or one of its superclasses. `@JvmStatic` is optional. To share a function between test classes,
+name its class as well:
+
+```kotlin
+object Fixtures {
+    fun ranges(): List<DateRange> = listOf(/* ... */)
+}
+
+@GeneratedParametersTest
+fun overlapsItself(@ValuesFrom("com.example.Fixtures#ranges") range: DateRange) {
+    assertTrue(range.overlaps(range))
+}
+```
+
+A top-level function is named by the class it compiles into: `com.example.FixturesKt#ranges` for
+one declared in `Fixtures.kt`.
+
+```java
+@GeneratedParametersTest
+void overlapsIsSymmetric(@ValuesFrom("ranges") DateRange a, @ValuesFrom("ranges") DateRange b) {
+}
+
+static List<DateRange> ranges() {
+    return List.of(/* ... */);
+}
+```
+
+Values from a function work with everything else:
+
+- **Filters and pairwise:** they see these values as they see any other.
+- **`@WithNull`:** adds a null case after the function's values.
+- **Value classes:** a function returning `List<Money>` works for a `Money` parameter.
+- **Invocation ceiling:** the function's values count toward it. Reading stops once the ceiling is passed, so an endless `Sequence` fails with a message instead of hanging the run.
+
+The element type has to match the parameter's: `List<Long>` is not accepted for a `Money` parameter.
+A function whose elements may be null needs a nullable parameter or `@WithNull`. The annotation
+processor checks the name, the arguments and the return type at compile time. The same checks run
+when the test does, and each failure names the parameter and the function:
+
+```text
+@ValuesFrom("ranges") on [a]: [ranges] returns String values, but [a] is DateRange
+```
+
+A compiled version of these, checked by the annotation processor, is `examples.ValuesFrom` in the
+`examples` module.
+
 ## Generated vs Random Values
 
 - Range and explicit-value sources are deterministic by definition.
@@ -490,6 +568,10 @@ Practical guidance:
 | Range/date convenience | Manual list/stream construction | Built-in numeric and date/time sources |
 | Compile-time validation | Limited by default | Supported via optional annotation processor |
 
+When a type needs a function, `@ValuesFrom` supplies one parameter's values rather than whole rows
+of arguments. The library still combines them, so a function listing three ranges gives every pair
+of ranges without writing the pairs out.
+
 ### `@CsvSource` vs Generated Parameters
 
 `@CsvSource` for a combinatorial check requires manually listing every pair:
@@ -535,6 +617,9 @@ Example (compile-time error when `min > max`):
 void invalid(@IntRangeSource(min = 10, max = 1) int value) {
 }
 ```
+
+It also checks every `@ValuesFrom`: the function exists and can be called before the test instance
+exists, takes no arguments, and returns a `List`, `Sequence` or array of the parameter's type.
 
 ## Data Flow
 

@@ -2,7 +2,6 @@ package com.wesleyhome.test.jupiter.generator
 
 import com.wesleyhome.test.jupiter.InvalidFilterException
 import java.lang.reflect.Method
-import java.lang.reflect.Modifier
 import java.lang.reflect.Parameter
 import kotlin.reflect.KClass
 import kotlin.reflect.full.valueParameters
@@ -110,42 +109,17 @@ internal class ParameterFilter(
             else -> this
         }
 
-        private fun find(testClass: Class<*>, name: String): Pair<Method, Any?> {
-            hierarchyOf(testClass).forEach { type ->
-                type.declaredMethods
-                    .firstOrNull { it.isNamed(name) && Modifier.isStatic(it.modifiers) }
-                    ?.let { return it to null }
-                companionOf(type)?.let { companion ->
-                    companion.javaClass.declaredMethods
-                        .firstOrNull { it.isNamed(name) }
-                        ?.let { return it to companion }
-                }
-            }
-            val instanceMethod = hierarchyOf(testClass)
-                .flatMap { it.declaredMethods.asSequence() }
-                .firstOrNull { it.isNamed(name) }
-            throw InvalidFilterException(
-                if (instanceMethod != null) {
+        private fun find(testClass: Class<*>, name: String): StaticFunction =
+            findStaticFunction(testClass, name) ?: throw InvalidFilterException(
+                if (hasInstanceFunction(testClass, name)) {
                     "Filter [$name] must be static or declared in a companion object, because filtering " +
                         "happens before the test instance exists"
                 } else {
                     "No filter named [$name] on ${testClass.name}"
                 }
             )
-        }
 
         private fun Method.declaresKotlinType(index: Int, type: KClass<*>): Boolean =
             kotlinFunction?.let { it.valueParameters[index].type.classifier == type } == true
-
-        /** The prefix check keeps Kotlin reflection off every method that could not be a match. */
-        private fun Method.isNamed(name: String): Boolean =
-            this.name.startsWith(name) && kotlinName() == name
-
-        /** Walks superclasses so a rule shared by several test classes can live in a base class. */
-        private fun hierarchyOf(testClass: Class<*>): Sequence<Class<*>> =
-            generateSequence(testClass) { it.superclass }.takeWhile { it != Any::class.java }
-
-        private fun companionOf(testClass: Class<*>): Any? =
-            runCatching { testClass.getDeclaredField("Companion").apply { isAccessible = true }.get(null) }.getOrNull()
     }
 }
