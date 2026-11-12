@@ -88,6 +88,12 @@ class RangeAnnotationValidatorTest {
     }
 
     @Test
+    fun testUnparseableInstantIsReportedWithoutAFormat() {
+        assertThat(validate("InstantRangeSource", "min" to "2024-01-01", "max" to "2024-02-01T00:00:00Z"))
+            .containsExactly("Unable to parse min string [2024-01-01]")
+    }
+
+    @Test
     fun testValidRangesOfEveryDateTimeKind() {
         assertThat(validate("LocalDateRangeSource", "min" to "2024-01-01", "max" to "2024-02-01")).isEmpty()
         assertThat(

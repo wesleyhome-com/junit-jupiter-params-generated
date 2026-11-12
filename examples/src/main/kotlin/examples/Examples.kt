@@ -619,9 +619,8 @@ class InstantRangeSource {
     fun example() {
 
         /**
-         * This will generate tests with random Instant values
-         * between 2023-01-01T00:00:00.000Z and 2023-01-10T00:00:00.000Z
-         * The values will be truncated to minutes
+         * This will generate a test for every hour from 2023-01-01T00:00:00Z
+         * to 2023-01-10T00:00:00Z inclusive
          */
         @GeneratedParametersTest
         fun testInstantRangeSourceWithInstant(

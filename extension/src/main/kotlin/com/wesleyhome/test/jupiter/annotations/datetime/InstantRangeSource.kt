@@ -16,7 +16,7 @@ import com.wesleyhome.test.jupiter.provider.datetime.InstantRangeSourceDataProvi
  * and increment until it reaches [max]. If false, the range will start with [max]
  * and decrement until it reaches [min].
  *
- * @sample examples.RandomInstantSource.example
+ * @sample examples.InstantRangeSource.example
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)

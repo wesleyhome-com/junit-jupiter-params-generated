@@ -1,41 +1,42 @@
 package com.wesleyhome.test.jupiter.annotations.validation.datetime
 
-import com.wesleyhome.test.jupiter.DEFAULT_DATE_FORMAT
 import com.wesleyhome.test.jupiter.formatter
 import com.wesleyhome.test.jupiter.temporalAmount
 import java.time.format.DateTimeParseException
 
 object DateTimeRangeValidator {
 
+    /**
+     * @param dateFormat the format [parse] reads values with, or null for a type that has no format, such as
+     * an ISO-8601 instant.
+     */
     fun <T : Comparable<T>> validate(
         minString: String,
         maxString: String,
         increment: String?,
         dateFormat: String?,
-        transformer: (String, String) -> T
+        parse: (String) -> T
     ): List<String> {
         val errors = mutableListOf<String>()
-        val format = if (dateFormat != null) {
+        if (dateFormat != null) {
             try {
                 dateFormat.formatter()
-                dateFormat
             } catch (e: Exception) {
                 errors.add("Invalid date format: [$dateFormat]")
                 return errors.toList()
             }
-        } else {
-            DEFAULT_DATE_FORMAT
         }
+        val usingFormat = dateFormat?.let { " using format [$it]" }.orEmpty()
         val min = try {
-            transformer(minString, format)
+            parse(minString)
         } catch (e: DateTimeParseException) {
-            errors.add("Unable to parse min string [$minString] using format [$format]")
+            errors.add("Unable to parse min string [$minString]$usingFormat")
             null
         }
         val max = try {
-            transformer(maxString, format)
+            parse(maxString)
         } catch (e: DateTimeParseException) {
-            errors.add("Unable to parse max string [$maxString] using format [$format]")
+            errors.add("Unable to parse max string [$maxString]$usingFormat")
             null
         }
         if (min != null && max != null && min > max) {
