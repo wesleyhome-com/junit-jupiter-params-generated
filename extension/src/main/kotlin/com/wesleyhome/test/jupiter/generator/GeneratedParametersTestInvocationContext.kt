@@ -35,7 +35,7 @@ internal class GeneratedParametersTestInvocationContext(
     override fun resolveParameter(
         parameterContext: ParameterContext,
         extensionContext: ExtensionContext
-    ): Any? = values[template.slotOf(parameterContext)]
+    ): Any? = template.resolve(template.slotOf(parameterContext), values, parameterContext.parameter.type)
 
     override fun beforeTestExecution(context: ExtensionContext) {
         if (template.reportValues) {

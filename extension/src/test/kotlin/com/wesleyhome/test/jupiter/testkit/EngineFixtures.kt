@@ -1,5 +1,6 @@
 package com.wesleyhome.test.jupiter.testkit
 
+import com.wesleyhome.test.jupiter.generator.kotlinName
 import org.junit.platform.engine.TestExecutionResult
 import org.junit.platform.engine.reporting.ReportEntry
 import org.junit.platform.engine.discovery.DiscoverySelectors.selectMethod
@@ -18,7 +19,7 @@ internal fun executeFixture(
     methodName: String,
     vararg configurationParameters: Pair<String, String>
 ): EngineExecutionResults {
-    val method = fixture.declaredMethods.firstOrNull { it.name == methodName }
+    val method = fixture.declaredMethods.firstOrNull { it.kotlinName() == methodName }
         ?: error("No method named [$methodName] on ${fixture.name}")
     var builder = EngineTestKit.engine("junit-jupiter").selectors(selectMethod(fixture, method))
     for ((key, value) in configurationParameters) {

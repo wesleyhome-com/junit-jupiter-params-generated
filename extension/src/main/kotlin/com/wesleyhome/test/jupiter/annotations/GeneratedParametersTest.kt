@@ -22,6 +22,12 @@ import org.junit.jupiter.api.extension.ExtendWith
  * Worked versions of both, compiled and checked by the annotation processor, are `examples.Filtering`
  * and `examples.Pairwise` in the `examples` module; the README shows them in full.
  *
+ * A parameter typed as a Kotlin value class takes its values from any source for the type it wraps,
+ * so `@LongSource([0, 1]) amount: Money` runs with `Money(0)` and `Money(1)`. Each value goes through
+ * the class's constructor; one its `init` rejects fails the invocation that would have received it,
+ * naming the parameter, the value and the reason. Filters declare the value class itself. See
+ * `examples.ValueClasses`.
+ *
  * @property name the display name given to each invocation. Supports the same placeholders as
  * `@ParameterizedTest`: `{index}` for the 1-based invocation number, `{arguments}` for the generated
  * values, `{argumentsWithNames}` for `name=value` pairs, `{displayName}` for the test method's own
