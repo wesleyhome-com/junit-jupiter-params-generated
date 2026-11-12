@@ -10,6 +10,7 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
+import com.wesleyhome.test.jupiter.annotations.ValuesFrom
 import com.wesleyhome.test.jupiter.annotations.WithNull
 import com.wesleyhome.test.jupiter.annotations.datetime.InstantRangeSource
 import com.wesleyhome.test.jupiter.annotations.datetime.LocalDateRangeSource
@@ -30,9 +31,22 @@ class AnnotationProcessor(private val environment: SymbolProcessorEnvironment) :
                 .filterIsInstance<KSValueParameter>()
                 .forEach { parameter -> validate(parameter, simpleName) }
         }
+        validateValuesFrom(resolver)
         warnAboutInferredNulls(resolver)
         warnAboutOrphanedFilters(resolver)
         return emptyList()
+    }
+
+    private fun validateValuesFrom(resolver: Resolver) {
+        val validator = ValuesFromValidator(resolver)
+        resolver.getSymbolsWithAnnotation(ValuesFrom::class.qualifiedName ?: return)
+            .filterIsInstance<KSValueParameter>()
+            .forEach { parameter ->
+                val reference = parameter.annotations
+                    .first { it.shortName.asString() == ValuesFrom::class.simpleName }
+                    .arguments.first().value as String
+                validator.validate(parameter, reference).forEach { environment.logger.error(it, parameter) }
+            }
     }
 
     /**

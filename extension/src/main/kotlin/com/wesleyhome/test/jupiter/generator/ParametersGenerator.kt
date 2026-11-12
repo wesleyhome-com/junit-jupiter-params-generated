@@ -8,6 +8,7 @@ import com.wesleyhome.test.jupiter.generator.DataProviderRegistry.createInstance
 import com.wesleyhome.test.jupiter.provider.ParameterDataProvider
 import com.wesleyhome.test.jupiter.provider.TestModel
 import com.wesleyhome.test.jupiter.provider.TestParameter
+import com.wesleyhome.test.jupiter.provider.ValuesFromDataProvider
 import java.time.Clock
 import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
@@ -15,7 +16,10 @@ import kotlin.reflect.full.isSubclassOf
 
 internal class ParametersGenerator(
     private val testModel: TestModel,
-    private val clock: Clock = Clock.systemUTC()
+    private val clock: Clock = Clock.systemUTC(),
+    private val maxPermutations: Long = DEFAULT_MAX_PERMUTATIONS,
+    /** Where `@ValuesFrom` looks a bare function name up, as a filter's name is looked up. */
+    private val testClass: Class<*> = Any::class.java
 ) {
 
     /**
@@ -37,7 +41,7 @@ internal class ParametersGenerator(
         GeneratedParameterLayout.of(parameters, testModel.testParameters.size)
     }
 
-    fun arguments(maxPermutations: Long = DEFAULT_MAX_PERMUTATIONS): ArgumentParameters {
+    fun arguments(): ArgumentParameters {
         val arguments = ArgumentParameters(parameters.map { it.options })
         if (arguments.totalPermutations > maxPermutations) {
             throw TooManyPermutationsException(
@@ -76,10 +80,17 @@ internal class ParametersGenerator(
             }
             valueClassOptionsFor(testParameter, annotatedProviders) ?: throw InvalidParameterException(testParameter)
         } else {
-            providers.flatMap { it.createParameterOptionsData(testParameter) }
+            providers.flatMap { optionsFrom(it, testParameter) }
         }
         return if (testParameter.isNullable) values + null else values
     }
+
+    private fun optionsFrom(provider: ParameterDataProvider<*>, testParameter: TestParameter): List<Any?> =
+        if (provider is ValuesFromDataProvider) {
+            provider.valuesFor(testParameter, testClass, maxPermutations)
+        } else {
+            provider.createParameterOptionsData(testParameter)
+        }
 
     /**
      * Lets a source written for the underlying type, such as `@LongSource` on a `Money(val cents: Long)`,

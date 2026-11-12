@@ -2,11 +2,14 @@ package examples
 
 import assertk.assertThat
 import assertk.assertions.isBetween
+import assertk.assertions.isEqualTo
 import assertk.assertions.isGreaterThanOrEqualTo
 import assertk.assertions.isNotNull
+import assertk.assertions.isTrue
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.GenerationStrategy.PAIRWISE
 import com.wesleyhome.test.jupiter.annotations.StringSource
+import com.wesleyhome.test.jupiter.annotations.ValuesFrom
 import com.wesleyhome.test.jupiter.annotations.WithNull
 import com.wesleyhome.test.jupiter.annotations.ext.SourceProvider
 import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource
@@ -14,6 +17,7 @@ import com.wesleyhome.test.jupiter.annotations.number.IntSource
 import com.wesleyhome.test.jupiter.annotations.number.LongSource
 import com.wesleyhome.test.jupiter.provider.AbstractAnnotatedParameterDataProvider
 import com.wesleyhome.test.jupiter.provider.TestParameter
+import java.time.LocalDate
 import java.util.UUID
 
 /**
@@ -179,4 +183,41 @@ class ValueClasses {
         @JvmStatic
         fun chargesCustomer_filter(amount: Money): Boolean = amount.cents > 0
     }
+}
+
+/**
+ * `@ValuesFrom` takes a parameter's values from a function, for types no annotation can spell out.
+ * The function has to be callable before the test instance exists, so this sample is a whole class.
+ */
+class ValuesFrom {
+
+    /** Runs with every ordered pair of the three ranges: nine invocations. */
+    @GeneratedParametersTest(name = "{arguments}")
+    fun overlapsIsSymmetric(@ValuesFrom("ranges") a: DateRange, @ValuesFrom("ranges") b: DateRange) {
+        assertThat(a.overlaps(b)).isEqualTo(b.overlaps(a))
+    }
+
+    /** A function on an object, named with its class, can be shared between test classes. */
+    @GeneratedParametersTest(name = "{arguments}")
+    fun overlapsItself(@ValuesFrom("examples.SharedRanges#ranges") range: DateRange) {
+        assertThat(range.overlaps(range)).isTrue()
+    }
+
+    companion object {
+
+        @JvmStatic
+        fun ranges(): List<DateRange> = listOf(
+            DateRange(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 1, 31)),
+            DateRange(LocalDate.of(2024, 1, 15), LocalDate.of(2024, 2, 15)),
+            DateRange(LocalDate.of(2024, 3, 1), LocalDate.of(2024, 3, 31))
+        )
+    }
+}
+
+data class DateRange(val start: LocalDate, val endInclusive: LocalDate) {
+    fun overlaps(other: DateRange): Boolean = start <= other.endInclusive && other.start <= endInclusive
+}
+
+object SharedRanges {
+    fun ranges(): List<DateRange> = listOf(DateRange(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 30)))
 }
