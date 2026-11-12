@@ -9,6 +9,19 @@ import org.junit.jupiter.api.extension.ExtendWith
 /**
  * Marks a test whose parameters are generated, running it once per combination of generated values.
  *
+ * A method named `<test>_filter` filters that test without being listed anywhere, so invalid
+ * combinations are never generated rather than generated and skipped. Use `<test>_filter_<name>` for
+ * several rules, and [filters] to share a rule between tests. A filter takes only the parameters it
+ * is about, matched by name, and must be static or in a companion object because filtering happens
+ * before the test instance exists.
+ *
+ * `strategy = PAIRWISE` covers every pair of parameters with every pair of their values instead of
+ * the whole product, and takes the pairs to cover from the combinations the filters accept. See
+ * [GenerationStrategy].
+ *
+ * Worked versions of both, compiled and checked by the annotation processor, are `examples.Filtering`
+ * and `examples.Pairwise` in the `examples` module; the README shows them in full.
+ *
  * @property name the display name given to each invocation. Supports the same placeholders as
  * `@ParameterizedTest`: `{index}` for the 1-based invocation number, `{arguments}` for the generated
  * values, `{argumentsWithNames}` for `name=value` pairs, `{displayName}` for the test method's own
@@ -31,7 +44,12 @@ annotation class GeneratedParametersTest(
      * Filtering happens before the test instance exists, so a filter must be static or declared in
      * a companion object - the same constraint `@MethodSource` has.
      */
-    val filters: Array<String> = []
+    val filters: Array<String> = [],
+    /**
+     * How combinations are chosen. Opt in per test method: whether pairwise coverage is enough
+     * depends on what the test asserts, and only its author knows.
+     */
+    val strategy: GenerationStrategy = GenerationStrategy.CARTESIAN
 )
 
 /**

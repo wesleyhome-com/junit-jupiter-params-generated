@@ -6,6 +6,7 @@ import com.wesleyhome.test.jupiter.InvalidFilterException
 import com.wesleyhome.test.jupiter.GeneratedParametersReport
 import com.wesleyhome.test.jupiter.MAX_PERMUTATIONS_PROPERTY
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
+import com.wesleyhome.test.jupiter.annotations.GenerationStrategy
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace.create
 import org.junit.jupiter.api.extension.TestTemplateInvocationContext
@@ -50,9 +51,11 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
             extensionContext.requiredTestClass, methodContext.filterNames, layout
         )
         if (GeneratedParametersReport.summaryEnabled(extensionContext)) {
-            extensionContext.publishReportEntry(summary(generator, arguments, methodContext.filterNames))
+            extensionContext.publishReportEntry(
+                summary(generator, arguments, methodContext.filterNames, methodContext.strategy)
+            )
         }
-        return valuesOf(arguments, filters, methodContext.filterNames)
+        return valuesOf(arguments, filters, methodContext)
             .map { values -> GeneratedParametersTestInvocationContext(template, values) }
     }
 
@@ -65,8 +68,17 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
     private fun valuesOf(
         arguments: ArgumentParameters,
         filters: List<ParameterFilter>,
-        filterNames: Set<String>
+        methodContext: GeneratedParametersTestMethodContext
     ): Stream<Array<Any?>> {
+        val filterNames = methodContext.filterNames
+        val accepts = { values: Array<Any?> -> filters.all { it.accepts(values) } }
+        if (methodContext.strategy == GenerationStrategy.PAIRWISE) {
+            val rows = PairwiseCovering.rowsFor(arguments, accepts)
+            if (rows.isEmpty()) {
+                throw rejectedEverything(arguments, filterNames)
+            }
+            return rows.stream()
+        }
         if (filters.isEmpty()) {
             return arguments.stream()
         }
@@ -80,15 +92,18 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
                 }
             }
             if (!emitted) {
-                throw InvalidFilterException(
-                    "All ${arguments.totalPermutations} generated combinations were rejected by " +
-                        filterNames.sorted().joinToString(", ", "[", "]") +
-                        ". Relax a filter, or widen the values the parameters generate."
-                )
+                throw rejectedEverything(arguments, filterNames)
             }
         }
         return StreamSupport.stream(accepted.asIterable().spliterator(), false)
     }
+
+    private fun rejectedEverything(arguments: ArgumentParameters, filterNames: Set<String>) =
+        InvalidFilterException(
+            "All ${arguments.totalPermutations} generated combinations were rejected by " +
+                filterNames.sorted().joinToString(", ", "[", "]") +
+                ". Relax a filter, or widen the values the parameters generate."
+        )
 
     /**
      * `generated.invocations` counts what was generated, not what ran - filters remove combinations
@@ -99,7 +114,8 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
     private fun summary(
         generator: ParametersGenerator,
         arguments: ArgumentParameters,
-        filterNames: Set<String>
+        filterNames: Set<String>,
+        strategy: GenerationStrategy
     ): Map<String, String> {
         val summary = mutableMapOf("generated.invocations" to arguments.totalPermutations.toString())
         if (generator.parameters.isNotEmpty()) {
@@ -108,6 +124,9 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
         }
         if (filterNames.isNotEmpty()) {
             summary["generated.filters"] = filterNames.sorted().joinToString(", ")
+        }
+        if (strategy != GenerationStrategy.CARTESIAN) {
+            summary["generated.strategy"] = strategy.name
         }
         return summary
     }

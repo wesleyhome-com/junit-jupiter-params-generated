@@ -124,6 +124,84 @@ parameter and its option count. Raise or lower that with a configuration paramet
 com.wesleyhome.test.jupiter.max.permutations=5000000
 ```
 
+## Pairwise Combinations
+
+`strategy = PAIRWISE` runs enough combinations that **every pair of parameters appears with every
+pair of their values**, and no more:
+
+```kotlin
+@GeneratedParametersTest(strategy = PAIRWISE)
+fun settings(
+    @StringSource(["chrome", "firefox", "safari"]) browser: String,
+    @StringSource(["windows", "mac", "linux"]) os: String,
+    @StringSource(["en", "fr"]) locale: String
+) {
+    // 9 invocations instead of 18
+}
+```
+
+Most defects are triggered by one value, or by two interacting. Pairwise keeps that reach for a
+fraction of the invocations, and unlike sampling it is a stated guarantee rather than a hope. What
+it gives up is combinations needing **three or more** specific values at once: in the example above
+`chrome + windows + fr` never runs.
+
+Whether that trade is acceptable depends on what a test asserts, so it is opt in per method and
+never a default.
+
+### The saving comes from parameter count, not value count
+
+| Parameters | Cartesian | Pairwise |
+| --- | --- | --- |
+| 2 params, 3 values each | 9 | **9, no saving at all** |
+| 3 params (3, 3, 2) | 18 | 9 |
+| 6 params (3, 3, 2, 3, 3, 4) | 648 | ~12-16 |
+| 10 params, 3 values each | 59,049 | ~15-20 |
+
+With two parameters the single pair *is* the whole product, so there is nothing to collapse.
+Pairwise is a tool for wide test methods; it does nothing for `@IntRangeSource(1..100)` twice, which
+still yields 10,000 rows.
+
+### With filters
+
+Say Safari only exists on mac:
+
+```kotlin
+@GeneratedParametersTest(strategy = PAIRWISE)
+fun rendersOnSupportedPlatforms(
+    @StringSource(["chrome", "firefox", "safari"]) browser: String,
+    @StringSource(["windows", "mac", "linux"]) os: String,
+    @StringSource(["en", "fr"]) locale: String
+) { ... }
+
+companion object {
+    @JvmStatic
+    fun rendersOnSupportedPlatforms_filter(browser: String, os: String): Boolean =
+        browser != "safari" || os == "mac"
+}
+```
+
+The pairs to cover are taken from the combinations the filter accepts, not from the value lists:
+
+- `safari + windows` is not a pair any accepted combination contains, so it is never demanded and
+  never reported as missing.
+- `safari + mac` **is** reachable, so it is still guaranteed to appear.
+
+Building a covering array first and filtering afterwards would instead drop whichever row happened
+to carry `safari + mac`, and the guarantee would quietly stop holding while still being advertised.
+That is the reason the two features are wired together rather than layered.
+
+A compiled version of this, checked by the annotation processor, is `examples.Pairwise` in the
+`examples` module.
+
+### Notes
+
+- Selection is deterministic. The same test picks the same combinations on every run and every
+  machine, and they are emitted in generation order.
+- Selection is greedy, so the row count is small but not provably minimal.
+- Pairwise reduces what *runs*, not what is generated, so the invocation ceiling still applies to
+  the full product and `generated.invocations` still reports it. The report summary names the
+  strategy when it is not `CARTESIAN`.
+
 ## Filtering Combinations
 
 A Cartesian product generates combinations that are invalid, not merely uninteresting - a `start`
