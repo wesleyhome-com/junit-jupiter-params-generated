@@ -369,6 +369,70 @@ where it is relied on, and it will be removed in a future release. Prefer `@With
 
 `@WithNull` on a type that cannot hold null, such as a Kotlin `Int` or a Java `int`, is an error.
 
+## Value Classes
+
+A parameter typed as a Kotlin `@JvmInline value class` takes its values from any source for the
+type it wraps. Each value is built through the class's constructor, so its `init` checks run:
+
+```kotlin
+@JvmInline
+value class Money(val cents: Long) {
+    init {
+        require(cents >= 0) { "cents must be >= 0" }
+    }
+}
+
+@GeneratedParametersTest
+fun formatsAmounts(@LongSource([0, 1, 250]) amount: Money, @IntSource([1, 2]) quantity: Int) {
+    // runs with Money(cents=0), Money(cents=1) and Money(cents=250), each with quantity 1 and 2
+}
+```
+
+This works for value classes over primitives, `String` and object types. A custom provider can also
+produce the value class directly, for a type no built-in source covers:
+
+```kotlin
+@JvmInline
+value class HouseholdId(val value: UUID)
+
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+@SourceProvider(HouseholdIdSourceDataProvider::class)
+annotation class HouseholdIdSource
+
+class HouseholdIdSourceDataProvider : AbstractAnnotatedParameterDataProvider<HouseholdId, HouseholdIdSource>() {
+    override fun createParameterOptionsData(testParameter: TestParameter): List<HouseholdId> =
+        listOf(HouseholdId(UUID.fromString("00000000-0000-0000-0000-000000000001")))
+}
+
+@GeneratedParametersTest
+fun loadsHousehold(@HouseholdIdSource id: HouseholdId) {
+}
+```
+
+If `init` rejects a generated value, the invocation that would have received it fails, and the
+others still run. The failure names the parameter, the value and the reason:
+
+```text
+Generated value [-1] for parameter [amount] was rejected by Money: IllegalArgumentException: cents must be >= 0
+```
+
+A filter can't skip a rejected value either; the invocation runs and fails.
+
+Display names and report entries show the value class's `toString`, such as `Money(cents=250)`.
+`@WithNull` works on a nullable value class (`amount: Money?`). On a non-null value class over a
+primitive it is an error, because the compiled method takes a `long` there.
+
+Filters can declare the value-class parameter as itself (`fun formatsAmounts_filter(amount: Money)`).
+Declaring the underlying type (`amount: Long`) is an error: both compile to `long`, so the Kotlin
+declaration is the only thing that tells them apart.
+
+A value class with no source annotation is left to other parameter resolvers, even when it wraps a
+type such as `Boolean` that would otherwise be generated.
+
+A compiled version of these, checked by the annotation processor, is `examples.ValueClasses` in the
+`examples` module.
+
 ## Generated vs Random Values
 
 - Range and explicit-value sources are deterministic by definition.

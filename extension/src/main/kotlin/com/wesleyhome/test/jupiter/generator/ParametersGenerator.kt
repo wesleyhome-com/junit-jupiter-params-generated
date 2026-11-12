@@ -70,14 +70,30 @@ internal class ParametersGenerator(
         val providers = annotatedProviders
             .ifEmpty { DataProviderRegistry.defaultDataProviders }
             .filter { it.providesDataFor(testParameter) }
-        if (providers.isEmpty()) {
+        val values = if (providers.isEmpty()) {
             if (annotatedProviders.isEmpty()) {
                 return null
             }
-            throw InvalidParameterException(testParameter)
+            valueClassOptionsFor(testParameter, annotatedProviders) ?: throw InvalidParameterException(testParameter)
+        } else {
+            providers.flatMap { it.createParameterOptionsData(testParameter) }
         }
-        val values = providers.flatMap { it.createParameterOptionsData(testParameter) }
         return if (testParameter.isNullable) values + null else values
+    }
+
+    /**
+     * Lets a source written for the underlying type, such as `@LongSource` on a `Money(val cents: Long)`,
+     * generate the value class. Only explicit sources get this second chance: a value class over
+     * Boolean or an enum with no annotation still belongs to whichever resolver handled it before.
+     */
+    private fun valueClassOptionsFor(
+        testParameter: TestParameter,
+        annotatedProviders: List<ParameterDataProvider<*>>
+    ): List<Any?>? {
+        val shape = ValueClassShape.of(testParameter.type) ?: return null
+        val underlying = testParameter.copy(type = shape.underlying)
+        val providers = annotatedProviders.filter { it.providesDataFor(underlying) }.ifEmpty { return null }
+        return providers.flatMap { it.createParameterOptionsData(underlying) }.map { raw -> raw?.let(shape::wrap) }
     }
 }
 

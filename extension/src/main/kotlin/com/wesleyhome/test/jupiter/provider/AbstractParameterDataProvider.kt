@@ -10,6 +10,9 @@ import kotlin.reflect.KClass
  * needs no implementation: `class FooProvider : AbstractParameterDataProvider<Foo>()` claims `Foo`
  * parameters and nothing else. Intermediate classes between the subclass and this one are resolved
  * correctly, so a shared base of your own is fine.
+ *
+ * [T] may be a Kotlin value class. Return it boxed, as `Money(100)`; the extension unwraps it for the
+ * compiled test method, which takes the underlying type.
  */
 abstract class AbstractParameterDataProvider<T : Any> : ParameterDataProvider<T> {
     private val classType: KClass<T> by lazy {

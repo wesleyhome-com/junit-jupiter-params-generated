@@ -10,7 +10,6 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.jvm.javaType
 import kotlin.reflect.jvm.kotlinFunction
 
 internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
@@ -23,10 +22,11 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
         val requiredTestMethod = context.requiredTestMethod.kotlinFunction!!
         val generated = requiredTestMethod.findAnnotation<GeneratedParametersTest>()
         namePattern = generated?.name ?: DEFAULT_DISPLAY_NAME
-        filterNames = conventionalFilterNames(context.requiredTestMethod) +
+        filterNames = conventionalFilterNames(requiredTestMethod.name, context.requiredTestMethod.declaringClass) +
             (generated?.filters?.toSet() ?: emptySet())
         strategy = generated?.strategy ?: GenerationStrategy.CARTESIAN
         val parameters = requiredTestMethod.parameters.filter { it.kind == KParameter.Kind.VALUE }
+        val jvmTypes = context.requiredTestMethod.parameterTypes
         testModel = TestModel(
             testParameters = parameters.mapIndexed { index, parameter ->
                 TestParameter(
@@ -34,7 +34,7 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
                     // position so a display name stays readable without it.
                     name = parameter.name ?: "arg$index",
                     type = parameter.type.classifier as KClass<*>,
-                    isNullable = generatesNull(parameter),
+                    isNullable = generatesNull(parameter, jvmTypes[index]),
                     annotations = parameter.annotations.toList()
                 )
             }
@@ -46,12 +46,13 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
      * being listed, so the common case needs no attribute. They are unioned with any named
      * explicitly rather than overridden by them, so adding one can never silently do nothing.
      */
-    private fun conventionalFilterNames(testMethod: java.lang.reflect.Method): Set<String> {
-        val prefix = "${testMethod.name}$FILTER_SUFFIX"
-        return generateSequence(testMethod.declaringClass) { it.superclass }
+    private fun conventionalFilterNames(testName: String, testClass: Class<*>): Set<String> {
+        val prefix = "$testName$FILTER_SUFFIX"
+        return generateSequence(testClass) { it.superclass }
             .takeWhile { it != Any::class.java }
             .flatMap { type -> type.declaredMethods.asSequence() + companionMethods(type) }
-            .map { it.name }
+            .filter { it.name.startsWith(prefix) }
+            .map { it.kotlinName() }
             .filter { it == prefix || it.startsWith("${prefix}_") }
             .toSet()
     }
@@ -68,13 +69,15 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
      * A Kotlin nullable type still implies a null case, so tests written before [WithNull] keep
      * working. The annotation says it explicitly and is the only form Java can express, since
      * Kotlin reflection reports every Java type as platform-typed and never as nullable.
+     *
+     * The compiled signature decides what can hold null, not the Kotlin type: a non-null value class
+     * over Long is a `long` there.
      */
-    private fun generatesNull(parameter: KParameter): Boolean {
+    private fun generatesNull(parameter: KParameter, jvmType: Class<*>): Boolean {
         val withNull = parameter.annotations.any { it is WithNull }
         if (withNull) {
-            val javaType = parameter.type.javaType
-            require(!(javaType is Class<*> && javaType.isPrimitive)) {
-                "@WithNull cannot be applied to [${parameter.name}]: ${javaType.typeName} cannot hold null"
+            require(!jvmType.isPrimitive) {
+                "@WithNull cannot be applied to [${parameter.name}]: ${jvmType.typeName} cannot hold null"
             }
         }
         return withNull || parameter.type.isMarkedNullable

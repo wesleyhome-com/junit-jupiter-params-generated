@@ -2,12 +2,19 @@ package examples
 
 import assertk.assertThat
 import assertk.assertions.isBetween
+import assertk.assertions.isGreaterThanOrEqualTo
 import assertk.assertions.isNotNull
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.GenerationStrategy.PAIRWISE
 import com.wesleyhome.test.jupiter.annotations.StringSource
 import com.wesleyhome.test.jupiter.annotations.WithNull
+import com.wesleyhome.test.jupiter.annotations.ext.SourceProvider
 import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource
+import com.wesleyhome.test.jupiter.annotations.number.IntSource
+import com.wesleyhome.test.jupiter.annotations.number.LongSource
+import com.wesleyhome.test.jupiter.provider.AbstractAnnotatedParameterDataProvider
+import com.wesleyhome.test.jupiter.provider.TestParameter
+import java.util.UUID
 
 /**
  * Filters, unlike the value sources, cannot be shown as local functions inside an `example()` method:
@@ -113,5 +120,63 @@ class NullValues {
         fun handlesMissingName(@StringSource(["ada", "grace"]) @WithNull name: String?) {
             assertThat(name?.length ?: 0).isBetween(0, 10)
         }
+    }
+}
+
+/**
+ * A value class takes its values from any source for the type it wraps, built through its
+ * constructor so its `init` checks run. Value classes cannot be declared inside a function body, so
+ * this sample is a whole class too.
+ */
+class ValueClasses {
+
+    @JvmInline
+    value class Money(val cents: Long) {
+        init {
+            require(cents >= 0) { "cents must be >= 0" }
+        }
+    }
+
+    @JvmInline
+    value class HouseholdId(val value: UUID)
+
+    @Target(AnnotationTarget.VALUE_PARAMETER)
+    @Retention(AnnotationRetention.RUNTIME)
+    @SourceProvider(HouseholdIdSourceDataProvider::class)
+    annotation class HouseholdIdSource
+
+    /** No built-in source covers UUID, so this provider produces the value class directly. */
+    class HouseholdIdSourceDataProvider : AbstractAnnotatedParameterDataProvider<HouseholdId, HouseholdIdSource>() {
+        override fun createParameterOptionsData(testParameter: TestParameter): List<HouseholdId> =
+            listOf(HouseholdId(UUID.fromString("00000000-0000-0000-0000-000000000001")))
+    }
+
+    /** Runs with Money(cents=0), Money(cents=1) and Money(cents=250), each with quantity 1 and 2. */
+    @GeneratedParametersTest(name = "{arguments}")
+    fun formatsAmounts(@LongSource([0, 1, 250]) amount: Money, @IntSource([1, 2]) quantity: Int) {
+        assertThat(amount.cents * quantity).isGreaterThanOrEqualTo(0L)
+    }
+
+    /** Runs with Money(cents=5) and null. */
+    @GeneratedParametersTest(name = "{arguments}")
+    fun handlesMissingAmount(@LongSource([5]) @WithNull amount: Money?) {
+        assertThat(amount?.cents ?: 0L).isGreaterThanOrEqualTo(0L)
+    }
+
+    @GeneratedParametersTest(name = "{arguments}")
+    fun loadsHousehold(@HouseholdIdSource id: HouseholdId) {
+        assertThat(id.value).isNotNull()
+    }
+
+    /** Free orders are never generated: the filter declares the value class, not the Long it wraps. */
+    @GeneratedParametersTest(name = "{arguments}")
+    fun chargesCustomer(@LongSource([0, 1, 250]) amount: Money) {
+        assertThat(amount.cents).isGreaterThanOrEqualTo(1L)
+    }
+
+    companion object {
+
+        @JvmStatic
+        fun chargesCustomer_filter(amount: Money): Boolean = amount.cents > 0
     }
 }
