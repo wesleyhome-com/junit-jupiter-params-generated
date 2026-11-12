@@ -99,6 +99,26 @@ class RangeAnnotationValidatorTest {
         ).isEmpty()
     }
 
+    /** The runtime accepts these, so a build that rejected them would block tests that would pass. */
+    @Test
+    fun testDefaultFormatsAcceptMinAndMax() {
+        assertThat(validate("LocalDateRangeSource", "min" to "-999999999-01-01", "max" to "+999999999-12-31"))
+            .isEmpty()
+        assertThat(
+            validate("LocalDateTimeRangeSource", "min" to "-999999999-01-01 00:00", "max" to "+999999999-12-31 23:59")
+        ).isEmpty()
+    }
+
+    @Test
+    fun testCustomFormatIsUsedAsGiven() {
+        assertThat(
+            validate(
+                "LocalDateRangeSource",
+                "min" to "-999999999/01/01", "max" to "2024/01/01", "dateFormat" to "yyyy/MM/dd"
+            )
+        ).containsExactly("Unable to parse min string [-999999999/01/01] using format [yyyy/MM/dd]")
+    }
+
     /** Defaults are what a caller who omits the argument gets, so they have to validate as valid. */
     @Test
     fun testDefaultIncrementAndFormatAreUsedWhenArgumentsAreAbsent() {

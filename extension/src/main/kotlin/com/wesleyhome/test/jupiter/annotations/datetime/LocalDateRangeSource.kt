@@ -6,7 +6,8 @@ import com.wesleyhome.test.jupiter.provider.datetime.LocalDateRangeDataProvider
 /**
  * Annotation to indicate that the annotated LocalDate parameter should be populated with a LocalDate range
  * from [min] to [max] with an [increment] step in the [ascending] direction. The default [increment] is 1 day.
- * The default [ascending] is true.
+ * The default [ascending] is true. The default [dateFormat] also accepts negative years, such as `LocalDate.MIN`
+ * written as `-999999999-01-01`.
  *
  * @sample examples.LocalDateRangeSource.example
  */

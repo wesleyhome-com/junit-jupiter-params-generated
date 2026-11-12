@@ -23,7 +23,8 @@ annotation class LocalDateSource(
     val values: Array<String>,
 
     /**
-     * The format to use when parsing the date string.
+     * The format to use when parsing the date string. The default also accepts negative years, such as
+     * `LocalDate.MIN` written as `-999999999-01-01`.
      * @return the date format
      * @see java.time.format.DateTimeFormatter
      */

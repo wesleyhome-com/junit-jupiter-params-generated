@@ -92,6 +92,27 @@ fun testWithGeneratedParameters(@IntRangeSource(min = 1, max = 10) value: Int) {
 - Random date/time: `@RandomInstantSource`
 - Other types: `@StringSource`, enums, booleans
 
+### Date and Time Formats
+
+Dates are read as `yyyy-MM-dd` and date-times as `yyyy-MM-dd HH:mm` unless `dateFormat` or `dateTimeFormat` says
+otherwise. The defaults also accept the year 0 and negative years, so `LocalDate.MIN` and `LocalDate.MAX` can be
+written the way `toString()` prints them:
+
+```kotlin
+@GeneratedParametersTest
+fun acceptsEveryDate(
+    @LocalDateSource(["-999999999-01-01", "2024-02-29", "+999999999-12-31"]) date: LocalDate
+) {
+    // LocalDate.MIN, an ordinary date, LocalDate.MAX
+}
+```
+
+- A year with more than four digits needs its sign, as in `+10000-01-01`.
+- A range can run all the way to `LocalDate.MAX`; it stops at the last value instead of overflowing.
+- A custom format is used exactly as given. In a pattern, `yyyy` is the year of the era and can't be negative, so
+  write `uuuu` to reach `LocalDate.MIN` with your own format.
+- The annotation processor accepts the same values at compile time.
+
 ## Parameter Combinations
 
 When multiple parameters are generated, the extension uses a **Cartesian product**.
