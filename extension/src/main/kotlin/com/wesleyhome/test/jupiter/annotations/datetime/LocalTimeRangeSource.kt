@@ -1,7 +1,7 @@
 package com.wesleyhome.test.jupiter.annotations.datetime
 
 import com.wesleyhome.test.jupiter.annotations.ext.SourceProvider
-import com.wesleyhome.test.jupiter.provider.datetime.LocalDateTimeRangeDataProvider
+import com.wesleyhome.test.jupiter.provider.datetime.LocalTimeRangeDataProvider
 
 /**
  * Annotation to mark that the given LocalTime parameter should be populated with a LocalTime range
@@ -13,7 +13,7 @@ import com.wesleyhome.test.jupiter.provider.datetime.LocalDateTimeRangeDataProvi
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
-@SourceProvider(LocalDateTimeRangeDataProvider::class)
+@SourceProvider(LocalTimeRangeDataProvider::class)
 @MustBeDocumented
 annotation class LocalTimeRangeSource(
     /**

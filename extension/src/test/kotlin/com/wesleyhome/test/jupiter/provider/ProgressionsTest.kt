@@ -3,6 +3,7 @@ package com.wesleyhome.test.jupiter.provider
 import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.containsExactly
+import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
 import com.wesleyhome.test.jupiter.step
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.temporal.UnsupportedTemporalTypeException
 
 /** Stepping past a type's last value overflows it, so a range ending there has to stop first. */
@@ -54,12 +56,47 @@ class ProgressionsTest {
         assertThat((Instant.MAX..Instant.MAX step "PT${Long.MAX_VALUE}S").toList()).containsExactly(Instant.MAX)
     }
 
+    /** `LocalTime` wraps at midnight, so the step after 23:00 lands back inside the range. */
+    @Test
+    fun testLocalTimeProgressionStopsAtMidnight() {
+        assertThat((LocalTime.MIN..LocalTime.of(23, 30) step "PT1h").toList())
+            .isEqualTo((0..23).map { LocalTime.of(it, 0) })
+    }
+
+    @Test
+    fun testLocalTimeProgressionWithAStepLongerThanADay() {
+        assertThat((LocalTime.of(1, 0)..LocalTime.of(23, 0) step "PT25h").toList()).containsExactly(LocalTime.of(1, 0))
+    }
+
+    @Test
+    fun testLocalTimeProgressionWithANegativeStepStopsBeforeMidnight() {
+        assertThat((LocalTime.MIN..LocalTime.of(5, 0) step "PT-1h").toList()).containsExactly(LocalTime.MIN)
+    }
+
+    @Test
+    fun testLocalTimeProgressionEndsWhenTheStepOverflowsArithmetic() {
+        assertThat((LocalTime.of(23, 0)..LocalTime.MAX step "PT${Long.MAX_VALUE}S").toList())
+            .containsExactly(LocalTime.of(23, 0))
+    }
+
+    @Test
+    fun testLocalTimeProgressionEndsAtMax() {
+        assertThat((LocalTime.of(23, 0)..LocalTime.MAX step "PT1h").toList()).containsExactly(LocalTime.of(23, 0))
+    }
+
+    @Test
+    fun testLocalTimeProgressionStillRejectsADateStep() {
+        assertFailure { (LocalTime.MIN..LocalTime.MAX step "P1d").toList() }
+            .isInstanceOf(UnsupportedTemporalTypeException::class)
+    }
+
     @Test
     fun testExhaustedProgressionThrowsNoSuchElement() {
         listOf(
             (LocalDate.MAX..LocalDate.MAX step "P1d").iterator(),
             (LocalDateTime.MAX..LocalDateTime.MAX step "PT1h").iterator(),
-            (Instant.MAX..Instant.MAX step "PT1h").iterator()
+            (Instant.MAX..Instant.MAX step "PT1h").iterator(),
+            (LocalTime.MAX..LocalTime.MAX step "PT1h").iterator()
         ).forEach { iterator ->
             iterator.next()
             assertThat(iterator.hasNext()).isFalse()

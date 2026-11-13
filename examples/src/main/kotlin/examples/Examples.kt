@@ -386,7 +386,7 @@ class LocalTimeSource {
     fun example() {
 
         /**
-         * This will generate 5 tests with the values "2020-01-01", "2021-01-01", "2022-01-01", "2023-01-01", "2024-01-01"
+         * This will generate 5 tests with the values 00:00, 02:00, 04:00, 06:00 and 08:00
          */
         @GeneratedParametersTest
         fun testLocalTimeSource(
@@ -405,8 +405,8 @@ class LocalTimeSource {
         }
 
         /**
-         * This will generate 5 tests with the values "01/01/2020", "01/01/2021", "01/01/2022", "01/01/2023", "01/01/2024"
-         * The values will be parsed using the format "MM/dd/yyyy"
+         * This will generate 5 tests with the values 00:00:01, 02:00:02, 03:00:03, 04:00:04 and 05:00:05
+         * The values will be parsed using the format "HH:mm:ss"
          */
         @GeneratedParametersTest
         fun testLocalTimeSourceWithFormat(
@@ -418,7 +418,7 @@ class LocalTimeSource {
                     "04:00:04",
                     "05:00:05"
                 ],
-                timeFormat = "hh:mm:ss"
+                timeFormat = "HH:mm:ss"
             )
             value: LocalTime
         ) {
@@ -645,8 +645,7 @@ class LocalTimeRangeSource {
     fun example() {
 
         /**
-         * This will generate tests with random LocalTime values
-         * between 12:00 and 19:00 with 1 hour increments
+         * This will generate a test for every hour from 12:00 to 19:00 inclusive
          */
         @GeneratedParametersTest
         fun testLocalTimeRangeSource(
