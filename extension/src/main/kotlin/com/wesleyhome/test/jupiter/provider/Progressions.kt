@@ -1,6 +1,7 @@
 package com.wesleyhome.test.jupiter.provider
 
 import java.time.DateTimeException
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -52,14 +53,14 @@ internal class LocalTimeProgression(
 ) : Iterable<LocalTime> {
 
     private val range = min..max
-    private val current = AtomicReference(min)
+    private val current = AtomicReference<LocalTime?>(min)
 
     override fun iterator(): Iterator<LocalTime> {
         return object : Iterator<LocalTime> {
-            override fun hasNext(): Boolean = range.contains(current.get())
+            override fun hasNext(): Boolean = current.get()?.let(range::contains) == true
 
             override fun next(): LocalTime {
-                return current.getAndUpdate { it + step }
+                return current.getAndUpdate { it?.plusWithinDay(step) } ?: throw NoSuchElementException()
             }
         }
     }
@@ -97,3 +98,11 @@ private fun <T> T.stepOrNull(step: (T) -> T): T? =
     } catch (_: ArithmeticException) {
         null
     }
+
+private val ONE_DAY: Duration = Duration.ofDays(1)
+
+/** Null once a step reaches midnight, where `LocalTime` would wrap back to the start of the day. */
+private fun LocalTime.plusWithinDay(step: TemporalAmount): LocalTime? {
+    val elapsed = Duration.ofNanos(toNanoOfDay()).stepOrNull { it + Duration.from(step) } ?: return null
+    return if (elapsed.isNegative || elapsed >= ONE_DAY) null else LocalTime.ofNanoOfDay(elapsed.toNanos())
+}

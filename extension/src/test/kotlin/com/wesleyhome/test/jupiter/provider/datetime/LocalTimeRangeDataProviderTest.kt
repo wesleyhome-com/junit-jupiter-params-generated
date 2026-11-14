@@ -29,7 +29,6 @@ internal class LocalTimeRangeDataProviderTest :
         createAndAssertTestParameter(min, max, increment, ascending, dateFormat)
     }
 
-    /** Checked here rather than through the engine until @LocalTimeRangeSource names this provider. */
     @Test
     fun testRangeToMaxKeyword() {
         testCreateParameterOptionsData(testParameter("22:00", "MAX", null, null, null), false) {
