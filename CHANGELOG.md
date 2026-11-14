@@ -14,6 +14,9 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
 - The release workflow creates the GitHub release. Its notes are this changelog's section for the
   version, followed by the release's pull requests grouped by label.
 - `CHANGELOG.md` records each release's changes, starting from 4.0.0.
+- Pull requests must pass a `changelog` check: an entry under `[Unreleased]`, a release-note label,
+  and an Upgrade note for anything labeled `breaking`.
+- `CLAUDE.md` gives Claude Code sessions the project's contribution rules.
 
 ## [4.1.0] - 2026-11-14
 
