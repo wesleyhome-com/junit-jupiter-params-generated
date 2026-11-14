@@ -63,7 +63,9 @@ jobs:
         uses: actions/checkout@v7
         with:
           path: tools
-          sparse-checkout: .github/scripts
+          sparse-checkout: |
+            .github/scripts
+            dokka-assets
 
       - name: Checkout ${{ steps.version.outputs.tag }}
         uses: actions/checkout@v7
@@ -91,6 +93,7 @@ jobs:
         run: >-
           bash tools/.github/scripts/build-pages-site.sh
           release source/docs gh-pages site "${{ steps.version.outputs.version }}"
+          tools/dokka-assets/version-selector.js
 
       - name: Store site on gh-pages
         run: >-
