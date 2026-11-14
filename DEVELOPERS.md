@@ -141,9 +141,31 @@ Main release/publish behavior is driven by GitHub workflows under `.github/workf
   - publishes non-SNAPSHOT release artifacts to Maven Central,
   - pushes the release commits and tag with the `RELEASE_DEPLOY_KEY` deploy key, the only actor
     allowed to push to `main` directly,
-  - creates the GitHub release with generated notes, starting from the previous GA tag (or the tag
-    just before a pre-release) and marked Latest for an `X.Y.Z` version or pre-release otherwise.
-    If that last step fails, the artifacts are already published; create the release by hand.
+  - renames `CHANGELOG.md`'s `[Unreleased]` section to the release version before building, and
+    stops the release there if that section is empty (see below),
+  - creates the GitHub release: that version's changelog section, then the pull requests since the
+    previous GA tag (or the tag just before a pre-release) grouped by label. An `X.Y.Z` version is
+    marked Latest, anything else a pre-release. If that last step fails, the artifacts are already
+    published; create the release by hand.
+
+## Changelog and Labels
+
+Every pull request does two things for the release notes:
+
+- **Adds an entry to `CHANGELOG.md` under `[Unreleased]`,** in the section it belongs to: Upgrade
+  notes, Added, Changed, Fixed, or Build and docs. Write it for someone upgrading, not as a commit
+  message. Anything that can break or change an existing build goes under **Upgrade notes** with what
+  to do about it.
+- **Gets a label:** `enhancement`, `bug`, `build`, `documentation` or `dependencies`, plus `breaking`
+  for anything with an upgrade note. `.github/release.yml` groups the release's pull request list by
+  these labels. Renovate labels its own pull requests `dependencies`, and those don't need a
+  changelog entry. `skip-changelog` leaves a pull request out of the list.
+
+At release time the `releaseChangelog` task (in `build.gradle.kts`, run before the release build)
+renames `[Unreleased]` to `[<version>] - <date>`, starts a new empty `[Unreleased]` and updates the
+compare links. The release plugin's pre-tag commit includes the change, so the tag carries it. An
+empty `[Unreleased]` stops the release before anything is built or published; add the missing
+entries in a pull request and run it again.
 
 ## Documentation Publishing and Versioning
 
