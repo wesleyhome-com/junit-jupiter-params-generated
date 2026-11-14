@@ -1,6 +1,7 @@
 {
-  "latest": "snapshot/",
+  "latest": "v/4.0.0/",
   "versions": [
-    {"label": "snapshot", "path": "snapshot/"}
+    {"label": "4.0.0 (latest)", "path": "v/4.0.0/"}
+   ,{"label": "snapshot", "path": "snapshot/"}
   ]
 }

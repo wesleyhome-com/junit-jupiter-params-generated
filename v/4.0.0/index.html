@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>All modules</title>
+    <link href="images/logo-icon.svg" rel="icon" type="image/svg">
+        <script>var pathToRoot = "";</script>
+    <script>document.documentElement.classList.replace("no-js", "js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+      if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      } else {
+        const savedDarkMode = JSON.parse(storage)
+        if (savedDarkMode === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      }
+    </script>
+<script type="text/javascript" src="scripts/sourceset_dependencies.js" async="async"></script>
+<link href="styles/style.css" rel="Stylesheet">
+<link href="styles/main.css" rel="Stylesheet">
+<link href="styles/prism.css" rel="Stylesheet">
+<link href="styles/logo-styles.css" rel="Stylesheet">
+<link href="ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="scripts/safe-local-storage_blocking.js"></script>
+<script type="text/javascript" src="scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="ui-kit/ui-kit.min.js" defer="defer"></script>
+<script type="text/javascript" src="images/version-selector.js" async="async"></script>
+</head>
+<body>
+<div class="root">
+    <header class="navigation theme-dark" id="navigation-wrapper" role="banner">
+            <a class="library-name--link" href="index.html" tabindex="1">
+                    junit-jupiter-params-generated-parent
+            </a>
+        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle"
+                type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">
+4.0.0        </div>
+        <div class="navigation-controls">
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button"
+                    type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </header>
+    <div id="container">
+        <nav id="leftColumn" class="sidebar" data-item-type="SECTION" data-item-config='{"defaultSize": 280, "minSize": 200, "maxSize": 400}'>
+            <a class="toc--skip-link" href="#main">Skip to content</a>
+            <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list"
+                    data-role="dropdown-listbox" aria-label="Table of contents">
+                    <div class="dropdown--header">
+                            <span>
+                                    junit-jupiter-params-generated-parent
+                            </span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                    <div class="sidebar--inner" id="sideMenu"></div>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </nav>
+        <div id="resizer" class="resizer" data-item-type="BAR"></div>
+        <div id="main" data-item-type="SECTION" role="main">
+<div class="main-content" id="content" pageIds="junit-jupiter-params-generated-parent::.ext/allModules///PointingToDeclaration//0">
+  <div class="breadcrumbs"></div>
+  <div class="cover ">
+    <div class="cover ">
+      <h1 class="">JUnit Jupiter Parameterized Test Extension</h1>
+      <p class="paragraph">This project extends JUnit Jupiter parameterized tests with generated parameter values for numbers, date/time types, strings, booleans, and enums.</p>
+      <p class="paragraph">It is designed to reduce <code class="lang-kotlin">@MethodSource</code> boilerplate while preserving type safety and adding compile-time validation for supported annotations.</p>
+      <h2 class="">Installation</h2>
+      <h3 class="">Runtime Extension</h3>
+      <p class="paragraph">Gradle:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">dependencies {<br>    testImplementation(&quot;com.wesleyhome.test:junit-jupiter-params-generated:&lt;latestVersion&gt;&quot;)<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">Maven:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-xml" theme="idea">&lt;dependency&gt;<br>    &lt;groupId&gt;com.wesleyhome.test&lt;/groupId&gt;<br>    &lt;artifactId&gt;junit-jupiter-params-generated&lt;/artifactId&gt;<br>    &lt;version&gt;${latestVersion}&lt;/version&gt;<br>    &lt;scope&gt;test&lt;/scope&gt;<br>&lt;/dependency&gt;</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <h3 class="">Annotation Processor (Optional, recommended)</h3>
+      <p class="paragraph">Gradle (KSP):</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">plugins {<br>    id(&quot;com.google.devtools.ksp&quot;) version &quot;&lt;kspVersion&gt;&quot;<br>}<br><br>dependencies {<br>    ksp(&quot;com.wesleyhome.test:annotation-processor:&lt;latestVersion&gt;&quot;)<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">Maven:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-xml" theme="idea">&lt;dependency&gt;<br>    &lt;groupId&gt;com.wesleyhome.test&lt;/groupId&gt;<br>    &lt;artifactId&gt;annotation-processor&lt;/artifactId&gt;<br>    &lt;version&gt;${latestVersion}&lt;/version&gt;<br>    &lt;scope&gt;provided&lt;/scope&gt;<br>&lt;/dependency&gt;</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <h2 class="">Compatibility Matrix</h2>
+      <div class="table--container">
+        <table>
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Supported</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Java</td>
+              <td>17+</td>
+            </tr>
+            <tr>
+              <td>Kotlin/JVM</td>
+              <td>2.3.x</td>
+            </tr>
+            <tr>
+              <td>JUnit Jupiter</td>
+              <td>6.0.3+</td>
+            </tr>
+            <tr>
+              <td>Gradle</td>
+              <td>Supported (<code class="org.jetbrains.dokka.pages.commenttable@7217b465 lang-kotlin">testImplementation</code>, optional <code class="org.jetbrains.dokka.pages.commenttable@7217b465 lang-kotlin">ksp</code>)</td>
+            </tr>
+            <tr>
+              <td>Maven</td>
+              <td>Supported (<code class="org.jetbrains.dokka.pages.commenttable@7217b465 lang-kotlin">test</code> scope for extension)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h2 class="">Getting Started</h2>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest<br>import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource<br>import kotlin.test.assertTrue<br><br>@GeneratedParametersTest<br>fun testWithGeneratedParameters(@IntRangeSource(min = 1, max = 10) value: Int) {<br>    assertTrue(value in 1..10)<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <h2 class="">Core Sources</h2>
+      <ul>
+        <li>
+          <p class="paragraph">Numeric ranges: <code class="lang-kotlin">@IntRangeSource</code>, <code class="lang-kotlin">@LongRangeSource</code>, <code class="lang-kotlin">@DoubleRangeSource</code>, <code class="lang-kotlin">@FloatRangeSource</code></p>
+        </li>
+        <li>
+          <p class="paragraph">Numeric explicit values: <code class="lang-kotlin">@IntSource</code>, <code class="lang-kotlin">@LongSource</code>, <code class="lang-kotlin">@DoubleSource</code>, <code class="lang-kotlin">@FloatSource</code></p>
+        </li>
+        <li>
+          <p class="paragraph">Date/time ranges: <code class="lang-kotlin">@InstantRangeSource</code>, <code class="lang-kotlin">@LocalDateRangeSource</code>, <code class="lang-kotlin">@LocalDateTimeRangeSource</code>, <code class="lang-kotlin">@LocalTimeRangeSource</code></p>
+        </li>
+        <li>
+          <p class="paragraph">Date/time explicit values: <code class="lang-kotlin">@InstantSource</code>, <code class="lang-kotlin">@LocalDateSource</code>, <code class="lang-kotlin">@LocalDateTimeSource</code>, <code class="lang-kotlin">@LocalTimeSource</code></p>
+        </li>
+        <li>
+          <p class="paragraph">Random date/time: <code class="lang-kotlin">@RandomInstantSource</code></p>
+        </li>
+        <li>
+          <p class="paragraph">Other types: <code class="lang-kotlin">@StringSource</code>, enums, booleans</p>
+        </li>
+      </ul>
+      <h2 class="">Parameter Combinations</h2>
+      <p class="paragraph">When multiple parameters are generated, the extension uses a <strong>Cartesian product</strong>.</p>
+      <p class="paragraph">Invocation count:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-text" theme="idea">totalInvocations = product(parameterOptionCounts)</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">Example:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">@GeneratedParametersTest<br>fun combinations(<br>    @IntRangeSource(min = 1, max = 3) first: Int,      // 3 values<br>    @IntRangeSource(min = 10, max = 12) second: Int    // 3 values<br>) {<br>    // Runs 9 times (3 * 3)<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">CI warning: two larger ranges can multiply quickly (for example, <code class="lang-kotlin">100 x 100 = 10,000</code> invocations).</p>
+      <h2 class="">Generated vs Random Values</h2>
+      <ul>
+        <li>
+          <p class="paragraph">Range and explicit-value sources are deterministic by definition.</p>
+        </li>
+        <li>
+          <p class="paragraph"><code class="lang-kotlin">@RandomInstantSource</code> is deterministic by default in this library (fixed internal seed).</p>
+        </li>
+        <li>
+          <p class="paragraph">Invocation display names include resolved argument values, so failures show the generated value directly.</p>
+        </li>
+      </ul>
+      <p class="paragraph">Because random generation is deterministic by default, rerunning the same test configuration reproduces the same sequence.</p>
+      <h2 class="">Performance and Memory</h2>
+      <p class="paragraph">Generation model:</p>
+      <ul>
+        <li>
+          <p class="paragraph">Parameter value lists are generated eagerly per parameter.</p>
+        </li>
+        <li>
+          <p class="paragraph">Test invocations are iterated lazily across the Cartesian product.</p>
+        </li>
+      </ul>
+      <p class="paragraph">Practical guidance:</p>
+      <ul>
+        <li>
+          <p class="paragraph">Keep ranges intentional.</p>
+        </li>
+        <li>
+          <p class="paragraph">Prefer smaller random <code class="lang-kotlin">size</code> values.</p>
+        </li>
+        <li>
+          <p class="paragraph">Split high-cardinality tests into targeted suites.</p>
+        </li>
+      </ul>
+      <h2 class="">Why Not <code class="lang-kotlin">@MethodSource</code>?</h2>
+      <div class="table--container">
+        <table>
+          <thead>
+            <tr>
+              <th>Concern</th>
+              <th><code class="org.jetbrains.dokka.pages.commenttable@7217b465 lang-kotlin">@MethodSource</code></th>
+              <th>Generated Sources</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Boilerplate</td>
+              <td>Requires separate provider methods</td>
+              <td>Inlined annotation configuration</td>
+            </tr>
+            <tr>
+              <td>Type safety</td>
+              <td>Depends on method return wiring</td>
+              <td>Annotation-driven parameter typing</td>
+            </tr>
+            <tr>
+              <td>Range/date convenience</td>
+              <td>Manual list/stream construction</td>
+              <td>Built-in numeric and date/time sources</td>
+            </tr>
+            <tr>
+              <td>Compile-time validation</td>
+              <td>Limited by default</td>
+              <td>Supported via optional annotation processor</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h3 class=""><code class="lang-kotlin">@CsvSource</code> vs Generated Parameters</h3>
+      <p class="paragraph"><code class="lang-kotlin">@CsvSource</code> for a combinatorial check requires manually listing every pair:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-java" theme="idea">@ParameterizedTest<br>@CsvSource({<br>    &quot;1,10&quot;,<br>    &quot;1,20&quot;,<br>    &quot;1,30&quot;,<br>    &quot;2,10&quot;,<br>    &quot;2,20&quot;,<br>    &quot;2,30&quot;,<br>    &quot;3,10&quot;,<br>    &quot;3,20&quot;,<br>    &quot;3,30&quot;<br>})<br>void multipliesAllPairs(int left, int right) {<br>    assertTrue((left * right) &gt; 0);<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">Equivalent generated-parameter test (same 3 x 3 Cartesian product, no manual tuple list):</p>
+      <div class="sample-container">
+        <pre><code class="block lang-java" theme="idea">@GeneratedParametersTest<br>void multipliesAllPairs(<br>    @IntRangeSource(min = 1, max = 3) int left,<br>    @IntRangeSource(min = 10, max = 30, increment = 10) int right<br>) {<br>    assertTrue((left * right) &gt; 0);<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <h2 class="">Annotation Processor</h2>
+      <p class="paragraph">The optional annotation processor validates supported annotation configurations at compile time.</p>
+      <p class="paragraph">Example (compile-time error when <code class="lang-kotlin">min &gt; max</code>):</p>
+      <div class="sample-container">
+        <pre><code class="block lang-java" theme="idea">@GeneratedParametersTest<br>void invalid(@IntRangeSource(min = 10, max = 1) int value) {<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <h2 class="">Data Flow</h2>
+      <div class="sample-container">
+        <pre><code class="block lang-text" theme="idea">[Test Method] -&gt; [Parameter Scan] -&gt; [Per-Parameter Data Generation] -&gt; [Invocation Iteration] -&gt; [Test Execution]</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <h2 class="">Custom Annotations and Providers</h2>
+      <p class="paragraph">You can create custom providers by:</p>
+      <ol>
+        <li>
+          <p class="paragraph">Defining a parameter annotation.</p>
+        </li>
+        <li>
+          <p class="paragraph">Mapping it with <code class="lang-kotlin">@SourceProvider(...)</code>.</p>
+        </li>
+        <li>
+          <p class="paragraph">Implementing <code class="lang-kotlin">ParameterDataProvider&lt;T&gt;</code>.</p>
+        </li>
+      </ol>
+      <p class="paragraph">Example:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">@Target(AnnotationTarget.VALUE_PARAMETER)<br>@Retention(AnnotationRetention.RUNTIME)<br>@SourceProvider(CustomSourceDataProvider::class)<br>annotation class CustomSource(val min: Int, val max: Int, val increment: Int)<br><br>class CustomSourceDataProvider : ParameterDataProvider&lt;Int&gt; {<br>    override fun createParameterOptionsData(testParameter: TestParameter): List&lt;Int&gt; {<br>        val annotation = testParameter.annotations.filterIsInstance&lt;CustomSource&gt;().first()<br>        return (annotation.min..annotation.max step annotation.increment).toList()<br>    }<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <h2 class="">Testing</h2>
+      <p class="paragraph">Run all tests:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-bash" theme="idea">./gradlew test</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+    </div>
+    <h2 class="">All modules:</h2>
+    <div class="table"><a data-name="-648429954%2FMain%2F0" anchor-label="junit-jupiter-params-generated" id="-648429954%2FMain%2F0" data-filterable-set=""></a>
+      <div class="table-row table-row_multimodule">
+        <div class="main-subrow ">
+          <div class="w-100"><span class="inline-flex">
+              <div><a href="junit-jupiter-params-generated/index.html">junit-jupiter-params-generated</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-648429954%2FMain%2F0"></span>
+                <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+              </span></span></div>
+          <div><span class="brief-comment"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <div class="footer--container">
+            <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+            <div class="footer--content">
+                <div>
+                    <span>Generated by </span>
+                    <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                        Dokka
+                    </a>
+                    <div>© 2026 Copyright</div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
