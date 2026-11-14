@@ -34,6 +34,29 @@
     return "";
   }
 
+  // The Dokka header is dark in both themes, so these use Dokka's dark-header tokens throughout.
+  var STYLES =
+    ".jp-version-select{" +
+    "appearance:none;-webkit-appearance:none;cursor:pointer;" +
+    "font:var(--font-text-m);color:var(--color-text-dt);background-color:transparent;" +
+    "border:1px solid var(--color-w16);border-radius:var(--size-s1);" +
+    "padding:4px 28px 4px 8px;margin:0;" +
+    "background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' " +
+    "viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='white' stroke-opacity='.7' " +
+    "stroke-width='1.5'/%3E%3C/svg%3E\");" +
+    "background-repeat:no-repeat;background-position:right 8px center;}" +
+    ".jp-version-select:hover{background-color:var(--color-w10);}" +
+    ".jp-version-select:focus-visible{outline:var(--focus-outline);}" +
+    ".jp-version-select option{color:var(--color-text-dt);background-color:var(--color-background-nav);}" +
+    // Dokka's breakpoint for the narrow header, where the version gets a row of its own with no padding.
+    "@media(max-width:899px){.jp-version-select{margin-left:12px;}}";
+
+  function installStyles() {
+    var style = document.createElement("style");
+    style.textContent = STYLES;
+    document.head.appendChild(style);
+  }
+
   var pathname = window.location.pathname;
   var basePrefix = detectBasePrefix(pathname);
   var docsRoot = detectDocsRoot(pathname, basePrefix);
@@ -64,18 +87,9 @@
         return;
       }
 
-      var container = document.createElement("div");
-      container.style.display = "inline-flex";
-      container.style.alignItems = "center";
-      container.style.gap = "0.4rem";
-      container.style.marginLeft = "0.8rem";
-      container.style.fontSize = "0.85rem";
-
-      var label = document.createElement("label");
-      label.textContent = "Docs:";
-
       var select = document.createElement("select");
-      select.style.fontSize = "0.85rem";
+      select.className = "jp-version-select";
+      select.setAttribute("aria-label", "Documentation version");
 
       data.versions.forEach(function (entry) {
         if (!entry || !entry.label || !entry.path) {
@@ -97,19 +111,18 @@
         window.location.assign(select.value);
       });
 
-      container.appendChild(label);
-      container.appendChild(select);
-
-      var target =
-        document.querySelector(".navigation .library-name") ||
-        document.querySelector(".navigation") ||
-        document.querySelector(".breadcrumbs") ||
-        document.querySelector("header");
-
-      if (!target) {
+      // The selected option names this page's version, so it replaces Dokka's plain version label.
+      var versionLabel = document.getElementById("library-version");
+      var controls = document.querySelector(".navigation-controls");
+      if (versionLabel) {
+        versionLabel.textContent = "";
+        versionLabel.appendChild(select);
+      } else if (controls) {
+        controls.insertBefore(select, controls.firstChild);
+      } else {
         return;
       }
-      target.appendChild(container);
+      installStyles();
     })
     .catch(function () {
       // Ignore docs version selector failures to avoid affecting page render.
