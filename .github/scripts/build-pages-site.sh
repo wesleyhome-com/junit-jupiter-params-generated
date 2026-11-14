@@ -5,6 +5,9 @@
 # under snapshot/. The root and latest/ are derived on every build: they are copies of the newest
 # GA release (a plain X.Y.Z version), or of the snapshot until a GA release exists.
 #
+# A snapshot publish records its version in snapshot/version.txt, which labels the snapshot in the
+# selector on every later publish, including release publishes that do not know it.
+#
 # When a selector script is given, it replaces the copy in every stored version, so pages built from
 # older tags get the current version selector too.
 #
@@ -15,7 +18,7 @@ MODE="${1:?mode (snapshot or release) is required}"
 DOCS_DIR="${2:-docs}"
 STORED_DIR="${3:-gh-pages}"
 OUT_DIR="${4:-site}"
-RELEASE_VERSION="${5:-}"
+VERSION="${5:-}"
 SELECTOR_JS="${6:-}"
 
 if [[ ! -d "${DOCS_DIR}" ]]; then
@@ -36,15 +39,18 @@ case "${MODE}" in
   snapshot)
     rm -rf "${OUT_DIR}/snapshot"
     cp -R "${DOCS_DIR}/." "${OUT_DIR}/snapshot/"
+    if [[ -n "${VERSION}" ]]; then
+      echo "${VERSION}" > "${OUT_DIR}/snapshot/version.txt"
+    fi
     ;;
   release)
-    if [[ -z "${RELEASE_VERSION}" ]]; then
+    if [[ -z "${VERSION}" ]]; then
       echo "Release mode requires a version argument."
       exit 1
     fi
-    rm -rf "${OUT_DIR}/v/${RELEASE_VERSION}"
+    rm -rf "${OUT_DIR}/v/${VERSION}"
     mkdir -p "${OUT_DIR}/v"
-    cp -R "${DOCS_DIR}/." "${OUT_DIR}/v/${RELEASE_VERSION}/"
+    cp -R "${DOCS_DIR}/." "${OUT_DIR}/v/${VERSION}/"
     ;;
   *)
     echo "Unknown mode '${MODE}'. Expected 'snapshot' or 'release'."
@@ -100,10 +106,14 @@ touch "${OUT_DIR}/.nojekyll"
     separator=","
   done
   if [[ -d "${OUT_DIR}/snapshot" ]]; then
-    echo "   ${separator}{\"label\": \"snapshot\", \"path\": \"snapshot/\"}"
+    snapshot_label="snapshot"
+    if [[ -s "${OUT_DIR}/snapshot/version.txt" ]]; then
+      snapshot_label="$(< "${OUT_DIR}/snapshot/version.txt")"
+    fi
+    echo "   ${separator}{\"label\": \"${snapshot_label}\", \"path\": \"snapshot/\"}"
   fi
   echo "  ]"
   echo "}"
 } > "${OUT_DIR}/versions.json"
 
-echo "Published ${MODE}${RELEASE_VERSION:+ ${RELEASE_VERSION}}; default docs: ${DEFAULT_PATH}"
+echo "Published ${MODE}${VERSION:+ ${VERSION}}; default docs: ${DEFAULT_PATH}"
