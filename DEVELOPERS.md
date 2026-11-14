@@ -129,44 +129,50 @@ matters; async-profiler is the better tool if the question is where CPU time goe
 
 Main release/publish behavior is driven by GitHub workflows under `.github/workflows`.
 
+- `build-pr.yml`:
+  - builds and tests every pull request to `main`; its `build` check is required to merge.
 - `build-main.yml`:
   - builds/tests,
   - publishes SNAPSHOT artifacts when `version` ends with `-SNAPSHOT`,
-  - generates docs,
-  - deploys latest docs to GitHub Pages.
+  - generates docs and publishes them as the snapshot docs (see below).
 - `release.yml`:
   - manual release workflow (`workflow_dispatch`),
   - runs `net.researchgate.release`,
-  - publishes non-SNAPSHOT release artifacts to Maven Central.
-- `build-branches.yml`:
-  - verifies non-main branches.
+  - publishes non-SNAPSHOT release artifacts to Maven Central,
+  - pushes the release commits and tag with the `RELEASE_DEPLOY_KEY` deploy key, the only actor
+    allowed to push to `main` directly.
 
 ## Documentation Publishing and Versioning
 
-Docs are published to GitHub Pages with two lanes:
+The site at https://junit-params.wesleyhome.com/ is laid out as:
 
-- `main` branch pushes update:
-  - `/latest/` (latest docs),
-  - `/` (root copy of latest docs).
-- tag pushes or manual dispatch publish versioned docs:
-  - `/v/<version>/`.
+- `/v/<version>/`: docs for each release, published when its tag is pushed.
+- `/snapshot/`: docs for `main`, published on every push to `main`.
+- `/` and `/latest/`: copies of the newest GA release (a plain `X.Y.Z` version), or of the
+  snapshot until a GA release exists.
+- `/versions.json`: what the version selector lists, newest release first and the snapshot last.
+
+GitHub Pages deploys a workflow artifact, which replaces the whole site, so the site is also stored
+on the `gh-pages` branch. Each publish starts from that branch, adds or replaces its own folder,
+recomputes `/`, `/latest/` and `versions.json`, writes the result back to `gh-pages`, and deploys it.
+Both workflows share the `pages-site` concurrency group so they never write the branch at once.
+GitHub keeps only one pending run per group, so if a snapshot publish replaces a queued release
+publish, re-run the release one as described below.
 
 Supporting files:
 
 - `.github/workflows/build-main.yml`
 - `.github/workflows/docs-version-release.yml`
 - `.github/scripts/build-pages-site.sh`
+- `.github/scripts/store-pages-site.sh`
 - `dokka-assets/version-selector.js`
-
-Version metadata is generated as `versions.json` at site root and used by the Dokka version selector asset.
 
 ## Backfilling Older Docs Versions
 
-To backfill a prior release (example: `3.0.0`):
-
-1. Checkout the release tag/commit.
-2. Run `Publish Versioned Docs` (`workflow_dispatch`) with `version=3.0.0`.
-3. The workflow publishes docs under `/v/3.0.0/` without removing existing version folders.
+To publish or republish a release's docs (example: `4.0.0`), run `Publish Versioned Docs`
+(`workflow_dispatch`) from `main` with `version=4.0.0`. It checks out that version's tag (`v4.0.0`,
+or `junit-jupiter-params-generated-<version>` for releases before 4.0.0), generates its docs, and
+publishes them under `/v/4.0.0/` without touching the other versions.
 
 ## Notes and Known Gotchas
 
