@@ -71,7 +71,9 @@ jobs:
           ref: gh-pages
           path: gh-pages
       - name: Build site
-        run: bash .github/scripts/build-pages-site.sh snapshot docs gh-pages site "" dokka-assets/version-selector.js
+        run: >-
+          bash .github/scripts/build-pages-site.sh snapshot docs gh-pages site
+          "$(grep '^version=' gradle.properties | cut -d= -f2)" dokka-assets/version-selector.js
       - name: Store site on gh-pages
         run: bash .github/scripts/store-pages-site.sh site gh-pages "Snapshot docs from ${GITHUB_SHA}"
       - name: Upload Pages artifact
