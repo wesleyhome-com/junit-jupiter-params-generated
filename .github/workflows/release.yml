@@ -13,7 +13,7 @@ on:
         type: string
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: release-${{ github.ref }}
@@ -30,10 +30,21 @@ jobs:
       ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
 
     steps:
+      # main requires pull requests; only this deploy key may push the release commits and tag.
+      - name: Require the release deploy key
+        env:
+          RELEASE_DEPLOY_KEY: ${{ secrets.RELEASE_DEPLOY_KEY }}
+        run: |
+          if [ -z "${RELEASE_DEPLOY_KEY}" ]; then
+            echo "::error::Secret RELEASE_DEPLOY_KEY is not set. Nothing was built or published."
+            exit 1
+          fi
+
       - name: Checkout
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
 
       - name: Set up JDK 25 (Corretto)
         uses: actions/setup-java@v6
