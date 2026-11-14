@@ -40,7 +40,7 @@ jobs:
         if: steps.version.outputs.is_snapshot == 'true'
         run: ./gradlew publishProjectSnapshotsToMavenCentral --no-daemon
       - name: Keep generated docs for the docs job
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: snapshot-docs
           path: docs
@@ -61,7 +61,7 @@ jobs:
       - name: Checkout project sources
         uses: actions/checkout@v7
       - name: Download generated docs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: snapshot-docs
           path: docs
