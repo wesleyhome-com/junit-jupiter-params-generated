@@ -21,3 +21,4 @@ build/
 /*.md
 !/README.md
 !/DEVELOPERS.md
+!/CHANGELOG.md

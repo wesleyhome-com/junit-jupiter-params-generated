@@ -29,6 +29,39 @@ pluginManager.withPlugin("net.researchgate.release") {
     tasks.named("afterReleaseBuild") {
         dependsOn("build", "dokkaGenerate", "publishProjectToMavenCentral")
     }
+
+    // Runs before anything is built or published, and the release plugin's pre-tag commit
+    // (git commit -a) picks up the edited CHANGELOG.md, so the tag carries the dated section.
+    val releaseChangelog = tasks.register("releaseChangelog") {
+        description = "Renames the [Unreleased] section of CHANGELOG.md to the release version."
+        val changelog = layout.projectDirectory.file("CHANGELOG.md").asFile
+        val releaseVersion = version.toString()
+        doLast {
+            check(!releaseVersion.endsWith("SNAPSHOT")) { "Not a release version: $releaseVersion" }
+            val text = changelog.readText()
+            val unreleased = "## [Unreleased]"
+            val entries = text.substringAfter(unreleased, "").substringBefore("\n## ").trim()
+            check(entries.isNotEmpty()) {
+                "CHANGELOG.md has no entries under $unreleased for $releaseVersion. " +
+                    "Add them in a pull request before releasing."
+            }
+            val compareLink = Regex("""^\[Unreleased]: (.+)/compare/(\S+)\.\.\.HEAD$""", RegexOption.MULTILINE)
+            val link = checkNotNull(compareLink.find(text)) { "CHANGELOG.md has no [Unreleased] compare link" }
+            val (repository, previousTag) = link.destructured
+            val tag = "v$releaseVersion"
+            changelog.writeText(
+                text.replaceFirst(unreleased, "$unreleased\n\n## [$releaseVersion] - ${java.time.LocalDate.now()}")
+                    .replace(
+                        link.value,
+                        "[Unreleased]: $repository/compare/$tag...HEAD\n" +
+                            "[$releaseVersion]: $repository/compare/$previousTag...$tag"
+                    )
+            )
+        }
+    }
+    tasks.named("beforeReleaseBuild") {
+        dependsOn(releaseChangelog)
+    }
 }
 
 dependencies {
