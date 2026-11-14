@@ -140,7 +140,10 @@ Main release/publish behavior is driven by GitHub workflows under `.github/workf
   - runs `net.researchgate.release`,
   - publishes non-SNAPSHOT release artifacts to Maven Central,
   - pushes the release commits and tag with the `RELEASE_DEPLOY_KEY` deploy key, the only actor
-    allowed to push to `main` directly.
+    allowed to push to `main` directly,
+  - creates the GitHub release with generated notes, starting from the previous GA tag (or the tag
+    just before a pre-release) and marked Latest for an `X.Y.Z` version or pre-release otherwise.
+    If that last step fails, the artifacts are already published; create the release by hand.
 
 ## Documentation Publishing and Versioning
 
