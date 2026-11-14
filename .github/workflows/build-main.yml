@@ -6,8 +6,6 @@ on:
       - 'main'
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 jobs:
   build-snapshot-gradle-project:
@@ -41,15 +39,42 @@ jobs:
       - name: Publish SNAPSHOT artifacts to Maven Central
         if: steps.version.outputs.is_snapshot == 'true'
         run: ./gradlew publishProjectSnapshotsToMavenCentral --no-daemon
-      - name: Checkout gh-pages (for versioned docs state)
+      - name: Keep generated docs for the docs job
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshot-docs
+          path: docs
+          retention-days: 1
+
+  publish-snapshot-docs:
+    needs: build-snapshot-gradle-project
+    runs-on: ubuntu-latest
+    # Shared with docs-version-release.yml: both read and write the stored site on gh-pages.
+    concurrency:
+      group: pages-site
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    steps:
+      - name: Checkout project sources
+        uses: actions/checkout@v7
+      - name: Download generated docs
+        uses: actions/download-artifact@v4
+        with:
+          name: snapshot-docs
+          path: docs
+      - name: Checkout stored site
         uses: actions/checkout@v7
         with:
           ref: gh-pages
           path: gh-pages
-        continue-on-error: true
-      - name: Build site artifact
-        run: bash .github/scripts/build-pages-site.sh latest docs gh-pages site
-      - name: Update documentation
+      - name: Build site
+        run: bash .github/scripts/build-pages-site.sh snapshot docs gh-pages site
+      - name: Store site on gh-pages
+        run: bash .github/scripts/store-pages-site.sh site gh-pages "Snapshot docs from ${GITHUB_SHA}"
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
           path: ./site

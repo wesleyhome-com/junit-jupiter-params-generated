@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
+# Builds the Pages site from the stored site plus one new set of docs.
+#
+# The stored site (the gh-pages branch) keeps every release under v/<version>/ and the main branch
+# under snapshot/. The root and latest/ are derived on every build: they are copies of the newest
+# GA release (a plain X.Y.Z version), or of the snapshot until a GA release exists.
+#
+# Usage: build-pages-site.sh <snapshot|release> <docs dir> <stored site dir> <output dir> [version]
 set -euo pipefail
 
-MODE="${1:-latest}"
+MODE="${1:?mode (snapshot or release) is required}"
 DOCS_DIR="${2:-docs}"
-EXISTING_DIR="${3:-gh-pages}"
+STORED_DIR="${3:-gh-pages}"
 OUT_DIR="${4:-site}"
 RELEASE_VERSION="${5:-}"
 
@@ -15,22 +22,16 @@ fi
 rm -rf "${OUT_DIR}"
 mkdir -p "${OUT_DIR}"
 
-if [[ -d "${EXISTING_DIR}" ]]; then
-  if [[ -d "${EXISTING_DIR}/v" ]]; then
-    mkdir -p "${OUT_DIR}/v"
-    cp -R "${EXISTING_DIR}/v/." "${OUT_DIR}/v/"
+for kept in v snapshot CNAME; do
+  if [[ -e "${STORED_DIR}/${kept}" ]]; then
+    cp -R "${STORED_DIR}/${kept}" "${OUT_DIR}/${kept}"
   fi
-  if [[ -f "${EXISTING_DIR}/CNAME" ]]; then
-    cp "${EXISTING_DIR}/CNAME" "${OUT_DIR}/CNAME"
-  fi
-fi
+done
 
 case "${MODE}" in
-  latest)
-    rm -rf "${OUT_DIR}/latest"
-    mkdir -p "${OUT_DIR}/latest"
-    cp -R "${DOCS_DIR}/." "${OUT_DIR}/latest/"
-    cp -R "${DOCS_DIR}/." "${OUT_DIR}/"
+  snapshot)
+    rm -rf "${OUT_DIR}/snapshot"
+    cp -R "${DOCS_DIR}/." "${OUT_DIR}/snapshot/"
     ;;
   release)
     if [[ -z "${RELEASE_VERSION}" ]]; then
@@ -38,32 +39,59 @@ case "${MODE}" in
       exit 1
     fi
     rm -rf "${OUT_DIR}/v/${RELEASE_VERSION}"
-    mkdir -p "${OUT_DIR}/v/${RELEASE_VERSION}"
+    mkdir -p "${OUT_DIR}/v"
     cp -R "${DOCS_DIR}/." "${OUT_DIR}/v/${RELEASE_VERSION}/"
-    if [[ ! -d "${OUT_DIR}/latest" ]]; then
-      mkdir -p "${OUT_DIR}/latest"
-      cp -R "${DOCS_DIR}/." "${OUT_DIR}/latest/"
-      cp -R "${DOCS_DIR}/." "${OUT_DIR}/"
-    fi
     ;;
   *)
-    echo "Unknown mode '${MODE}'. Expected 'latest' or 'release'."
+    echo "Unknown mode '${MODE}'. Expected 'snapshot' or 'release'."
     exit 1
     ;;
 esac
 
-touch "${OUT_DIR}/.nojekyll"
+# "~" sorts before everything in version order, which puts 4.1.0-RC1 below 4.1.0.
+mapfile -t RELEASES < <(find "${OUT_DIR}/v" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null \
+  | sed 's/-/~/' | sort -Vr | sed 's/~/-/' || true)
 
-mapfile -t RELEASE_DIRS < <(find "${OUT_DIR}/v" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null | sort -Vr || true)
+LATEST_GA=""
+for v in "${RELEASES[@]}"; do
+  if [[ "${v}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    LATEST_GA="${v}"
+    break
+  fi
+done
+
+if [[ -n "${LATEST_GA}" ]]; then
+  DEFAULT_PATH="v/${LATEST_GA}/"
+elif [[ -d "${OUT_DIR}/snapshot" ]]; then
+  DEFAULT_PATH="snapshot/"
+else
+  echo "Nothing to publish: no releases and no snapshot."
+  exit 1
+fi
+
+cp -R "${OUT_DIR}/${DEFAULT_PATH}." "${OUT_DIR}/latest/"
+cp -R "${OUT_DIR}/${DEFAULT_PATH}." "${OUT_DIR}/"
+
+touch "${OUT_DIR}/.nojekyll"
 
 {
   echo "{"
-  echo "  \"latest\": \"latest/\","
+  echo "  \"latest\": \"${DEFAULT_PATH}\","
   echo "  \"versions\": ["
-  echo "    {\"label\": \"latest\", \"path\": \"latest/\"}"
-  for v in "${RELEASE_DIRS[@]}"; do
-    echo "    ,{\"label\": \"${v}\", \"path\": \"v/${v}/\"}"
+  separator=" "
+  for v in "${RELEASES[@]}"; do
+    label="${v}"
+    if [[ "${v}" == "${LATEST_GA}" ]]; then
+      label="${v} (latest)"
+    fi
+    echo "   ${separator}{\"label\": \"${label}\", \"path\": \"v/${v}/\"}"
+    separator=","
   done
+  if [[ -d "${OUT_DIR}/snapshot" ]]; then
+    echo "   ${separator}{\"label\": \"snapshot\", \"path\": \"snapshot/\"}"
+  fi
   echo "  ]"
   echo "}"
 } > "${OUT_DIR}/versions.json"
+
+echo "Published ${MODE}${RELEASE_VERSION:+ ${RELEASE_VERSION}}; default docs: ${DEFAULT_PATH}"

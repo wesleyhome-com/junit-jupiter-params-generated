@@ -5,9 +5,12 @@
   window.__jpDocsVersionSelectorInstalled = true;
 
   function detectBasePrefix(pathname) {
-    var latestIdx = pathname.indexOf("/latest/");
-    if (latestIdx >= 0) {
-      return pathname.slice(0, latestIdx + 1);
+    var namedRoots = ["/latest/", "/snapshot/"];
+    for (var i = 0; i < namedRoots.length; i++) {
+      var namedIdx = pathname.indexOf(namedRoots[i]);
+      if (namedIdx >= 0) {
+        return pathname.slice(0, namedIdx + 1);
+      }
     }
     var versionIdx = pathname.indexOf("/v/");
     if (versionIdx >= 0) {
@@ -20,6 +23,9 @@
     var normalized = pathname.slice(basePrefix.length - 1);
     if (normalized.startsWith("/latest/")) {
       return "latest/";
+    }
+    if (normalized.startsWith("/snapshot/")) {
+      return "snapshot/";
     }
     var releaseMatch = normalized.match(/^\/v\/[^/]+\//);
     if (releaseMatch) {
@@ -78,11 +84,8 @@
         var option = document.createElement("option");
         option.textContent = entry.label;
         option.value = (basePrefix + entry.path + relativePath).replace(/\/+/g, "/");
-        if (docsRoot.length > 0 && docsRoot === entry.path) {
-          option.selected = true;
-        } else if (docsRoot.length === 0 && entry.path === data.latest) {
-          option.selected = true;
-        }
+        var showsDefault = docsRoot.length === 0 || docsRoot === "latest/";
+        option.selected = showsDefault ? entry.path === data.latest : entry.path === docsRoot;
         select.appendChild(option);
       });
 
