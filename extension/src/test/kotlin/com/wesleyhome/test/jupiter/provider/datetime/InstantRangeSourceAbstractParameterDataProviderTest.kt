@@ -6,7 +6,6 @@ import com.wesleyhome.test.jupiter.annotations.datetime.InstantRangeSource
 import com.wesleyhome.test.jupiter.provider.TestParameter
 import com.wesleyhome.test.jupiter.step
 import com.wesleyhome.test.jupiter.toInstant
-import org.junit.jupiter.api.Disabled
 import java.time.Instant
 
 internal class InstantRangeSourceAbstractParameterDataProviderTest :
@@ -15,7 +14,6 @@ internal class InstantRangeSourceAbstractParameterDataProviderTest :
     override val defaultIncrementString: String = "PT1h"
 
     @GeneratedParametersTest
-    @Disabled
     fun testCreateParameterOptionsData(
         @StringSource(["", "Unparseable", "2024-06-01T12:00:00Z"])
         min: String,

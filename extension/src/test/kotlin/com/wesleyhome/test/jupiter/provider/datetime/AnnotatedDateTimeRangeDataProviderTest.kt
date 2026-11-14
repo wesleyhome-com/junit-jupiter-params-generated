@@ -61,16 +61,16 @@ internal abstract class AnnotatedDateTimeRangeDataProviderTest
                 return
             }
 
-
+        val usingFormat = if (provider.formatPropertyName == null) "" else " using format [$dateFormat]"
         try {
             convert(minString, dateFormat)
         } catch (_: Exception) {
-            errorList += "Unable to parse min string [$minString] using format [$dateFormat]"
+            errorList += "Unable to parse min string [$minString]$usingFormat"
         }
         try {
             convert(maxString, dateFormat)
         } catch (_: Exception) {
-            errorList += "Unable to parse max string [$maxString] using format [$dateFormat]"
+            errorList += "Unable to parse max string [$maxString]$usingFormat"
         }
         val (min: T, max: T) = if (errorList.isEmpty()) {
             val min = convert(minString, dateFormat)
@@ -83,7 +83,7 @@ internal abstract class AnnotatedDateTimeRangeDataProviderTest
             val annotation = createTrueProvidesForTestParameter().annotations.first()
             val min = annotation.propertyValue<String>("min")
             val max = annotation.propertyValue<String>("max")
-            val format = annotation.propertyValue<String>(provider.formatPropertyName)
+            val format = provider.formatPropertyName?.let { annotation.propertyValue<String>(it) }.orEmpty()
             convert(min, format) to convert(max, format)
         }
         val increment =

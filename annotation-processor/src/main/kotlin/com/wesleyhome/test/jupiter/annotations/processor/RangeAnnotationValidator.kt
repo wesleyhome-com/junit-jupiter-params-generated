@@ -55,7 +55,7 @@ internal object RangeAnnotationValidator {
             val max = arguments["max"] as? String ?: return missing("max")
             val increment = arguments["increment"] as? String ?: defaultIncrement
             val format = formatArgument?.let { arguments[it] as? String ?: defaultFormat }
-            return DateTimeRangeValidator.validate(min, max, increment, format, parse)
+            return DateTimeRangeValidator.validate(min, max, increment, format) { parse(it, format.orEmpty()) }
         }
     }
 }
