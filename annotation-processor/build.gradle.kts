@@ -8,10 +8,14 @@ plugins {
 dependencies {
     implementation(project(":validation"))
     implementation(project(":junit-jupiter-params-generated"))
-    implementation("com.google.devtools.ksp:symbol-processing-api:2.3.14")
+    implementation(libs.ksp.api)
     testImplementation(libs.junit.jupiter.api)
     testImplementation("com.willowtreeapps.assertk:assertk:0.28.1")
     testImplementation("dev.zacsweers.kctfork:ksp:0.14.0")
+    // kctfork bundles an older KSP; it has to match the API version above.
+    testRuntimeOnly(libs.ksp)
+    testRuntimeOnly(libs.ksp.aa.embeddable)
+    testRuntimeOnly(libs.ksp.common.deps)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
