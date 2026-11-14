@@ -1,0 +1,1 @@
+sourceset_dependencies = '{":junit-jupiter-params-generated/main":[]}'

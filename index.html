@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>All modules</title>
+    <link href="images/logo-icon.svg" rel="icon" type="image/svg">
+        <script>var pathToRoot = "";</script>
+    <script>document.documentElement.classList.replace("no-js", "js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+      if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      } else {
+        const savedDarkMode = JSON.parse(storage)
+        if (savedDarkMode === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      }
+    </script>
+<script type="text/javascript" src="scripts/sourceset_dependencies.js" async="async"></script>
+<link href="styles/style.css" rel="Stylesheet">
+<link href="styles/main.css" rel="Stylesheet">
+<link href="styles/prism.css" rel="Stylesheet">
+<link href="styles/logo-styles.css" rel="Stylesheet">
+<link href="ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="scripts/safe-local-storage_blocking.js"></script>
+<script type="text/javascript" src="scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="ui-kit/ui-kit.min.js" defer="defer"></script>
+<script type="text/javascript" src="images/version-selector.js" async="async"></script>
+</head>
+<body>
+<div class="root">
+    <header class="navigation theme-dark" id="navigation-wrapper" role="banner">
+            <a class="library-name--link" href="index.html" tabindex="1">
+                    junit-jupiter-params-generated-parent
+            </a>
+        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle"
+                type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">
+4.0.1-SNAPSHOT        </div>
+        <div class="navigation-controls">
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button"
+                    type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </header>
+    <div id="container">
+        <nav id="leftColumn" class="sidebar" data-item-type="SECTION" data-item-config='{"defaultSize": 280, "minSize": 200, "maxSize": 400}'>
+            <a class="toc--skip-link" href="#main">Skip to content</a>
+            <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list"
+                    data-role="dropdown-listbox" aria-label="Table of contents">
+                    <div class="dropdown--header">
+                            <span>
+                                    junit-jupiter-params-generated-parent
+                            </span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                    <div class="sidebar--inner" id="sideMenu"></div>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </nav>
+        <div id="resizer" class="resizer" data-item-type="BAR"></div>
+        <div id="main" data-item-type="SECTION" role="main">
+<div class="main-content" id="content" pageIds="junit-jupiter-params-generated-parent::.ext/allModules///PointingToDeclaration//0">
+  <div class="breadcrumbs"></div>
+  <div class="cover ">
+    <div class="cover ">
+      <h1 class="">JUnit Jupiter Parameterized Test Extension</h1>
+      <p class="paragraph">This project extends JUnit Jupiter parameterized tests with generated parameter values for numbers, date/time types, strings, booleans, and enums.</p>
+      <p class="paragraph">It is designed to reduce <code class="lang-kotlin">@MethodSource</code> boilerplate while preserving type safety and adding compile-time validation for supported annotations.</p>
+      <h2 class="">Installation</h2>
+      <h3 class="">Runtime Extension</h3>
+      <p class="paragraph">Gradle:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">dependencies {<br>    testImplementation(&quot;com.wesleyhome.test:junit-jupiter-params-generated:&lt;latestVersion&gt;&quot;)<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">Maven:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-xml" theme="idea">&lt;dependency&gt;<br>    &lt;groupId&gt;com.wesleyhome.test&lt;/groupId&gt;<br>    &lt;artifactId&gt;junit-jupiter-params-generated&lt;/artifactId&gt;<br>    &lt;version&gt;${latestVersion}&lt;/version&gt;<br>    &lt;scope&gt;test&lt;/scope&gt;<br>&lt;/dependency&gt;</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <h3 class="">Annotation Processor (Optional, recommended)</h3>
+      <p class="paragraph">Gradle (KSP):</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">plugins {<br>    id(&quot;com.google.devtools.ksp&quot;) version &quot;&lt;kspVersion&gt;&quot;<br>}<br><br>dependencies {<br>    ksp(&quot;com.wesleyhome.test:annotation-processor:&lt;latestVersion&gt;&quot;)<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">Maven:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-xml" theme="idea">&lt;dependency&gt;<br>    &lt;groupId&gt;com.wesleyhome.test&lt;/groupId&gt;<br>    &lt;artifactId&gt;annotation-processor&lt;/artifactId&gt;<br>    &lt;version&gt;${latestVersion}&lt;/version&gt;<br>    &lt;scope&gt;provided&lt;/scope&gt;<br>&lt;/dependency&gt;</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <h2 class="">Compatibility Matrix</h2>
+      <div class="table--container">
+        <table>
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Supported</th>
+              <th>Verified against</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Java</td>
+              <td>17+</td>
+              <td>17 (class file major version 61)</td>
+            </tr>
+            <tr>
+              <td>Kotlin/JVM</td>
+              <td>2.4+</td>
+              <td>2.4.20</td>
+            </tr>
+            <tr>
+              <td>JUnit Jupiter</td>
+              <td>6.0.3+</td>
+              <td>6.1.3, with the full suite re-run against 6.0.3</td>
+            </tr>
+            <tr>
+              <td>Gradle</td>
+              <td>any version supporting the above</td>
+              <td>9.7.1</td>
+            </tr>
+            <tr>
+              <td>Maven</td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@56a19fba lang-kotlin">test</code> scope for the extension</td>
+              <td>-</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="paragraph">Kotlin 2.4 is a floor rather than a preference: the published classes carry Kotlin metadata v2.4, and earlier compilers refuse to read it. Consuming this library from a Kotlin 2.3 build fails with &quot;compiled with an incompatible version of Kotlin&quot;.</p>
+      <p class="paragraph">The optional annotation processor runs under KSP, so compile-time validation applies to Kotlin sources only. Java sources get the full runtime behaviour, but misconfigured annotations surface when the test runs rather than when it compiles.</p>
+      <h2 class="">Getting Started</h2>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest<br>import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource<br>import kotlin.test.assertTrue<br><br>@GeneratedParametersTest<br>fun testWithGeneratedParameters(@IntRangeSource(min = 1, max = 10) value: Int) {<br>    assertTrue(value in 1..10)<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <h2 class="">Core Sources</h2>
+      <ul>
+        <li>
+          <p class="paragraph">Numeric ranges: <code class="lang-kotlin">@IntRangeSource</code>, <code class="lang-kotlin">@LongRangeSource</code>, <code class="lang-kotlin">@DoubleRangeSource</code>, <code class="lang-kotlin">@FloatRangeSource</code></p>
+        </li>
+        <li>
+          <p class="paragraph">Numeric explicit values: <code class="lang-kotlin">@IntSource</code>, <code class="lang-kotlin">@LongSource</code>, <code class="lang-kotlin">@DoubleSource</code>, <code class="lang-kotlin">@FloatSource</code></p>
+        </li>
+        <li>
+          <p class="paragraph">Date/time ranges: <code class="lang-kotlin">@InstantRangeSource</code>, <code class="lang-kotlin">@LocalDateRangeSource</code>, <code class="lang-kotlin">@LocalDateTimeRangeSource</code>, <code class="lang-kotlin">@LocalTimeRangeSource</code></p>
+        </li>
+        <li>
+          <p class="paragraph">Date/time explicit values: <code class="lang-kotlin">@InstantSource</code>, <code class="lang-kotlin">@LocalDateSource</code>, <code class="lang-kotlin">@LocalDateTimeSource</code>, <code class="lang-kotlin">@LocalTimeSource</code></p>
+        </li>
+        <li>
+          <p class="paragraph">Random date/time: <code class="lang-kotlin">@RandomInstantSource</code></p>
+        </li>
+        <li>
+          <p class="paragraph">Other types: <code class="lang-kotlin">@StringSource</code>, enums, booleans</p>
+        </li>
+        <li>
+          <p class="paragraph">Values from a function, for data classes and nested objects: <code class="lang-kotlin">@ValuesFrom</code> (see #values-from-a-function)</p>
+        </li>
+      </ul>
+      <h3 class="">Date and Time Formats</h3>
+      <p class="paragraph">Dates are read as <code class="lang-kotlin">yyyy-MM-dd</code>, date-times as <code class="lang-kotlin">yyyy-MM-dd HH:mm</code> and times as <code class="lang-kotlin">HH:mm</code>, unless <code class="lang-kotlin">dateFormat</code>, <code class="lang-kotlin">dateTimeFormat</code> or <code class="lang-kotlin">timeFormat</code> says otherwise. Instants are always ISO-8601.</p>
+      <p class="paragraph">Write <code class="lang-kotlin">MIN</code> or <code class="lang-kotlin">MAX</code> in place of a value for the type's own <code class="lang-kotlin">MIN</code> or <code class="lang-kotlin">MAX</code>. This works in every date and time value and range source, whatever the format:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">@GeneratedParametersTest<br>fun acceptsEveryDate(@LocalDateSource([&quot;MIN&quot;, &quot;2024-02-29&quot;, &quot;MAX&quot;]) date: LocalDate) {<br>    // LocalDate.MIN, an ordinary date, LocalDate.MAX<br>}<br><br>@GeneratedParametersTest<br>fun lastWeekOfTime(@LocalDateRangeSource(min = &quot;+999999999-12-25&quot;, max = &quot;MAX&quot;) date: LocalDate) {<br>    // the last seven days LocalDate can hold<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <ul>
+        <li>
+          <p class="paragraph"><code class="lang-kotlin">MAX</code> is the type's exact maximum, such as <code class="lang-kotlin">LocalDateTime.MAX</code> at <code class="lang-kotlin">23:59:59.999999999</code>, which <code class="lang-kotlin">HH:mm</code> can't write.</p>
+        </li>
+        <li>
+          <p class="paragraph">Only the uppercase words are keywords; <code class="lang-kotlin">min</code> and <code class="lang-kotlin">Max</code> are parsed like any other value.</p>
+        </li>
+        <li>
+          <p class="paragraph">A range can run all the way to <code class="lang-kotlin">MAX</code> and stops at the last value instead of overflowing. Mind the step, though:   <code class="lang-kotlin">min = &quot;MIN&quot;, max = &quot;MAX&quot;</code> a day at a time is about 730 billion dates.</p>
+        </li>
+        <li>
+          <p class="paragraph">Dates near the edges can be written out too. The default formats accept the year 0 and negative years, as in   <code class="lang-kotlin">-0500-03-15</code>. A year always has at least four digits, and one with more than four needs its sign, as in   <code class="lang-kotlin">+10000-01-01</code>.</p>
+        </li>
+        <li>
+          <p class="paragraph">A custom format is used exactly as given. In a pattern, <code class="lang-kotlin">yyyy</code> is the year of the era and can't be negative, so   write <code class="lang-kotlin">uuuu</code> to reach negative years with your own format.</p>
+        </li>
+        <li>
+          <p class="paragraph">The annotation processor accepts the same values at compile time.</p>
+        </li>
+        <li>
+          <p class="paragraph"><code class="lang-kotlin">@RandomInstantSource</code> doesn't take the keywords, because it picks values by epoch millisecond, which can't   reach <code class="lang-kotlin">Instant.MIN</code> or <code class="lang-kotlin">Instant.MAX</code>.</p>
+        </li>
+      </ul>
+      <h2 class="">Parameter Combinations</h2>
+      <p class="paragraph">When multiple parameters are generated, the extension uses a <strong>Cartesian product</strong>.</p>
+      <p class="paragraph">Invocation count:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-text" theme="idea">totalInvocations = product(parameterOptionCounts)</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">Example:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">@GeneratedParametersTest<br>fun combinations(<br>    @IntRangeSource(min = 1, max = 3) first: Int,      // 3 values<br>    @IntRangeSource(min = 10, max = 12) second: Int    // 3 values<br>) {<br>    // Runs 9 times (3 * 3)<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">CI warning: two larger ranges can multiply quickly (for example, <code class="lang-kotlin">100 x 100 = 10,000</code> invocations).</p>
+      <p class="paragraph">A product above one million invocations is refused before any test runs, with a message naming each parameter and its option count. Raise or lower that with a configuration parameter:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-properties" theme="idea"># junit-platform.properties<br>com.wesleyhome.test.jupiter.max.permutations=5000000</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <h2 class="">Pairwise Combinations</h2>
+      <p class="paragraph"><code class="lang-kotlin">strategy = PAIRWISE</code> runs enough combinations that <strong>every pair of parameters appears with every pair of their values</strong>, and no more:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">@GeneratedParametersTest(strategy = PAIRWISE)<br>fun settings(<br>    @StringSource([&quot;chrome&quot;, &quot;firefox&quot;, &quot;safari&quot;]) browser: String,<br>    @StringSource([&quot;windows&quot;, &quot;mac&quot;, &quot;linux&quot;]) os: String,<br>    @StringSource([&quot;en&quot;, &quot;fr&quot;]) locale: String<br>) {<br>    // 9 invocations instead of 18<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">Most defects are triggered by one value, or by two interacting. Pairwise keeps that reach for a fraction of the invocations, and unlike sampling it is a stated guarantee rather than a hope. What it gives up is combinations needing <strong>three or more</strong> specific values at once: in the example above <code class="lang-kotlin">chrome + windows + fr</code> never runs.</p>
+      <p class="paragraph">Whether that trade is acceptable depends on what a test asserts, so it is opt in per method and never a default.</p>
+      <h3 class="">The saving comes from parameter count, not value count</h3>
+      <div class="table--container">
+        <table>
+          <thead>
+            <tr>
+              <th>Parameters</th>
+              <th>Cartesian</th>
+              <th>Pairwise</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>2 params, 3 values each</td>
+              <td>9</td>
+              <td><strong>9, no saving at all</strong></td>
+            </tr>
+            <tr>
+              <td>3 params (3, 3, 2)</td>
+              <td>18</td>
+              <td>9</td>
+            </tr>
+            <tr>
+              <td>6 params (3, 3, 2, 3, 3, 4)</td>
+              <td>648</td>
+              <td>~12-16</td>
+            </tr>
+            <tr>
+              <td>10 params, 3 values each</td>
+              <td>59,049</td>
+              <td>~15-20</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="paragraph">With two parameters the single pair <em>is</em> the whole product, so there is nothing to collapse. Pairwise is a tool for wide test methods; it does nothing for <code class="lang-kotlin">@IntRangeSource(1..100)</code> twice, which still yields 10,000 rows.</p>
+      <h3 class="">With filters</h3>
+      <p class="paragraph">Say Safari only exists on mac:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">@GeneratedParametersTest(strategy = PAIRWISE)<br>fun rendersOnSupportedPlatforms(<br>    @StringSource([&quot;chrome&quot;, &quot;firefox&quot;, &quot;safari&quot;]) browser: String,<br>    @StringSource([&quot;windows&quot;, &quot;mac&quot;, &quot;linux&quot;]) os: String,<br>    @StringSource([&quot;en&quot;, &quot;fr&quot;]) locale: String<br>) { ... }<br><br>companion object {<br>    @JvmStatic<br>    fun rendersOnSupportedPlatforms_filter(browser: String, os: String): Boolean =<br>        browser != &quot;safari&quot; || os == &quot;mac&quot;<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">The pairs to cover are taken from the combinations the filter accepts, not from the value lists:</p>
+      <ul>
+        <li>
+          <p class="paragraph"><code class="lang-kotlin">safari + windows</code> is not a pair any accepted combination contains, so it is never demanded and   never reported as missing.</p>
+        </li>
+        <li>
+          <p class="paragraph"><code class="lang-kotlin">safari + mac</code> <strong>is</strong> reachable, so it is still guaranteed to appear.</p>
+        </li>
+      </ul>
+      <p class="paragraph">Building a covering array first and filtering afterwards would instead drop whichever row happened to carry <code class="lang-kotlin">safari + mac</code>, and the guarantee would quietly stop holding while still being advertised. That is the reason the two features are wired together rather than layered.</p>
+      <p class="paragraph">A compiled version of this, checked by the annotation processor, is <code class="lang-kotlin">examples.Pairwise</code> in the <code class="lang-kotlin">examples</code> module.</p>
+      <h3 class="">Notes</h3>
+      <ul>
+        <li>
+          <p class="paragraph">Selection is deterministic. The same test picks the same combinations on every run and every   machine, and they are emitted in generation order.</p>
+        </li>
+        <li>
+          <p class="paragraph">Selection is greedy, so the row count is small but not provably minimal.</p>
+        </li>
+        <li>
+          <p class="paragraph">Pairwise reduces what <em>runs</em>, not what is generated, so the invocation ceiling still applies to   the full product and <code class="lang-kotlin">generated.invocations</code> still reports it. The report summary names the   strategy when it is not <code class="lang-kotlin">CARTESIAN</code>.</p>
+        </li>
+      </ul>
+      <h2 class="">Filtering Combinations</h2>
+      <p class="paragraph">A Cartesian product generates combinations that are invalid, not merely uninteresting - a <code class="lang-kotlin">start</code> after its <code class="lang-kotlin">end</code>, a currency that does not exist in the selected country. Skipping those in the test body with <code class="lang-kotlin">Assumptions.assumeTrue</code> still generates, schedules and runs them, and reports them as skipped. A filter removes them before an invocation exists.</p>
+      <p class="paragraph">Name a method after the test and it applies automatically:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">@GeneratedParametersTest<br>fun ordered(<br>    @IntRangeSource(min = 1, max = 3) start: Int,<br>    @IntRangeSource(min = 1, max = 3) end: Int<br>) {<br>    // runs 6 times, not 9<br>}<br><br>companion object {<br>    @JvmStatic<br>    fun ordered_filter(start: Int, end: Int): Boolean = start &lt;= end<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">A filter declares only the parameters it is about, matched <strong>by name</strong>, so several small rules compose instead of one predicate that has to know about everything. A combination runs only if every filter accepts it. Use a suffix when a test has more than one:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">@JvmStatic fun prices_filter_ordered(start: Int, end: Int): Boolean = start &lt;= end<br>@JvmStatic fun prices_filter_currency(currency: Currency, country: Country): Boolean =<br>    currency in country.currencies</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">Name filters explicitly to share a rule between tests. Explicit and conventional filters both apply:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">@GeneratedParametersTest(filters = [&quot;startBeforeEnd&quot;])<br>fun prices(...)</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <h3 class="">Rules</h3>
+      <ul>
+        <li>
+          <p class="paragraph">A filter must be <strong>static</strong>, or declared in a <strong>companion object</strong>. Filtering happens before the   test instance exists, which is the same constraint <code class="lang-kotlin">@MethodSource</code> has. Filters may live in a   superclass.</p>
+        </li>
+        <li>
+          <p class="paragraph">Parameter types must match the generated parameter. A supertype is fine - <code class="lang-kotlin">Number</code> accepts a   generated <code class="lang-kotlin">Int</code> - but a filter declaring <code class="lang-kotlin">Long</code> against a generated <code class="lang-kotlin">Int</code> is rejected rather than   silently widened by reflection.</p>
+        </li>
+        <li>
+          <p class="paragraph">A filter must return <code class="lang-kotlin">Boolean</code> and must not return null.</p>
+        </li>
+        <li>
+          <p class="paragraph">If every combination is rejected, the test fails and the message names the filters responsible.</p>
+        </li>
+        <li>
+          <p class="paragraph">Filtering reduces what <em>runs</em>, not what is <em>generated</em>, so the invocation ceiling still applies to   the full product and <code class="lang-kotlin">generated.invocations</code> still reports it.</p>
+        </li>
+      </ul>
+      <p class="paragraph">The annotation processor warns about any <code class="lang-kotlin">*_filter</code> method that matches no test in its class, so renaming a test cannot silently leave its rule unused.</p>
+      <h2 class="">Invocation Display Names</h2>
+      <p class="paragraph">Each invocation is named the way <code class="lang-kotlin">@ParameterizedTest</code> names its own, so IDEs and test reports read generated invocations the same way:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-text" theme="idea">[1] value=1<br>[2] value=2</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">Override the pattern with <code class="lang-kotlin">name</code>:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">@GeneratedParametersTest(name = &quot;{index}: {0} squared is {1}&quot;)<br>fun squares(<br>    @IntRangeSource(min = 1, max = 3) value: Int,<br>    @IntRangeSource(min = 1, max = 9) square: Int<br>) {<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <div class="table--container">
+        <table>
+          <thead>
+            <tr>
+              <th>Placeholder</th>
+              <th>Renders</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@56a19fba lang-kotlin">{index}</code></td>
+              <td>the 1-based invocation number</td>
+            </tr>
+            <tr>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@56a19fba lang-kotlin">{arguments}</code></td>
+              <td>the generated values, comma separated</td>
+            </tr>
+            <tr>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@56a19fba lang-kotlin">{argumentsWithNames}</code></td>
+              <td>the generated values as <code class="org.jetbrains.dokka.pages.commenttable@56a19fba lang-kotlin">name=value</code>, comma separated</td>
+            </tr>
+            <tr>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@56a19fba lang-kotlin">{displayName}</code></td>
+              <td>the test method's own display name</td>
+            </tr>
+            <tr>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@56a19fba lang-kotlin">{0}</code>, <code class="org.jetbrains.dokka.pages.commenttable@56a19fba lang-kotlin">{1}</code>, ...</td>
+              <td>a single generated value, by position</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="paragraph">Only generated parameters are listed. A parameter resolved by another extension - <code class="lang-kotlin">TestInfo</code>, <code class="lang-kotlin">@TempDir</code>, an injected mock - is not named and does not shift the <code class="lang-kotlin">{0}</code>, <code class="lang-kotlin">{1}</code> positions.</p>
+      <h3 class="">Parameter Names</h3>
+      <p class="paragraph"><code class="lang-kotlin">{argumentsWithNames}</code> needs the declared parameter names to be present in the compiled class file. Kotlin records them in its own metadata, so Kotlin test sources need nothing. Java test sources must be compiled with <code class="lang-kotlin">-parameters</code>, or the names fall back to <code class="lang-kotlin">arg0</code>, <code class="lang-kotlin">arg1</code>:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">// Gradle<br>tasks.withType&lt;JavaCompile&gt;().configureEach {<br>    options.compilerArgs.add(&quot;-parameters&quot;)<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <div class="sample-container">
+        <pre><code class="block lang-xml" theme="idea">&lt;!-- Maven --&gt;<br>&lt;plugin&gt;<br>    &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;<br>    &lt;artifactId&gt;maven-compiler-plugin&lt;/artifactId&gt;<br>    &lt;configuration&gt;<br>        &lt;parameters&gt;true&lt;/parameters&gt;<br>    &lt;/configuration&gt;<br>&lt;/plugin&gt;</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <h2 class="">Report Entries</h2>
+      <p class="paragraph">Each test method publishes a summary of what it generated, which is what answers &quot;why does this test have four thousand cases?&quot; from the report rather than by reading the annotations:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-text" theme="idea">generated.invocations = 4320<br>generated.parameters  = min=8 x max=6 x increment=5 x dateFormat=6 x ascending=3</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">The generated values themselves are in the display name. They can also be published as structured entries, one per invocation, for when the display name is truncated by a report viewer or when something downstream needs to read the values back:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-properties" theme="idea"># junit-platform.properties<br>com.wesleyhome.test.jupiter.report.values=true</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <div class="sample-container">
+        <pre><code class="block lang-text" theme="idea">generated.left  = 501<br>generated.right = 1</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">That is off by default because a ten thousand invocation product means ten thousand entries. The summary is on by default and costs one entry per test method; turn it off with <code class="lang-kotlin">com.wesleyhome.test.jupiter.report.summary=false</code>.</p>
+      <h2 class="">Null Values</h2>
+      <p class="paragraph">Add <code class="lang-kotlin">@WithNull</code> to generate a <code class="lang-kotlin">null</code> case alongside a parameter's other values:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">@GeneratedParametersTest<br>fun handlesMissingName(@StringSource([&quot;ada&quot;, &quot;grace&quot;]) @WithNull name: String?) {<br>    // runs with &quot;ada&quot;, &quot;grace&quot;, null<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <div class="sample-container">
+        <pre><code class="block lang-java" theme="idea">@GeneratedParametersTest<br>void handlesMissingName(@StringSource(values = {&quot;ada&quot;, &quot;grace&quot;}) @WithNull String name) {<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">The null is generated last, after the parameter's other values.</p>
+      <p class="paragraph">A Kotlin parameter declared nullable also gets a null case today, inferred from its type. That inference is Kotlin-only - a Java <code class="lang-kotlin">Integer</code> is nullable and never receives one - and it says nothing at the use site about what the test will run. It still works, but the annotation processor warns where it is relied on, and it will be removed in a future release. Prefer <code class="lang-kotlin">@WithNull</code>.</p>
+      <p class="paragraph"><code class="lang-kotlin">@WithNull</code> on a type that cannot hold null, such as a Kotlin <code class="lang-kotlin">Int</code> or a Java <code class="lang-kotlin">int</code>, is an error.</p>
+      <h2 class="">Value Classes</h2>
+      <p class="paragraph">A parameter typed as a Kotlin <code class="lang-kotlin">@JvmInline value class</code> takes its values from any source for the type it wraps. Each value is built through the class's constructor, so its <code class="lang-kotlin">init</code> checks run:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">@JvmInline<br>value class Money(val cents: Long) {<br>    init {<br>        require(cents &gt;= 0) { &quot;cents must be &gt;= 0&quot; }<br>    }<br>}<br><br>@GeneratedParametersTest<br>fun formatsAmounts(@LongSource([0, 1, 250]) amount: Money, @IntSource([1, 2]) quantity: Int) {<br>    // runs with Money(cents=0), Money(cents=1) and Money(cents=250), each with quantity 1 and 2<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">This works for value classes over primitives, <code class="lang-kotlin">String</code> and object types. A custom provider can also produce the value class directly, for a type no built-in source covers:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">@JvmInline<br>value class HouseholdId(val value: UUID)<br><br>@Target(AnnotationTarget.VALUE_PARAMETER)<br>@Retention(AnnotationRetention.RUNTIME)<br>@SourceProvider(HouseholdIdSourceDataProvider::class)<br>annotation class HouseholdIdSource<br><br>class HouseholdIdSourceDataProvider : AbstractAnnotatedParameterDataProvider&lt;HouseholdId, HouseholdIdSource&gt;() {<br>    override fun createParameterOptionsData(testParameter: TestParameter): List&lt;HouseholdId&gt; =<br>        listOf(HouseholdId(UUID.fromString(&quot;00000000-0000-0000-0000-000000000001&quot;)))<br>}<br><br>@GeneratedParametersTest<br>fun loadsHousehold(@HouseholdIdSource id: HouseholdId) {<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">If <code class="lang-kotlin">init</code> rejects a generated value, the invocation that would have received it fails, and the others still run. The failure names the parameter, the value and the reason:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-text" theme="idea">Generated value [-1] for parameter [amount] was rejected by Money: IllegalArgumentException: cents must be &gt;= 0</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">A filter can't skip a rejected value either; the invocation runs and fails.</p>
+      <p class="paragraph">Display names and report entries show the value class's <code class="lang-kotlin">toString</code>, such as <code class="lang-kotlin">Money(cents=250)</code>. <code class="lang-kotlin">@WithNull</code> works on a nullable value class (<code class="lang-kotlin">amount: Money?</code>). On a non-null value class over a primitive it is an error, because the compiled method takes a <code class="lang-kotlin">long</code> there.</p>
+      <p class="paragraph">Filters can declare the value-class parameter as itself (<code class="lang-kotlin">fun formatsAmounts_filter(amount: Money)</code>). Declaring the underlying type (<code class="lang-kotlin">amount: Long</code>) is an error: both compile to <code class="lang-kotlin">long</code>, so the Kotlin declaration is the only thing that tells them apart.</p>
+      <p class="paragraph">A value class with no source annotation is left to other parameter resolvers, even when it wraps a type such as <code class="lang-kotlin">Boolean</code> that would otherwise be generated.</p>
+      <p class="paragraph">A compiled version of these, checked by the annotation processor, is <code class="lang-kotlin">examples.ValueClasses</code> in the <code class="lang-kotlin">examples</code> module.</p>
+      <h2 class="">Values From a Function</h2>
+      <p class="paragraph">No annotation can spell out a data class or a nested object. <code class="lang-kotlin">@ValuesFrom</code> takes a parameter's values from a function instead, and combines them with the other parameters like any other source:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">data class DateRange(val start: LocalDate, val endInclusive: LocalDate) {<br>    fun overlaps(other: DateRange): Boolean = start &lt;= other.endInclusive &amp;&amp; other.start &lt;= endInclusive<br>}<br><br>class DateRangeTest {<br><br>    @GeneratedParametersTest<br>    fun overlapsIsSymmetric(@ValuesFrom(&quot;ranges&quot;) a: DateRange, @ValuesFrom(&quot;ranges&quot;) b: DateRange) {<br>        // runs with every ordered pair of the three ranges: nine invocations<br>        assertEquals(a.overlaps(b), b.overlaps(a))<br>    }<br><br>    companion object {<br>        @JvmStatic<br>        fun ranges(): List&lt;DateRange&gt; = listOf(<br>            DateRange(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 1, 31)),<br>            DateRange(LocalDate.of(2024, 1, 15), LocalDate.of(2024, 2, 15)),<br>            DateRange(LocalDate.of(2024, 3, 1), LocalDate.of(2024, 3, 31))<br>        )<br>    }<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">The function takes no arguments and returns a <code class="lang-kotlin">List</code>, <code class="lang-kotlin">Sequence</code> or array of the parameter's type. It is found by name the way a filter is: static, or in an object or companion object, on the test class or one of its superclasses. <code class="lang-kotlin">@JvmStatic</code> is optional. To share a function between test classes, name its class as well:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">object Fixtures {<br>    fun ranges(): List&lt;DateRange&gt; = listOf(/* ... */)<br>}<br><br>@GeneratedParametersTest<br>fun overlapsItself(@ValuesFrom(&quot;com.example.Fixtures#ranges&quot;) range: DateRange) {<br>    assertTrue(range.overlaps(range))<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">A top-level function is named by the class it compiles into: <code class="lang-kotlin">com.example.FixturesKt#ranges</code> for one declared in <code class="lang-kotlin">Fixtures.kt</code>.</p>
+      <div class="sample-container">
+        <pre><code class="block lang-java" theme="idea">@GeneratedParametersTest<br>void overlapsIsSymmetric(@ValuesFrom(&quot;ranges&quot;) DateRange a, @ValuesFrom(&quot;ranges&quot;) DateRange b) {<br>}<br><br>static List&lt;DateRange&gt; ranges() {<br>    return List.of(/* ... */);<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">Values from a function work with everything else:</p>
+      <ul>
+        <li>
+          <p class="paragraph"><strong>Filters and pairwise:</strong> they see these values as they see any other.</p>
+        </li>
+        <li>
+          <p class="paragraph"><code class="strong lang-kotlin"><strong>@WithNull</strong></code><strong>:</strong> adds a null case after the function's values.</p>
+        </li>
+        <li>
+          <p class="paragraph"><strong>Value classes:</strong> a function returning <code class="lang-kotlin">List&lt;Money&gt;</code> works for a <code class="lang-kotlin">Money</code> parameter.</p>
+        </li>
+        <li>
+          <p class="paragraph"><strong>Invocation ceiling:</strong> the function's values count toward it. Reading stops once the ceiling is passed, so an endless <code class="lang-kotlin">Sequence</code> fails with a message instead of hanging the run.</p>
+        </li>
+      </ul>
+      <p class="paragraph">The element type has to match the parameter's: <code class="lang-kotlin">List&lt;Long&gt;</code> is not accepted for a <code class="lang-kotlin">Money</code> parameter. A function whose elements may be null needs a nullable parameter or <code class="lang-kotlin">@WithNull</code>. The annotation processor checks the name, the arguments and the return type at compile time. The same checks run when the test does, and each failure names the parameter and the function:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-text" theme="idea">@ValuesFrom(&quot;ranges&quot;) on [a]: [ranges] returns String values, but [a] is DateRange</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">A compiled version of these, checked by the annotation processor, is <code class="lang-kotlin">examples.ValuesFrom</code> in the <code class="lang-kotlin">examples</code> module.</p>
+      <h2 class="">Generated vs Random Values</h2>
+      <ul>
+        <li>
+          <p class="paragraph">Range and explicit-value sources are deterministic by definition.</p>
+        </li>
+        <li>
+          <p class="paragraph"><code class="lang-kotlin">@RandomInstantSource</code> draws from a fixed seed, so the same bounds produce the same sequence.</p>
+        </li>
+        <li>
+          <p class="paragraph">Invocation display names include resolved argument values, so failures show the generated value directly.</p>
+        </li>
+      </ul>
+      <p class="paragraph">Change the seed to explore different values, deliberately rather than by accident:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">@GeneratedParametersTest<br>fun expiry(@RandomInstantSource(min = &quot;2024-01-01T00:00:00Z&quot;, max = &quot;2025-01-01T00:00:00Z&quot;, size = 10, seed = 99L) at: Instant)</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <h3 class="">Offset bounds need a fixed clock</h3>
+      <p class="paragraph">A fixed seed only makes a sequence reproducible if the range it draws from is also fixed. With <code class="lang-kotlin">useOffset = true</code> the bounds are resolved against the current instant, so by default they move with the wall clock and a rerun tomorrow draws from a different window.</p>
+      <p class="paragraph">Fix the clock to make those reproducible:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-properties" theme="idea"># junit-platform.properties<br>com.wesleyhome.test.jupiter.clock.fixed.at=2024-01-01T00:00:00Z<br>com.wesleyhome.test.jupiter.clock.zone=UTC</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">or set one for a class or a run from an extension:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">GeneratedParametersClock.set(extensionContext, Clock.fixed(instant, ZoneOffset.UTC))</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">Absolute bounds never depended on the clock and are unaffected by either.</p>
+      <h2 class="">Performance and Memory</h2>
+      <p class="paragraph">Generation model:</p>
+      <ul>
+        <li>
+          <p class="paragraph">Parameter value lists are generated eagerly per parameter.</p>
+        </li>
+        <li>
+          <p class="paragraph">Test invocations are iterated lazily across the Cartesian product.</p>
+        </li>
+      </ul>
+      <p class="paragraph">Practical guidance:</p>
+      <ul>
+        <li>
+          <p class="paragraph">Keep ranges intentional.</p>
+        </li>
+        <li>
+          <p class="paragraph">Prefer smaller random <code class="lang-kotlin">size</code> values.</p>
+        </li>
+        <li>
+          <p class="paragraph">Split high-cardinality tests into targeted suites.</p>
+        </li>
+      </ul>
+      <h2 class="">Why Not <code class="lang-kotlin">@MethodSource</code>?</h2>
+      <div class="table--container">
+        <table>
+          <thead>
+            <tr>
+              <th>Concern</th>
+              <th><code class="org.jetbrains.dokka.pages.commenttable@56a19fba lang-kotlin">@MethodSource</code></th>
+              <th>Generated Sources</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Boilerplate</td>
+              <td>Requires separate provider methods</td>
+              <td>Inlined annotation configuration</td>
+            </tr>
+            <tr>
+              <td>Type safety</td>
+              <td>Depends on method return wiring</td>
+              <td>Annotation-driven parameter typing</td>
+            </tr>
+            <tr>
+              <td>Range/date convenience</td>
+              <td>Manual list/stream construction</td>
+              <td>Built-in numeric and date/time sources</td>
+            </tr>
+            <tr>
+              <td>Compile-time validation</td>
+              <td>Limited by default</td>
+              <td>Supported via optional annotation processor</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="paragraph">When a type needs a function, <code class="lang-kotlin">@ValuesFrom</code> supplies one parameter's values rather than whole rows of arguments. The library still combines them, so a function listing three ranges gives every pair of ranges without writing the pairs out.</p>
+      <h3 class=""><code class="lang-kotlin">@CsvSource</code> vs Generated Parameters</h3>
+      <p class="paragraph"><code class="lang-kotlin">@CsvSource</code> for a combinatorial check requires manually listing every pair:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-java" theme="idea">@ParameterizedTest<br>@CsvSource({<br>    &quot;1,10&quot;,<br>    &quot;1,20&quot;,<br>    &quot;1,30&quot;,<br>    &quot;2,10&quot;,<br>    &quot;2,20&quot;,<br>    &quot;2,30&quot;,<br>    &quot;3,10&quot;,<br>    &quot;3,20&quot;,<br>    &quot;3,30&quot;<br>})<br>void multipliesAllPairs(int left, int right) {<br>    assertTrue((left * right) &gt; 0);<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">Equivalent generated-parameter test (same 3 x 3 Cartesian product, no manual tuple list):</p>
+      <div class="sample-container">
+        <pre><code class="block lang-java" theme="idea">@GeneratedParametersTest<br>void multipliesAllPairs(<br>    @IntRangeSource(min = 1, max = 3) int left,<br>    @IntRangeSource(min = 10, max = 30, increment = 10) int right<br>) {<br>    assertTrue((left * right) &gt; 0);<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <h2 class="">Annotation Processor</h2>
+      <p class="paragraph">The optional annotation processor validates supported annotation configurations at compile time.</p>
+      <p class="paragraph">Example (compile-time error when <code class="lang-kotlin">min &gt; max</code>):</p>
+      <div class="sample-container">
+        <pre><code class="block lang-java" theme="idea">@GeneratedParametersTest<br>void invalid(@IntRangeSource(min = 10, max = 1) int value) {<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">It also checks every <code class="lang-kotlin">@ValuesFrom</code>: the function exists and can be called before the test instance exists, takes no arguments, and returns a <code class="lang-kotlin">List</code>, <code class="lang-kotlin">Sequence</code> or array of the parameter's type.</p>
+      <h2 class="">Data Flow</h2>
+      <div class="sample-container">
+        <pre><code class="block lang-text" theme="idea">[Test Method] -&gt; [Parameter Scan] -&gt; [Per-Parameter Data Generation] -&gt; [Invocation Iteration] -&gt; [Test Execution]</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <h2 class="">Custom Annotations and Providers</h2>
+      <p class="paragraph">Define a parameter annotation, point it at a provider with <code class="lang-kotlin">@SourceProvider</code>, and implement the provider. <code class="lang-kotlin">AbstractAnnotatedParameterDataProvider&lt;T, A&gt;</code> recovers both the parameter type <code class="lang-kotlin">T</code> and the annotation type <code class="lang-kotlin">A</code> from the type arguments you supply, so it decides on its own which parameters to claim:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">@Target(AnnotationTarget.VALUE_PARAMETER)<br>@Retention(AnnotationRetention.RUNTIME)<br>@SourceProvider(CustomSourceDataProvider::class)<br>annotation class CustomSource(val min: Int, val max: Int, val increment: Int)<br><br>class CustomSourceDataProvider : AbstractAnnotatedParameterDataProvider&lt;Int, CustomSource&gt;() {<br>    override fun createParameterOptionsData(testParameter: TestParameter): List&lt;Int&gt; {<br>        val annotation = findAnnotation(testParameter)!!<br>        return (annotation.min..annotation.max step annotation.increment).toList()<br>    }<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <p class="paragraph">Intermediate classes of your own between the provider and the library base are supported, so shared behaviour across several providers can live in a base class you control.</p>
+      <p class="paragraph">For a provider that claims a parameter by type alone, without an annotation, extend <code class="lang-kotlin">AbstractParameterDataProvider&lt;T&gt;</code> instead and override only <code class="lang-kotlin">createParameterOptionsData</code>.</p>
+      <p class="paragraph">To decide for yourself which parameters to claim, implement <code class="lang-kotlin">ParameterDataProvider&lt;T&gt;</code> directly and supply both members:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-kotlin" theme="idea">class CustomSourceDataProvider : ParameterDataProvider&lt;Int&gt; {<br>    override fun providesDataFor(testParameter: TestParameter): Boolean =<br>        testParameter.annotations.any { it is CustomSource }<br><br>    override fun createParameterOptionsData(testParameter: TestParameter): List&lt;Int&gt; {<br>        val annotation = testParameter.annotations.filterIsInstance&lt;CustomSource&gt;().first()<br>        return (annotation.min..annotation.max step annotation.increment).toList()<br>    }<br>}</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+      <h2 class="">Testing</h2>
+      <p class="paragraph">Run all tests:</p>
+      <div class="sample-container">
+        <pre><code class="block lang-bash" theme="idea">./gradlew test</code></pre>
+<span class="copy-tooltip">
+          <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+    </div>
+    <h2 class="">All modules:</h2>
+    <div class="table"><a data-name="-648429954%2FMain%2F0" anchor-label="junit-jupiter-params-generated" id="-648429954%2FMain%2F0" data-filterable-set=""></a>
+      <div class="table-row table-row_multimodule">
+        <div class="main-subrow ">
+          <div class="w-100"><span class="inline-flex">
+              <div><a href="junit-jupiter-params-generated/index.html">junit-jupiter-params-generated</a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-648429954%2FMain%2F0"></span>
+                <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+              </span></span></div>
+          <div><span class="brief-comment"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <div class="footer--container">
+            <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+            <div class="footer--content">
+                <div>
+                    <span>Generated by </span>
+                    <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                        Dokka
+                    </a>
+                    <div>© 2026 Copyright</div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

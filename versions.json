@@ -1,0 +1,6 @@
+{
+  "latest": "snapshot/",
+  "versions": [
+    {"label": "snapshot", "path": "snapshot/"}
+  ]
+}
