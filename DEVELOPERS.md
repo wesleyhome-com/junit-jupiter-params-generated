@@ -161,6 +161,15 @@ Every pull request does two things for the release notes:
   these labels. Renovate labels its own pull requests `dependencies`, and those don't need a
   changelog entry. `skip-changelog` leaves a pull request out of the list.
 
+The `changelog` check (`.github/workflows/pr-changelog.yml`) enforces both, and `main` requires it.
+It fails a pull request that:
+
+- has none of those labels, or `skip-changelog`;
+- leaves `[Unreleased]` unchanged, unless it's labeled `skip-changelog` or `dependencies`;
+- is labeled `breaking` but adds nothing under `[Unreleased]`'s **Upgrade notes**.
+
+Adding or removing a label re-runs the check.
+
 At release time the `releaseChangelog` task (in `build.gradle.kts`, run before the release build)
 renames `[Unreleased]` to `[<version>] - <date>`, starts a new empty `[Unreleased]` and updates the
 compare links. The release plugin's pre-tag commit includes the change, so the tag carries it. An
