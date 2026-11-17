@@ -7,6 +7,9 @@ import com.wesleyhome.test.jupiter.annotations.WithNull
 import com.wesleyhome.test.jupiter.provider.TestModel
 import com.wesleyhome.test.jupiter.provider.TestParameter
 import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.platform.commons.annotation.Testable
+import org.junit.platform.commons.support.AnnotationSupport
+import java.lang.reflect.Method
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.findAnnotation
@@ -51,13 +54,26 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
         return generateSequence(testClass) { it.superclass }
             .takeWhile { it != Any::class.java }
             .flatMap { type -> type.declaredMethods.asSequence() + companionMethods(type) }
-            .filter { it.name.startsWith(prefix) }
+            .filter { it.name.startsWith(prefix) && it.couldBeAFilter() }
             .map { it.kotlinName() }
             .filter { it == prefix || it.startsWith("${prefix}_") }
             .toSet()
     }
 
-    private fun companionMethods(type: Class<*>): Sequence<java.lang.reflect.Method> =
+    /**
+     * The compiler names what it generates for a function after that function:
+     * `ordered_filter_small$default` for default arguments, and `ordered_filter_small$lambda$0` or
+     * `ordered_filter_small$check` for a lambda or local function inside it. An `internal` function's
+     * mangled name contains a `$` as well, but maps back to a declared function. Being synthetic is
+     * not a reason to skip a method on its own: a `@JvmSynthetic` filter is the user's, and failing on
+     * it is better than ignoring it. `@Testable` is on every JUnit test annotation,
+     * `@GeneratedParametersTest` included.
+     */
+    private fun Method.couldBeAFilter(): Boolean =
+        ('$' !in name || kotlinFunction != null) &&
+            !AnnotationSupport.isAnnotated(this, Testable::class.java)
+
+    private fun companionMethods(type: Class<*>): Sequence<Method> =
         runCatching { type.getDeclaredField("Companion").apply { isAccessible = true }.get(null) }
             .getOrNull()
             ?.javaClass
