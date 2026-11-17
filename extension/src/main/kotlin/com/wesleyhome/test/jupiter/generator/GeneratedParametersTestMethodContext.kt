@@ -61,15 +61,16 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
     }
 
     /**
-     * The compiler names what it generates for a function after that function: `ordered_filter$default`
-     * for default arguments, which is synthetic, and `ordered_filter$lambda$0` or `ordered_filter$check`
-     * for a lambda or local function inside it, which are not. An `internal` function's mangled name
-     * contains a `$` as well, but maps back to a declared function. `@Testable` is on every JUnit test
-     * annotation, `@GeneratedParametersTest` included.
+     * The compiler names what it generates for a function after that function:
+     * `ordered_filter_small$default` for default arguments, and `ordered_filter_small$lambda$0` or
+     * `ordered_filter_small$check` for a lambda or local function inside it. An `internal` function's
+     * mangled name contains a `$` as well, but maps back to a declared function. Being synthetic is
+     * not a reason to skip a method on its own: a `@JvmSynthetic` filter is the user's, and failing on
+     * it is better than ignoring it. `@Testable` is on every JUnit test annotation,
+     * `@GeneratedParametersTest` included.
      */
     private fun Method.couldBeAFilter(): Boolean =
-        !isSynthetic &&
-            ('$' !in name || kotlinFunction != null) &&
+        ('$' !in name || kotlinFunction != null) &&
             !AnnotationSupport.isAnnotated(this, Testable::class.java)
 
     private fun companionMethods(type: Class<*>): Sequence<Method> =

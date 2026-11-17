@@ -4,6 +4,7 @@ import assertk.assertThat
 import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
+import assertk.assertions.messageContains
 import com.wesleyhome.test.jupiter.InvalidFilterException
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.WithNull
@@ -209,7 +210,7 @@ class ParameterFilterTest {
         assertThat(invocationNames(Fixture::class.java, "bindingLocalFunction")).isEqualTo(listOf("1", "3"))
     }
 
-    /** The default argument compiles to a synthetic `withDefault_filter_ordered$default`. */
+    /** The default argument compiles to `withDefault_filter_ordered$default`, which is not a filter. */
     @Test
     fun testAConventionalFilterWithADefaultArgumentApplies() {
         assertThat(invocationNames(Fixture::class.java, "withDefault")).isEqualTo(
@@ -222,6 +223,17 @@ class ParameterFilterTest {
     fun testATestNamedLikeAConventionalFilterIsNotAFilter() {
         assertThat(invocationNames(Fixture::class.java, "price")).isEqualTo(listOf("1", "3"))
         assertThat(invocationNames(JavaFilterFixture::class.java, "price")).isEqualTo(listOf("1", "3"))
+    }
+
+    /**
+     * A `@JvmSynthetic` filter is the user's own, so it must not be skipped as compiler-generated. It
+     * fails at the moment, because a synthetic method records no parameter names, but it fails loudly.
+     */
+    @Test
+    fun testAJvmSyntheticConventionalFilterIsReportedRatherThanIgnored() {
+        assertThat(executionFailure(Fixture::class.java, "jvmSynthetic"))
+            .isInstanceOf(InvalidFilterException::class)
+            .messageContains("Filter [jvmSynthetic_filter_small]")
     }
 
     /**
@@ -427,6 +439,10 @@ class ParameterFilterTest {
         fun internalSuffixed(@IntRangeSource(min = 1, max = 3) start: Int) {
         }
 
+        @GeneratedParametersTest(name = "{arguments}")
+        fun jvmSynthetic(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
         fun instanceRule(start: Int): Boolean = true
 
         companion object {
@@ -526,6 +542,10 @@ class ParameterFilterTest {
 
             @JvmStatic
             internal fun internalSuffixed_filter_small(start: Int): Boolean = start <= 2
+
+            @JvmStatic
+            @JvmSynthetic
+            fun jvmSynthetic_filter_small(start: Int): Boolean = start <= 2
         }
     }
 }
