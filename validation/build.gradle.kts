@@ -3,9 +3,51 @@
  */
 plugins {
     id("buildlogic.kotlin-common-conventions")
+    id("buildlogic.coverage-conventions")
 }
 
 dependencies {
     implementation(kotlin("reflect"))
     implementation(kotlin("stdlib"))
+}
+
+// This module has no tests of its own. Its coverage is what the tests of the modules that use it
+// exercise, so its report and gate read their JaCoCo execution data.
+val testedBy = configurations.dependencyScope("testedBy")
+val testedByCoverageData = configurations.resolvable("testedByCoverageData") {
+    extendsFrom(testedBy.get())
+    attributes {
+        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.VERIFICATION))
+        attribute(TestSuiteName.TEST_SUITE_NAME_ATTRIBUTE, objects.named("test"))
+        attribute(VerificationType.VERIFICATION_TYPE_ATTRIBUTE, objects.named(VerificationType.JACOCO_RESULTS))
+    }
+}
+
+dependencies {
+    testedBy(project(":junit-jupiter-params-generated"))
+    testedBy(project(":annotation-processor"))
+}
+
+tasks.jacocoTestReport {
+    executionData(testedByCoverageData)
+}
+
+tasks.jacocoTestCoverageVerification {
+    executionData(testedByCoverageData)
+    violationRules {
+        // Coverage when the gate was added, rounded down to the percent. Raising it: DEVELOPERS.md.
+        rule {
+            element = "BUNDLE"
+            limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = "0.94".toBigDecimal()
+            }
+            limit {
+                counter = "BRANCH"
+                value = "COVEREDRATIO"
+                minimum = "0.84".toBigDecimal()
+            }
+        }
+    }
 }

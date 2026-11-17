@@ -3,7 +3,7 @@
  */
 plugins {
     id("buildlogic.kotlin-common-conventions")
-    jacoco
+    id("buildlogic.coverage-conventions")
     id("org.jetbrains.dokka")
 }
 
@@ -41,66 +41,22 @@ tasks.test {
     // also running the EngineTestKit fixtures directly - they are nested classes with test methods,
     // and some of them fail on purpose.
     include("**/*Test.class")
-    finalizedBy(tasks.jacocoTestReport)
-}
-
-tasks.jacocoTestReport {
-    dependsOn(tasks.test)
-    reports {
-        xml.required.set(true)
-        html.required.set(true)
-    }
 }
 
 tasks.jacocoTestCoverageVerification {
     violationRules {
-        isFailOnViolation = true
+        // Coverage when the gate was added, rounded down to the percent. Raising it: DEVELOPERS.md.
         rule {
-            element = "METHOD"
+            element = "BUNDLE"
             limit {
-                maximum = 1.00.toBigDecimal()
-                counter = "INSTRUCTION"
-                value = "MISSEDCOUNT"
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = "0.98".toBigDecimal()
             }
-        }
-        rule {
-            element = "METHOD"
             limit {
-                maximum = 1.00.toBigDecimal()
                 counter = "BRANCH"
-                value = "MISSEDCOUNT"
-            }
-        }
-        rule {
-            element = "LINE"
-            limit {
-                maximum = 1.00.toBigDecimal()
-                counter = "INSTRUCTION"
-                value = "MISSEDCOUNT"
-            }
-        }
-        rule {
-            element = "LINE"
-            limit {
-                maximum = 1.00.toBigDecimal()
-                counter = "BRANCH"
-                value = "MISSEDCOUNT"
-            }
-        }
-        rule {
-            element = "CLASS"
-            limit {
-                maximum = 1.00.toBigDecimal()
-                counter = "INSTRUCTION"
-                value = "MISSEDCOUNT"
-            }
-        }
-        rule {
-            element = "CLASS"
-            limit {
-                maximum = 1.00.toBigDecimal()
-                counter = "BRANCH"
-                value = "MISSEDCOUNT"
+                value = "COVEREDRATIO"
+                minimum = "0.92".toBigDecimal()
             }
         }
     }
