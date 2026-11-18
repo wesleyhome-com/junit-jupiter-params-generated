@@ -2,7 +2,9 @@ package com.wesleyhome.test.jupiter.generator
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import com.wesleyhome.test.jupiter.consumer.JavaConsumerFilters
 import com.wesleyhome.test.jupiter.java.filter.JavaParametersFilters
 import org.junit.jupiter.api.Test
@@ -32,6 +34,22 @@ class FilterBindingTest {
                 "the test has no parameter named [start, end]. Name the filter's parameters as the test does to " +
                     "bind by name."
             )
+    }
+
+    /** `end` contradicts its position, so names decide, and binding `other` fails rather than warning. */
+    @Test
+    fun testABindingByNameIsNotSaidToBeByPosition() {
+        val filter = JavaConsumerFilters::class.java.getMethod("endThenOther", Int::class.java, Int::class.java)
+        val binding = FilterBinding(filter, positionsNamed("start", "end"))
+        assertThat((0..1).map(binding::slotOf)).isEqualTo(listOf(1, null))
+        assertThat(binding.boundByPositionBecause).isNull()
+    }
+
+    /** A Kotlin test may call a parameter `arg0`, but that alone doesn't make its names Java's positions. */
+    @Test
+    fun testOnlyEveryNameBeingAPositionMakesTheNamesPositions() {
+        assertThat(positionsNamed("start", "end").namesArePositions).isTrue()
+        assertThat(layoutOf(arrayOf("arg0", "end"), arrayOf("arg0", "end")).namesArePositions).isFalse()
     }
 
     /** Kotlin writes `value` into the bridge's debug information too, which would let both bind. */
