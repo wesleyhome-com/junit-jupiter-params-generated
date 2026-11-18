@@ -104,6 +104,27 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   `InvocationInterceptor` of your own that reads the test's arguments now sees a generated value
   of these classes unboxed, as the test gets it. Display names, report entries, filters and
   invocation counts don't change.
+- **The library asks for `kotlin-stdlib` and `kotlin-reflect` 2.2.21, rather than 2.4.21** (#170),
+  so that Kotlin 2.2 projects can use it. Gradle takes the highest version asked for, so a project
+  on a newer Kotlin still gets its own `kotlin-stdlib`, but its own `kotlin-reflect` only if it
+  declares it. Otherwise its tests now run on `kotlin-reflect` 2.2.21, which can't read context
+  parameters: a Kotlin 2.4 test class that declares a function with them can fail with
+  `KotlinReflectionInternalError: Inconsistent number of parameters in the descriptor and Java
+  reflection object`, for example beside a filter that takes a value class. Maven takes the nearest
+  declaration, so a project that doesn't declare `kotlin-stdlib` itself can get 2.2.21 from this
+  library too, which another library on its test classpath may find too old. To keep your own
+  Kotlin's versions, declare them: `testRuntimeOnly(kotlin("reflect"))` in Gradle, which takes your
+  Kotlin plugin's version, and `kotlin-stdlib` and `kotlin-reflect` at `${kotlin.version}` in Maven.
+  Spring Boot's dependency management already sets both.
+
+### Added
+
+- **Kotlin 2.2 and 2.3 projects can use the library** (#170), such as Spring Boot 4.0's (Kotlin
+  2.2.21) and 4.1's (2.3.21). It's still compiled by Kotlin 2.4, but for Kotlin 2.2, so its classes
+  carry metadata a 2.2 compiler reads. With 4.1.0, a Kotlin 2.2 project failed to compile: `The
+  actual metadata version is 2.4.0, but the compiler version 2.2.0 can read versions up to 2.3.0`.
+  The library runs on Spring Boot 4.0's versions, `kotlin-stdlib` and `kotlin-reflect` 2.2.21 and
+  JUnit 6.0.3. The annotation processor needs KSP2, from 2.2.21-2.0.4.
 
 ### Fixed
 
@@ -218,6 +239,12 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
 - JaCoCo 0.8.16 measures the coverage gate.
 - `./gradlew test -PjunitVersion=6.0.3` runs every project's tests on another JUnit version, such
   as 6.0.3, the oldest this library supports (#168). Only the tests' runtime classpath changes.
+- `./gradlew test -PkotlinRuntime=2.2.21` runs every project's tests on another `kotlin-stdlib` and
+  `kotlin-reflect`, such as 2.2.21, the oldest this library supports (#170). Tests of context
+  parameters, which kotlin-reflect reads from 2.4 on, are skipped on an older one.
+- Pull request and `main` builds also build and test a Kotlin 2.2.21 project against the library,
+  with Spring Boot 4.0.9's dependency management and the annotation processor under KSP
+  2.2.21-2.0.4 (#170). `bash .github/scripts/consumer-smoke-test.sh` runs it locally.
 
 ## [4.1.0] - 2026-11-14
 

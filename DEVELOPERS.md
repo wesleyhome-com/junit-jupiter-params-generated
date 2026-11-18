@@ -17,6 +17,8 @@ This repository provides `junit-jupiter-params-generated`, a JUnit Jupiter exten
 - `annotation-processor`: KSP-based compile-time checks.
 - `examples`: Usage examples and sample wiring.
 - `buildSrc`: Shared Gradle convention plugins.
+- `consumer-tests`: Separate Gradle builds that use the published library as a project would (see
+  [Kotlin Versions](#kotlin-versions)). They aren't part of the main build.
 
 ## Common Commands
 
@@ -33,6 +35,13 @@ Run from repository root.
 - Run the tests on another JUnit version, such as 6.0.3, the oldest supported. Only the tests'
   runtime classpath changes; everything is still compiled against the version catalog's JUnit:
   - `./gradlew test -PjunitVersion=6.0.3`
+- Run the tests on another Kotlin runtime, such as 2.2.21, Spring Boot 4.0's and the oldest
+  supported. Only the tests' `kotlin-stdlib` and `kotlin-reflect` change; tests that need a newer
+  kotlin-reflect are skipped (see [Kotlin Versions](#kotlin-versions)). It combines with
+  `-PjunitVersion`:
+  - `./gradlew test -PkotlinRuntime=2.2.21 -PjunitVersion=6.0.3`
+- Build and test a Kotlin 2.2 project against this build's output (see [Kotlin Versions](#kotlin-versions)):
+  - `bash .github/scripts/consumer-smoke-test.sh`
 - Check test coverage against the gate (see [Coverage Gate](#coverage-gate)):
   - `./gradlew jacocoTestCoverageVerification`
 - Generate docs:
@@ -97,6 +106,49 @@ gate: its samples are compiled, and checked by the annotation processor, but nev
 The JaCoCo agent only instruments `com.wesleyhome.*` classes. Instrumenting everything also
 instruments the Kotlin compiler that the annotation processor's tests run, which slowed them by
 about 40%.
+
+## Kotlin Versions
+
+The build compiles with the version catalog's Kotlin, but builds the published code for Kotlin 2.2,
+Spring Boot 4.0's, so that Kotlin 2.2 projects can use it. `buildlogic.kotlin-common-conventions`:
+
+- sets `apiVersion` and `languageVersion` 2.2 on each module's main `compileKotlin`. A compiler
+  reads class metadata at most one minor version newer than its own, so classes compiled for 2.4
+  fail to compile in a 2.2 project.
+- sets `coreLibrariesVersion = "2.2.21"`, so the POM and Gradle module metadata ask for
+  `kotlin-stdlib` and `kotlin-reflect` 2.2.21.
+- leaves test sources on the compiler's language and API versions, and runs the tests on the
+  compiler's `kotlin-stdlib` and `kotlin-reflect`, unless `-PkotlinRuntime` says otherwise.
+  `KotlinRuntimeTest` fails if they run on any other version.
+
+On the 2.2 runtime, kotlin-reflect can't read context parameters, a Kotlin 2.4 feature, and fails
+when looking up a class's functions reaches one. The fixtures that use them have classes of their
+own, so they don't take other tests with them, and their tests are skipped on a runtime older than
+2.4.
+
+`consumer-tests/kotlin-2.2` is a separate Gradle build: a Spring Boot 4.0 project's test setup,
+compiled by Kotlin 2.2.21 with Spring Boot 4.0.9's dependency management, so it runs on JUnit 6.0.3
+and `kotlin-stdlib` and `kotlin-reflect` 2.2.21. It runs a generated test with a filter,
+`@ValuesFrom` and a value class, and the annotation processor under KSP 2.2.21-2.0.4, the oldest KSP
+it supports. The processor's own tests run the KSP it's compiled against, from the version catalog.
+`.github/scripts/consumer-smoke-test.sh` publishes the three modules with `publishToMavenLocal`
+into `build/consumer-repository` (through `-Dmaven.repo.local`, so `~/.m2` is untouched), then
+builds that project against them with this repository's Gradle wrapper. The project resolves
+`com.wesleyhome.test` from that repository only, so it can't pick up a published release. The
+script also fails:
+
+- unless the published POMs and module metadata ask for `kotlin-stdlib` and `kotlin-reflect`
+  2.2.21 and nothing else. Spring Boot's dependency management would hide it in the project.
+- unless the annotation processor's warning about the project's deliberately unused filter
+  appears, which shows that KSP ran it.
+
+Pull request and `main` builds run it after `build`, in the same job, so the required `build`
+check covers it. Publishing to a local repository rather than including this build in the
+project's makes the project read the POMs and module metadata that are published, rather than the
+project's own variants, and keeps Kotlin 2.4's Gradle plugin out of a build that uses 2.2's.
+
+Renovate leaves `consumer-tests` alone: its versions are the oldest this library supports, and
+raising them would stop testing those. Raise them only when a major release raises the minimums.
 
 ## Measuring Generation Performance
 
@@ -181,10 +233,10 @@ matters; async-profiler is the better tool if the question is where CPU time goe
 Main release/publish behavior is driven by GitHub workflows under `.github/workflows`.
 
 - `build-pr.yml`:
-  - builds and tests every pull request to `main`, including the [coverage gate](#coverage-gate);
-    its `build` check is required to merge.
+  - builds and tests every pull request to `main`, including the [coverage gate](#coverage-gate)
+    and the [Kotlin 2.2 project](#kotlin-versions); its `build` check is required to merge.
 - `build-main.yml`:
-  - builds/tests,
+  - builds/tests, including the Kotlin 2.2 project,
   - publishes SNAPSHOT artifacts when `version` ends with `-SNAPSHOT`,
   - generates docs and publishes them as the snapshot docs (see below).
 - `release.yml`:

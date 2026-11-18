@@ -25,7 +25,7 @@ Issues are grouped into release milestones.
 - **Major:** anything that changes names, generated values or invocation counts for tests that pass
   today.
 
-Minimum versions (Java 17, Kotlin 2.4, JUnit 6.0.3) don't rise within a major.
+Minimum versions (Java 17, Kotlin 2.2, JUnit 6.0.3) don't rise within a major.
 
 ## Code
 
