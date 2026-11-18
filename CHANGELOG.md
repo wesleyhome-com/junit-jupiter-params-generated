@@ -207,6 +207,7 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   before publishing. Before building, and again before publishing, they check that `main` hasn't
   moved, that the release tag doesn't exist yet, and that the deploy key can still reach the
   repository for pushing. The release plugin's tasks are listed by `./gradlew tasks`.
+- JaCoCo 0.8.16 measures the coverage gate.
 - `./gradlew test -PjunitVersion=6.0.3` runs every project's tests on another JUnit version, such
   as 6.0.3, the oldest this library supports (#168). Only the tests' runtime classpath changes.
 
