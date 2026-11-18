@@ -44,7 +44,8 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
                     isNullable = generatesNull(parameter, jvmTypes[index]),
                     annotations = parameter.annotations.toList()
                 )
-            }
+            },
+            declaredNames = context.requiredTestMethod.declaredParameterNames()
         )
     }
 

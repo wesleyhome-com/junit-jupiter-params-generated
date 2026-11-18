@@ -262,7 +262,10 @@ companion object {
 
 A filter declares only the parameters it is about, matched **by name**, so several small rules
 compose instead of one predicate that has to know about everything. A combination runs only if every
-filter accepts it. Use a suffix when a test has more than one:
+filter accepts it. The names come from Kotlin's metadata, or for Java from `-parameters` or the
+debug information Gradle and Maven compile with by default, so no compiler flag is needed. See
+[Parameter Names](#parameter-names) for a build that records none. Use a suffix when a test has more
+than one:
 
 ```kotlin
 @JvmStatic fun prices_filter_ordered(start: Int, end: Int): Boolean = start <= end
@@ -340,9 +343,26 @@ Only generated parameters are listed. A parameter resolved by another extension 
 
 ### Parameter Names
 
-`{argumentsWithNames}` needs the declared parameter names to be present in the compiled class file.
-Kotlin records them in its own metadata, so Kotlin test sources need nothing. Java test sources must
-be compiled with `-parameters`, or the names fall back to `arg0`, `arg1`:
+Filters and `{argumentsWithNames}` both use the names parameters were declared with, which have to
+be recorded in the compiled class files.
+
+- **Kotlin** records them in its own metadata, so Kotlin sources need nothing.
+- **Java filters** find them either way Java records them: with `-parameters`, or in the debug
+  information that `-g` adds. Gradle and Maven compile with `-g` by default, so a default build
+  needs nothing. `@ValuesFrom` messages use these names too.
+- **Java display names** use `-parameters` names only. Without them, `{argumentsWithNames}` and the
+  `generated.parameters` report entry show `arg0`, `arg1`.
+
+A Java build that records no names at all, without `-parameters` and with `-g:none`, binds a
+filter's parameters to the test's by position: its first parameter to the test's first, whatever
+either is called. That is only right for a filter that repeats the test's parameters in order, so
+each such filter logs a warning:
+
+```text
+Filter [ordered_filter] binds to the test's parameters by position, because the class files don't record their names. Compile with -parameters to bind by name.
+```
+
+To record the names everywhere, compile Java with `-parameters`:
 
 ```kotlin
 // Gradle

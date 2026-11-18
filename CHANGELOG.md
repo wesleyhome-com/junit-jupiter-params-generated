@@ -44,6 +44,17 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   `prices_filter_small$my_module`, and now show `prices_filter_small`. Update anything that matches
   on the old name. Naming an `internal` function by its compiled name in `filters = [...]` or
   `@ValuesFrom` still works, and a filter reached by both names is listed once.
+- **Filters for Java tests compiled without `-parameters` bind by name** (#120). Neither side's
+  names were visible before, so each filter parameter took the test parameter at the same
+  position, whatever either was called: `endNotOne_filter(int end)` on `test(int start, int end)`
+  filtered on `start`, and passed. Names now come from the debug information Gradle and Maven
+  compile with by default, so the filter gets the parameter it names and the test runs the
+  combinations it was written for. That can mean different invocations, and failures the old
+  binding hid. A filter whose parameter names aren't the test's, such as `(int a, int b)` for
+  `(int start, int end)`, now fails with `declares [a], which is not a generated parameter of the
+  test`: rename its parameters to the test's. A filter that repeats the test's parameters in order
+  runs as before, and so does any build with `-parameters`. A build that records no names at all
+  (`-g:none`) still binds by position, and now logs a warning for each such filter.
 
 ### Fixed
 
@@ -60,6 +71,14 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   `@ValuesFrom` used to fail with `No filter named […]` or `no function named […]`. Conventional
   filters are now looked for on the class running the test rather than the one declaring it, so
   they also apply to inherited tests and to an interface's default tests.
+- **Filters work without `javaParameters` or `-parameters`** (#120). Kotlin filters failed with
+  `Filter [...] declares [arg0], which is not a generated parameter of the test` unless compiled
+  with `javaParameters`, which isn't Kotlin's default. They now bind by the names in Kotlin's
+  metadata, `@JvmSynthetic` ones included. Java filters read their names from the debug
+  information, so they also bind for a test whose first parameter is resolved by another
+  extension, such as `TestInfo`. Messages about a filter's parameters, and `@ValuesFrom` messages
+  for Java tests, name parameters as declared rather than `arg0`. Display names and report entries
+  are unchanged: for Java they still need `-parameters` to show declared names.
 
 ### Build and docs
 

@@ -3,6 +3,7 @@ package com.wesleyhome.test.jupiter.generator
 import com.wesleyhome.test.jupiter.InvalidFilterException
 import java.lang.reflect.Method
 import java.lang.reflect.Parameter
+import java.util.logging.Logger
 import kotlin.reflect.KClass
 import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.kotlinFunction
@@ -58,7 +59,14 @@ internal class ParameterFilter(
                     "Filter [$name] must return Boolean, but returns ${method.returnType.simpleName}"
                 )
             }
-            val slots = method.parameters.mapIndexed { index, parameter -> slotFor(name, method, index, parameter, layout) }
+            val binding = FilterBinding(method, layout)
+            if (!binding.byName) {
+                logger.warning(
+                    "Filter [$name] binds to the test's parameters by position, because the class files don't " +
+                        "record their names. Compile with -parameters to bind by name."
+                )
+            }
+            val slots = method.parameters.mapIndexed { index, parameter -> slotFor(name, method, index, parameter, binding) }
             method.isAccessible = true
             return ParameterFilter(name, method, receiver, slots.toIntArray())
         }
@@ -75,12 +83,14 @@ internal class ParameterFilter(
             method: Method,
             index: Int,
             parameter: Parameter,
-            layout: GeneratedParameterLayout
+            binding: FilterBinding
         ): Int {
-            val slot = layout.slotOfName(parameter.name)
+            val declaredAs = binding.names[index]
+            val slot = binding.slotOf(index)
                 ?: throw InvalidFilterException(
-                    "Filter [$name] declares [${parameter.name}], which is not a generated parameter of the test"
+                    "Filter [$name] declares [$declaredAs], which is not a generated parameter of the test"
                 )
+            val layout = binding.layout
             val generatedType = layout.typeOf(slot)
             val generated = generatedType.javaObjectType
             val declared = parameter.type
@@ -88,18 +98,20 @@ internal class ParameterFilter(
                 !(generatedType.isValue && method.declaresKotlinType(index, generatedType))
             ) {
                 throw InvalidFilterException(
-                    "Filter [$name] declares [${parameter.name}] as ${declared.simpleName}, " +
+                    "Filter [$name] declares [$declaredAs] as ${declared.simpleName}, " +
                         "but the generated parameter is ${generated.simpleName}"
                 )
             }
             if (layout.isNullable(slot) && declared.isPrimitive) {
                 throw InvalidFilterException(
-                    "Filter [$name] declares [${parameter.name}] as ${declared.simpleName}, " +
+                    "Filter [$name] declares [$declaredAs] as ${declared.simpleName}, " +
                         "which cannot hold the null this parameter generates"
                 )
             }
             return slot
         }
+
+        private val logger: Logger = Logger.getLogger(ParameterFilter::class.java.name)
 
         private fun Class<*>.boxed(): Class<*> = when (this) {
             Boolean::class.javaPrimitiveType -> Boolean::class.javaObjectType
@@ -126,4 +138,24 @@ internal class ParameterFilter(
         private fun Method.declaresKotlinType(index: Int, type: KClass<*>): Boolean =
             kotlinFunction?.let { it.valueParameters[index].type.classifier == type } == true
     }
+}
+
+/**
+ * How a filter's parameters find their generated slots: the one decision every caller binds through.
+ *
+ * Declared names bind when the class files record both the filter's and the test's. Otherwise
+ * binding is as it was before names were read: Java reflection's names against the test's display
+ * names, which without `-parameters` are `arg0`, `arg1` on both sides, pairing parameters by position.
+ */
+internal class FilterBinding(method: Method, val layout: GeneratedParameterLayout) {
+
+    private val declared: List<String>? = method.declaredParameterNames()?.takeIf { layout.recordsDeclaredNames }
+
+    val byName: Boolean get() = declared != null
+
+    /** What each parameter is bound by, and so what messages call it. */
+    val names: List<String> = declared ?: method.parameters.map { it.name }
+
+    fun slotOf(index: Int): Int? =
+        if (byName) layout.slotOfDeclaredName(names[index]) else layout.slotOfName(names[index])
 }

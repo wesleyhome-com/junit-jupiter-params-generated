@@ -5,6 +5,12 @@ import kotlin.reflect.KClass
 
 internal data class TestModel(
     val testParameters: List<TestParameter>,
+    /**
+     * The names the test method's parameters were declared with, by position, or null when its class
+     * file doesn't record them. A [TestParameter.name] is what display names use, which for Java
+     * compiled without `-parameters` is `arg0`, `arg1` even when these are known.
+     */
+    val declaredNames: List<String>? = testParameters.map { it.name },
 )
 
 /**

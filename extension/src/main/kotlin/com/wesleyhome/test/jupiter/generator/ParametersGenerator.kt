@@ -31,14 +31,15 @@ internal class ParametersGenerator(
     val parameters: List<GeneratedParameter> by lazy {
         testModel.testParameters.mapIndexedNotNull { index, declared ->
             val testParameter = declared.copy(clock = clock)
-            optionsFor(testParameter)?.let {
-                GeneratedParameter(index, testParameter.name, testParameter.type, testParameter.isNullable, it)
+            val declaredName = testModel.declaredNames?.get(index) ?: testParameter.name
+            optionsFor(testParameter, declaredName)?.let {
+                GeneratedParameter(index, testParameter.name, declaredName, testParameter.type, testParameter.isNullable, it)
             }
         }
     }
 
     val layout: GeneratedParameterLayout by lazy {
-        GeneratedParameterLayout.of(parameters, testModel.testParameters.size)
+        GeneratedParameterLayout.of(parameters, testModel.testParameters.size, testModel.declaredNames != null)
     }
 
     fun arguments(): ArgumentParameters {
@@ -60,7 +61,7 @@ internal class ParametersGenerator(
      * annotation is misapplied and that is reported. A parameter with no source annotation that none of
      * the default providers handle belongs to another resolver, not to us.
      */
-    private fun optionsFor(testParameter: TestParameter): List<Any?>? {
+    private fun optionsFor(testParameter: TestParameter, declaredName: String): List<Any?>? {
         val annotatedProviders = testParameter.annotations.mapNotNull { annotation ->
             val annotationClass = annotation.annotationClass
             val sourceProvider: SourceProvider = annotationClass.findAnnotation() ?: return@mapNotNull null
@@ -80,14 +81,19 @@ internal class ParametersGenerator(
             }
             valueClassOptionsFor(testParameter, annotatedProviders) ?: throw InvalidParameterException(testParameter)
         } else {
-            providers.flatMap { optionsFrom(it, testParameter) }
+            providers.flatMap { optionsFrom(it, testParameter, declaredName) }
         }
         return if (testParameter.isNullable) values + null else values
     }
 
-    private fun optionsFrom(provider: ParameterDataProvider<*>, testParameter: TestParameter): List<Any?> =
+    /** `@ValuesFrom` messages name the parameter as declared, where a display name may say `arg0`. */
+    private fun optionsFrom(
+        provider: ParameterDataProvider<*>,
+        testParameter: TestParameter,
+        declaredName: String
+    ): List<Any?> =
         if (provider is ValuesFromDataProvider) {
-            provider.valuesFor(testParameter, testClass, maxPermutations)
+            provider.valuesFor(testParameter.copy(name = declaredName), testClass, maxPermutations)
         } else {
             provider.createParameterOptionsData(testParameter)
         }
@@ -112,6 +118,7 @@ internal class ParametersGenerator(
 internal data class GeneratedParameter(
     val index: Int,
     val name: String,
+    val declaredName: String,
     val type: KClass<*>,
     val isNullable: Boolean,
     val options: List<Any?>

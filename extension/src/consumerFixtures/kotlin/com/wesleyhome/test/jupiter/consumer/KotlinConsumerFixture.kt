@@ -1,0 +1,105 @@
+package com.wesleyhome.test.jupiter.consumer
+
+import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
+import com.wesleyhome.test.jupiter.annotations.ValuesFrom
+import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource
+import com.wesleyhome.test.jupiter.annotations.number.LongSource
+
+/** Compiled without javaParameters, as Kotlin is by default. Driven by ParameterNamesTest; not run directly. */
+class KotlinConsumerFixture {
+
+    @GeneratedParametersTest(name = "{arguments}")
+    fun jvmStatic(@IntRangeSource(min = 1, max = 3) start: Int, @IntRangeSource(min = 1, max = 3) end: Int) {
+    }
+
+    @GeneratedParametersTest(name = "{arguments}")
+    fun companionMember(@IntRangeSource(min = 1, max = 3) start: Int, @IntRangeSource(min = 1, max = 3) end: Int) {
+    }
+
+    @GeneratedParametersTest(name = "{arguments}", filters = ["endAfterStart"])
+    fun reversed(@IntRangeSource(min = 1, max = 3) start: Int, @IntRangeSource(min = 1, max = 3) end: Int) {
+    }
+
+    @GeneratedParametersTest(name = "{arguments}")
+    fun internalFilter(@IntRangeSource(min = 1, max = 3) start: Int, @IntRangeSource(min = 1, max = 3) end: Int) {
+    }
+
+    @GeneratedParametersTest(name = "{arguments}")
+    fun valueClass(@LongSource([1, 2, 3]) amount: Cents, @IntRangeSource(min = 1, max = 2) count: Int) {
+    }
+
+    @GeneratedParametersTest(name = "{arguments}")
+    fun synthetic(@IntRangeSource(min = 1, max = 3) start: Int) {
+    }
+
+    @GeneratedParametersTest
+    fun displayed(@IntRangeSource(min = 1, max = 2) start: Int, @IntRangeSource(min = 1, max = 2) end: Int) {
+    }
+
+    @GeneratedParametersTest(filters = ["mentionsMissing"])
+    fun unknownParameter(@IntRangeSource(min = 1, max = 2) start: Int) {
+    }
+
+    @GeneratedParametersTest(filters = ["expectsString"])
+    fun wrongType(@IntRangeSource(min = 1, max = 2) start: Int) {
+    }
+
+    @GeneratedParametersTest(filters = ["receiverRule"])
+    fun extensionReceiver(@IntRangeSource(min = 1, max = 2) start: Int) {
+    }
+
+    @GeneratedParametersTest
+    fun valuesFromMissing(@ValuesFrom("nope") label: String) {
+    }
+
+    companion object {
+        @JvmStatic
+        fun jvmStatic_filter(start: Int, end: Int): Boolean = start <= end
+
+        fun companionMember_filter(start: Int, end: Int): Boolean = start <= end
+
+        @JvmStatic
+        fun endAfterStart(end: Int, start: Int): Boolean = start <= end
+
+        @JvmStatic
+        internal fun internalFilter_filter(start: Int, end: Int): Boolean = start <= end
+
+        @JvmStatic
+        fun valueClass_filter(count: Int, amount: Cents): Boolean = amount.value != count.toLong()
+
+        @JvmStatic
+        @JvmSynthetic
+        fun synthetic_filter(start: Int): Boolean = start <= 2
+
+        @JvmStatic
+        fun mentionsMissing(nope: Int): Boolean = true
+
+        @JvmStatic
+        fun expectsString(start: String): Boolean = true
+
+        @JvmStatic
+        fun Int.receiverRule(): Boolean = this > 1
+    }
+}
+
+class NamedCompanionConsumerFixture {
+
+    @GeneratedParametersTest(name = "{arguments}")
+    fun ordered(@IntRangeSource(min = 1, max = 3) start: Int, @IntRangeSource(min = 1, max = 3) end: Int) {
+    }
+
+    companion object Rules {
+        fun ordered_filter(end: Int, start: Int): Boolean = start <= end
+    }
+}
+
+@JvmInline
+value class Cents(val value: Long)
+
+/** A top-level class, so ParameterNamesTest can load it again on its own. */
+object KotlinConsumerRules {
+    fun ordered(end: Int, start: Int): Boolean = start <= end
+
+    @JvmOverloads
+    fun upTo(start: Int, end: Int = 2): Boolean = start <= end
+}
