@@ -21,19 +21,27 @@ import com.wesleyhome.test.jupiter.testkit.executeFixture
 import com.wesleyhome.test.jupiter.testkit.executionFailure
 import com.wesleyhome.test.jupiter.testkit.invocationCounts
 import com.wesleyhome.test.jupiter.testkit.invocationNames
+import com.wesleyhome.test.jupiter.testkit.reportEntries
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
+import org.junit.jupiter.api.TestReporter
+import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ParameterContext
 import org.junit.jupiter.api.extension.ParameterResolutionException
 import org.junit.jupiter.api.extension.ParameterResolver
+import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.api.extension.TestExecutionExceptionHandler
 import org.junit.jupiter.api.io.TempDir
 import org.mockito.Mock
 import org.mockito.Mockito.mockingDetails
 import org.mockito.junit.jupiter.MockitoExtension
+import java.lang.reflect.Method
 import java.nio.file.Path
 import java.util.UUID
 
@@ -363,7 +371,9 @@ class ValueClassTest {
     }
 
     @Test
-    fun testValueClassOverANullableValueClassHoldingNullReachesTheTestMethod() {
+    fun testValueClassOverANullableTypeHoldingNullReachesTheTestMethod() {
+        assertThat(invocationNames(TestMethodFixture::class.java, "nickname"))
+            .isEqualTo(listOf("Nickname(value=a)", "Nickname(value=null)"))
         assertThat(invocationNames(TestMethodFixture::class.java, "outerMoney"))
             .isEqualTo(listOf("OuterMoney(inner=Money(cents=1))", "OuterMoney(inner=null)"))
         assertThat(invocationNames(TestMethodFixture::class.java, "outerName"))
@@ -379,6 +389,43 @@ class ValueClassTest {
         assertThat(executionFailure(TestMethodFixture::class.java, "throwing"))
             .isInstanceOf(IllegalStateException::class)
             .hasMessage("thrown by the test")
+    }
+
+    @Test
+    fun testFailedAssumptionInATestMethodTakingAValueClassAbortsIt() {
+        val tests = executeFixture(TestMethodFixture::class.java, "assuming").testEvents()
+        assertThat(tests.aborted().count() to tests.failed().count()).isEqualTo(2L to 0L)
+    }
+
+    @Test
+    fun testExceptionHandlerGetsWhatATestMethodTakingAValueClassThrew() {
+        assertThat(invocationCounts(HandledFixture::class.java, "handled")).isEqualTo(2L to 2L)
+    }
+
+    /** Without a box among the arguments, JUnit calls the test as it always has. */
+    @Test
+    fun testTestMethodIsCalledByTheExtensionOnlyWithABoxAmongItsArguments() {
+        assertThat(invocationNames(TestMethodFixture::class.java, "plain")).isEqualTo(listOf("1, (1, 2)"))
+        assertThat(invocationNames(TestMethodFixture::class.java, "unboxedOnly")).isEqualTo(listOf("Money(cents=1)"))
+        assertThat(invocationNames(TestMethodFixture::class.java, "boxedOrNull")).isEqualTo(listOf("Money(cents=1)", "null"))
+    }
+
+    @Test
+    fun testInterceptorOfTheUsersOwnRunsAroundTheCallAndSeesTheCompiledArguments() {
+        val entries = reportEntries(InterceptedFixture::class.java, "intercepted")
+            .filter { it.keys.any { key -> key in setOf("before", "body", "after") } }
+        assertThat(entries).isEqualTo(
+            listOf(
+                mapOf("before" to "Money(cents=1), x"), mapOf("body" to "ran"), mapOf("after" to "done"),
+                mapOf("before" to "null, x"), mapOf("body" to "ran"), mapOf("after" to "done")
+            )
+        )
+    }
+
+    @Test
+    fun testTestMethodTakingAValueClassRunsOnTheTimeoutThread() {
+        assertThat(invocationNames(InterceptedFixture::class.java, "separateThread"))
+            .isEqualTo(listOf("Money(cents=1), AnyBox(value=x)", "null, AnyBox(value=x)"))
     }
 
     /**
@@ -485,6 +532,31 @@ class ValueClassTest {
             throw IllegalStateException("thrown by the test")
         }
 
+        @GeneratedParametersTest
+        fun assuming(@LongSource([1]) amount: Money?) {
+            assumeTrue(false)
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun plain(@IntSource([1]) n: Int, @ValuesFrom("pairs") pair: Pair<Int, Int>) {
+            check(calledByJupiterEngine())
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun unboxedOnly(@LongSource([1]) amount: Money) {
+            check(calledByJupiterEngine())
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun boxedOrNull(@LongSource([1]) amount: Money?) {
+            check(calledByJupiterEngine() == (amount == null))
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun nickname(@ValuesFrom("nicknames") nickname: Nickname) {
+            check(nickname.value == null || nickname.value == "a")
+        }
+
         @GeneratedParametersTest(name = "{arguments}")
         suspend fun suspending(@ValuesFrom("anyBoxes") box: AnyBox) {
             check(box.value == "x" || box.value == "y")
@@ -531,6 +603,12 @@ class ValueClassTest {
 
             @JvmStatic
             fun nullOuterNames(): List<OuterName> = listOf(OuterName(null))
+
+            @JvmStatic
+            fun nicknames(): List<Nickname> = listOf(Nickname("a"), Nickname(null))
+
+            @JvmStatic
+            fun pairs(): List<Pair<Int, Int>> = listOf(1 to 2)
         }
     }
 
@@ -561,7 +639,7 @@ class ValueClassTest {
 
         @GeneratedParametersTest(name = "{arguments}")
         fun alongsideAResolvedBox(@IntSource([1]) n: Int, @ResolvedBox resolved: AnyBox) {
-            check(resolved.value == "resolved")
+            check(resolved.value == "resolved" && !calledByJupiterEngine())
         }
 
         companion object {
@@ -581,6 +659,62 @@ class ValueClassTest {
                     extensionContext: ExtensionContext
                 ): Any = AnyBox("resolved")
             }
+        }
+    }
+
+    @ExtendWith(SwallowingHandler::class)
+    class HandledFixture {
+
+        @GeneratedParametersTest
+        fun handled(@LongSource([1]) amount: Money?) {
+            throw IllegalStateException("handled")
+        }
+    }
+
+    class SwallowingHandler : TestExecutionExceptionHandler {
+        override fun handleTestExecutionException(context: ExtensionContext, throwable: Throwable) {
+            if (throwable !is IllegalStateException) throw throwable
+        }
+    }
+
+    /** Arguments other than the reporter, as an interceptor of the user's own sees them. */
+    class RecordingInterceptor : InvocationInterceptor {
+        override fun interceptTestTemplateMethod(
+            invocation: InvocationInterceptor.Invocation<Void?>,
+            invocationContext: ReflectiveInvocationContext<Method>,
+            extensionContext: ExtensionContext
+        ) {
+            extensionContext.publishReportEntry("before", invocationContext.arguments.take(2).joinToString())
+            invocation.proceed()
+            extensionContext.publishReportEntry("after", "done")
+        }
+    }
+
+    @ExtendWith(RecordingInterceptor::class)
+    class InterceptedFixture {
+
+        private lateinit var lifecycleThread: Thread
+
+        @BeforeEach
+        fun setUp() {
+            lifecycleThread = Thread.currentThread()
+        }
+
+        @GeneratedParametersTest
+        fun intercepted(@LongSource([1]) amount: Money?, @ValuesFrom("anyBoxes") box: AnyBox, reporter: TestReporter) {
+            reporter.publishEntry("body", "ran")
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        @Timeout(value = 10, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+        fun separateThread(@LongSource([1]) amount: Money?, @ValuesFrom("anyBoxes") box: AnyBox) {
+            check(Thread.currentThread() !== lifecycleThread)
+            check((amount == null || amount.cents == 1L) && box.value == "x")
+        }
+
+        companion object {
+            @JvmStatic
+            fun anyBoxes(): List<AnyBox> = listOf(AnyBox("x"))
         }
     }
 
@@ -930,6 +1064,16 @@ value class OuterBox(val inner: Box<Int>?)
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class ResolvedBox
+
+/**
+ * Whether JUnit's engine called the running test, rather than this extension. The engine's frames
+ * sit between the test and the extension's interceptor only when the interceptor let JUnit go ahead.
+ */
+private fun calledByJupiterEngine(): Boolean {
+    val frames = Thread.currentThread().stackTrace
+    val interceptor = frames.indexOfFirst { it.className == GeneratedParametersTestInvocationContext::class.java.name }
+    return frames.take(interceptor).any { it.className.startsWith("org.junit.jupiter.engine.") }
+}
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)

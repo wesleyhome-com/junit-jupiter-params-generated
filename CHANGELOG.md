@@ -180,16 +180,24 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   kotlin-reflect takes every value-class argument to be boxed. So a test taking `Money`, passed
   unboxed as a `long`, beside a box such as an `AnyBox`, a `Money?` or a `Box<Money>`, failed with
   `object is not an instance of declaring class`. One taking `Wallet?`, for
-  `Wallet(val money: Money)`, failed with `argument type mismatch` for every value but null. The
-  test is now called with `Method.invoke` on every JUnit version, given each value as its compiled
-  signature takes it. On JUnit 6.1, a test that threw with a box among its arguments was reported
-  as an `InvocationTargetException`, with its exception as the cause, and is now reported as what
-  it threw. JUnit still calls a `suspend` test itself, as before.
-- **A value class over a nullable value class reaches the test method holding null** (#168).
-  `OuterMoney(null)`, for `OuterMoney(val inner: Money?)`, failed on every JUnit version with
-  `ParameterResolver [...] resolved a value of type [OuterMoney] for parameter [...], but a value
-  assignment compatible with [Money] is required`. On JUnit 6.1 one holding a value failed too,
-  with `object is not an instance of declaring class`. Both now run.
+  `Wallet(val money: Money)`, failed with `argument type mismatch` for every value but null. When
+  an argument is a box, the test is now called with `Method.invoke`, as JUnit 6.0 calls it, given
+  each value as its compiled signature takes it. Otherwise JUnit calls it, as before, and so it
+  does a `suspend` test. On JUnit 6.1, a test that threw with a box among its arguments was
+  reported as an `InvocationTargetException`, with its exception as the cause. So
+  `assumeTrue(false)` failed the test rather than aborting it, and a
+  `TestExecutionExceptionHandler` was given the `InvocationTargetException` rather than the test's
+  exception. The test is now reported as what it threw: aborted for a failed assumption, and
+  handed to the handler as it is.
+- **A value class over a nullable type reaches the test method holding null** (#168), when it comes
+  boxed from `@ValuesFrom` or a custom provider. `Nickname(null)`, for
+  `Nickname(val value: String?)`, failed on every JUnit version with `ParameterResolver [...]
+  resolved a value of type [...Nickname] for parameter [java.lang.String nickname] in method [...],
+  but a value assignment compatible with [java.lang.String] is required`. So did
+  `OuterMoney(null)`, for `OuterMoney(val inner: Money?)`. The null `@WithNull` adds already
+  reached a `Nickname` test as `Nickname(null)`. On JUnit 6.1, a value class over a nullable value
+  class failed holding a value too, such as `OuterMoney(Money(1))`, with `object is not an instance
+  of declaring class`. These now run.
 
 ### Build and docs
 

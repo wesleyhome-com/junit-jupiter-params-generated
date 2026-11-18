@@ -49,11 +49,13 @@ internal class GeneratedParametersTemplate(
      * The test method's [arguments] as its compiled signature takes them, for calling it with
      * `Method.invoke` as JUnit 6.0 does, or null to leave the call to JUnit. JUnit 6.1 calls it
      * through kotlin-reflect when an argument is a value class's box, and kotlin-reflect takes every
-     * value-class argument to be boxed, which the `long` a `Money` compiles to isn't. [resolve] has
-     * already compiled each generated value. Another resolver's box is unboxed, as kotlin-reflect does.
+     * value-class argument to be boxed, which the `long` a `Money` compiles to isn't. Without a box
+     * among them, both versions make the call this would. [resolve] has already compiled each
+     * generated value. Another resolver's box is unboxed, as kotlin-reflect does.
      */
     fun compiledArguments(arguments: List<Any?>): Array<Any?>? {
         val unboxing = unboxing ?: return null
+        if (arguments.none { it != null && it.javaClass.isAnnotationPresent(JvmInline::class.java) }) return null
         return Array(arguments.size) { index ->
             if (layout.slotOf(index) == GeneratedParameterLayout.NO_SLOT) {
                 arguments[index].unboxedFrom(unboxing[index])
