@@ -167,7 +167,8 @@ class ValueClassTest {
     /** A context parameter is a JVM parameter but not a value parameter, so the Kotlin types don't line up and can't be used. */
     @Test
     fun testFilterWhoseKotlinParametersDoNotLineUpIsJudgedByItsSignature() {
-        assertThat(executionFailure(Fixture::class.java, "contextParameter"))
+        assumeKotlinReflectReadsContextParameters()
+        assertThat(executionFailure(ContextParameterFixture::class.java, "contextParameter"))
             .isInstanceOf(InvalidFilterException::class)
             .hasMessage("Filter [contextRule] declares [amount] as long, but the generated parameter is Money")
     }
@@ -290,7 +291,8 @@ class ValueClassTest {
     /** A context parameter is a JVM parameter but not a value parameter, so, as for a Java filter, the box goes as it is. */
     @Test
     fun testFilterWithAContextParameterIsGivenTheBox() {
-        assertThat(invocationNames(FilterFixture::class.java, "contextAnyBox"))
+        assumeKotlinReflectReadsContextParameters()
+        assertThat(invocationNames(ContextParameterFilterFixture::class.java, "contextAnyBox"))
             .isEqualTo(listOf("1, AnyBox(value=x)", "1, AnyBox(value=y)"))
     }
 
@@ -744,10 +746,6 @@ class ValueClassTest {
         fun result(@ValuesFrom("results") result: Result<Int>) {
         }
 
-        @GeneratedParametersTest(name = "{arguments}", filters = ["boxedInContext"])
-        fun contextAnyBox(@IntSource([1]) n: Int, @ValuesFrom("anyBoxes") box: AnyBox) {
-        }
-
         @GeneratedParametersTest(name = "{arguments}")
         fun box(@ValuesFrom("intBoxes") box: Box<Int>) {
         }
@@ -822,10 +820,6 @@ class ValueClassTest {
 
             @JvmStatic
             fun result_filter(result: Result<Int>): Boolean = result.isSuccess
-
-            context(n: Int)
-            @JvmStatic
-            fun boxedInContext(box: AnyBox): Boolean = box.value is AnyBox
 
             @JvmStatic
             fun intBoxes(): List<Box<Int>> = listOf(Box(1), Box(2), Box(3))
@@ -962,10 +956,6 @@ class ValueClassTest {
         fun underlyingTypeFilter(@LongSource([1]) amount: Money) {
         }
 
-        @GeneratedParametersTest(filters = ["contextRule"])
-        fun contextParameter(@IntSource([1]) n: Int, @LongSource([1]) amount: Money) {
-        }
-
         @GeneratedParametersTest(name = "{arguments}", strategy = GenerationStrategy.PAIRWISE)
         fun pairwise(@LongSource([0, 1]) amount: Money, @IntSource([1, 2]) count: Count, flag: Boolean) {
         }
@@ -998,14 +988,50 @@ class ValueClassTest {
             @JvmStatic
             fun underlyingTypeFilter_filter(amount: Long): Boolean = amount > 0
 
-            context(n: Int)
-            @JvmStatic
-            fun contextRule(amount: Money): Boolean = amount.cents < n
-
             /** Shares the `lookalike_filter` prefix without being a filter for it; applied, it would reject everything. */
             @JvmStatic
             fun lookalike_filtering(amount: Money): Boolean = false
         }
+    }
+
+    /*
+     * The context-parameter fixtures have classes of their own: kotlin-reflect before 2.4 fails when a
+     * lookup in a class reaches one, which under -PkotlinRuntime took other tests of that class with it.
+     */
+    class ContextParameterFixture {
+
+        @GeneratedParametersTest(filters = ["contextRule"])
+        fun contextParameter(@IntSource([1]) n: Int, @LongSource([1]) amount: Money) {
+        }
+
+        companion object {
+            context(n: Int)
+            @JvmStatic
+            fun contextRule(amount: Money): Boolean = amount.cents < n
+        }
+    }
+
+    class ContextParameterFilterFixture {
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["boxedInContext"])
+        fun contextAnyBox(@IntSource([1]) n: Int, @ValuesFrom("anyBoxes") box: AnyBox) {
+        }
+
+        companion object {
+            @JvmStatic
+            fun anyBoxes(): List<AnyBox> = listOf(AnyBox("x"), AnyBox("y"))
+
+            context(n: Int)
+            @JvmStatic
+            fun boxedInContext(box: AnyBox): Boolean = box.value is AnyBox
+        }
+    }
+
+    private fun assumeKotlinReflectReadsContextParameters() {
+        assumeTrue(
+            KotlinVersion.CURRENT.isAtLeast(2, 4),
+            "kotlin-reflect ${KotlinVersion.CURRENT} can't read context parameters"
+        )
     }
 }
 
