@@ -1,5 +1,6 @@
 package com.wesleyhome.test.jupiter.generator
 
+import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
@@ -33,6 +34,11 @@ private val compiledNameCalls = AtomicInteger(0)
 private val ORDERED = listOf("1, 1", "1, 2", "1, 3", "2, 2", "2, 3", "3, 3")
 
 private val ALL_PAIRS = listOf("1, 1", "1, 2", "1, 3", "2, 1", "2, 2", "2, 3", "3, 1", "3, 2", "3, 3")
+
+private val OVERLOAD_ORDERS = listOf(
+    ParameterFilterTest.ShortOverloadsFirstFixture::class.java,
+    ParameterFilterTest.LongOverloadsFirstFixture::class.java
+)
 
 /** What the compiler appends to this module's `internal` names. */
 internal const val TEST_MODULE = "com_wesleyhome_test_junit_jupiter_params_generated_test"
@@ -475,6 +481,276 @@ class ParameterFilterTest {
     fun testAJavaStaticFieldNamedCompanionIsSearched() {
         assertThat(invocationNames(JavaCompanionFieldFixture::class.java, "ordered")).isEqualTo(ORDERED)
         assertThat(invocationNames(JavaCompanionFieldFixture::class.java, "explicit")).isEqualTo(ORDERED)
+    }
+
+    @Test
+    fun testTheOverloadWhoseParametersAllBindIsChosen() {
+        for (fixture in OVERLOAD_ORDERS) {
+            assertThat(invocationNames(fixture, "startOnly")).isEqualTo(listOf("2", "3"))
+            assertThat(invocationNames(fixture, "pair")).isEqualTo(ORDERED)
+        }
+    }
+
+    @Test
+    fun testSeveralOverloadsWhoseParametersAllBindFailTheTest() {
+        for (fixture in OVERLOAD_ORDERS) {
+            assertThat(executionFailure(fixture, "a"))
+                .isInstanceOf(InvalidFilterException::class)
+                .hasMessage(
+                    "Filter [a_filter] is overloaded, and 2 overloads can filter this test: " +
+                        "a_filter(int), a_filter(int, int). Give them different names."
+                )
+        }
+    }
+
+    @Test
+    fun testAnOverloadedFilterNoOverloadOfWhichCanFilterNamesWhatIsWrongWithEach() {
+        for (fixture in OVERLOAD_ORDERS) {
+            assertThat(executionFailure(fixture, "noneFits"))
+                .isInstanceOf(InvalidFilterException::class)
+                .hasMessage(
+                    "Filter [mismatched] is overloaded, and no overload can filter this test: " +
+                        "mismatched(String) declares [label], which is not a generated parameter of the test; " +
+                        "mismatched(int) must return Boolean, but returns int; " +
+                        "mismatched(long) declares [start] as long, but the generated parameter is Integer"
+                )
+        }
+    }
+
+    /** The fixtures above depend on the order this JVM lists methods in; this gives the overloads in both. */
+    @Test
+    fun testTheChoiceBetweenOverloadsDoesNotDependOnTheirOrder() {
+        val companion = ShortOverloadsFirstFixture.Companion
+        fun overload(name: String, vararg types: Class<*>) =
+            StaticFunction(companion.javaClass.getDeclaredMethod(name, *types), companion)
+        val start = overload("startRule", Int::class.java)
+        val startAndEnd = overload("startRule", Int::class.java, Int::class.java)
+        val mismatched = listOf(
+            overload("mismatched", String::class.java),
+            overload("mismatched", Int::class.java),
+            overload("mismatched", Long::class.java)
+        )
+        for (order in listOf<(List<StaticFunction>) -> List<StaticFunction>>({ it }, { it.reversed() })) {
+            assertThat(ParameterFilter.choose("startRule", listOf(order(listOf(start, startAndEnd))), layoutOf("start")).method)
+                .isEqualTo(start.method)
+            assertFailure { ParameterFilter.choose("startRule", listOf(order(listOf(start, startAndEnd))), layoutOf("start", "end")) }
+                .hasMessage(
+                    "Filter [startRule] is overloaded, and 2 overloads can filter this test: " +
+                        "startRule(int), startRule(int, int). Give them different names."
+                )
+            assertFailure { ParameterFilter.choose("mismatched", listOf(order(mismatched)), layoutOf("start")) }
+                .hasMessage(
+                    "Filter [mismatched] is overloaded, and no overload can filter this test: " +
+                        "mismatched(String) declares [label], which is not a generated parameter of the test; " +
+                        "mismatched(int) must return Boolean, but returns int; " +
+                        "mismatched(long) declares [start] as long, but the generated parameter is Integer"
+                )
+        }
+    }
+
+    private fun layoutOf(vararg intParameters: String) = GeneratedParameterLayout(
+        arrayOf(*intParameters),
+        Array(intParameters.size) { Int::class },
+        BooleanArray(intParameters.size),
+        IntArray(intParameters.size) { it }
+    )
+
+    /** A public overload ranks before an `internal` one, then a `@JvmStatic` one first; neither depended on reflection. */
+    @Test
+    fun testAnOverloadThatAlwaysTookPrecedenceStillDoes() {
+        assertThat(invocationNames(OverloadPrecedenceFixture::class.java, "jvmStaticFirst")).isEqualTo(listOf("2, 1", "2, 2"))
+        assertThat(invocationNames(OverloadPrecedenceFixture::class.java, "publicFirst")).isEqualTo(listOf("2, 1", "2, 2"))
+        assertThat(invocationNames(OverloadPrecedenceFixture::class.java, "publicBeforeStatic")).isEqualTo(ORDERED)
+    }
+
+    /** The overload ranked first used to be chosen even when it could only fail the test. */
+    @Test
+    fun testAnOverloadThatCanFilterIsChosenOverOneRankedBeforeIt() {
+        assertThat(invocationNames(OverloadPrecedenceFixture::class.java, "jvmStaticCannot")).isEqualTo(listOf("2", "3"))
+        assertThat(invocationNames(OverloadPrecedenceFixture::class.java, "publicCannot")).isEqualTo(listOf("2", "3"))
+        assertThat(invocationNames(OverloadPrecedenceFixture::class.java, "valueClassCannot")).isEqualTo(listOf("1", "2"))
+    }
+
+    /** `@JvmOverloads` compiles each shorter form to an overload of its own. */
+    @Test
+    fun testJvmOverloadsAreOverloadsLikeAnyOther() {
+        assertThat(invocationNames(JvmOverloadsFixture::class.java, "startOnly")).isEqualTo(listOf("1", "2"))
+        assertThat(executionFailure(JvmOverloadsFixture::class.java, "startAndEnd"))
+            .isInstanceOf(InvalidFilterException::class)
+            .hasMessage(
+                "Filter [upTo] is overloaded, and 2 overloads can filter this test: upTo(int), upTo(int, int). " +
+                    "Give them different names."
+            )
+        assertThat(executionFailure(JvmOverloadsFixture::class.java, "everyParameter"))
+            .hasMessage(
+                "Filter [upTo] is overloaded, and 3 overloads can filter this test: " +
+                    "upTo(int), upTo(int, int), upTo(int, int, int). Give them different names."
+            )
+    }
+
+    /** Overloaded filters, run against [ShortOverloadsFirstFixture] and [LongOverloadsFirstFixture]. */
+    abstract class OverloadedFilterTests {
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["startRule"])
+        fun startOnly(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["pairRule"])
+        fun pair(
+            @IntRangeSource(min = 1, max = 3) start: Int,
+            @IntRangeSource(min = 1, max = 3) end: Int
+        ) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun a(
+            @IntRangeSource(min = 1, max = 3) start: Int,
+            @IntRangeSource(min = 1, max = 3) end: Int
+        ) {
+        }
+
+        @GeneratedParametersTest(filters = ["mismatched"])
+        fun noneFits(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+    }
+
+    /** Reflection lists overloads in no specified order, so each set is declared in both. */
+    class ShortOverloadsFirstFixture : OverloadedFilterTests() {
+        companion object {
+            fun startRule(start: Int): Boolean = start >= 2
+
+            fun startRule(start: Int, end: Int): Boolean = start <= end
+
+            fun pairRule(label: String): Boolean = label.isEmpty()
+
+            fun pairRule(start: Int, end: Int): Boolean = start <= end
+
+            fun a_filter(start: Int): Boolean = start >= 2
+
+            fun a_filter(start: Int, end: Int): Boolean = start <= end
+
+            fun mismatched(label: String): Boolean = label.isEmpty()
+
+            fun mismatched(start: Int): Int = start
+
+            fun mismatched(start: Long): Boolean = start > 0
+        }
+    }
+
+    class LongOverloadsFirstFixture : OverloadedFilterTests() {
+        companion object {
+            fun startRule(start: Int, end: Int): Boolean = start <= end
+
+            fun startRule(start: Int): Boolean = start >= 2
+
+            fun pairRule(start: Int, end: Int): Boolean = start <= end
+
+            fun pairRule(label: String): Boolean = label.isEmpty()
+
+            fun a_filter(start: Int, end: Int): Boolean = start <= end
+
+            fun a_filter(start: Int): Boolean = start >= 2
+
+            fun mismatched(start: Long): Boolean = start > 0
+
+            fun mismatched(start: Int): Int = start
+
+            fun mismatched(label: String): Boolean = label.isEmpty()
+        }
+    }
+
+    class OverloadPrecedenceFixture {
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["jvmStaticRule"])
+        fun jvmStaticFirst(
+            @IntRangeSource(min = 1, max = 2) start: Int,
+            @IntRangeSource(min = 1, max = 2) end: Int
+        ) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["publicRule"])
+        fun publicFirst(
+            @IntRangeSource(min = 1, max = 2) start: Int,
+            @IntRangeSource(min = 1, max = 2) end: Int
+        ) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["jvmStaticFallback"])
+        fun jvmStaticCannot(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["publicFallback"])
+        fun publicCannot(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["internalStaticRule"])
+        fun publicBeforeStatic(
+            @IntRangeSource(min = 1, max = 3) start: Int,
+            @IntRangeSource(min = 1, max = 3) end: Int
+        ) {
+        }
+
+        /** The two overloads compile to `valueClassFallback-<hash>(long)` and `valueClassFallback$<module>(long)`. */
+        @GeneratedParametersTest(name = "{arguments}", filters = ["valueClassFallback"])
+        fun valueClassCannot(@LongSource([1, 2, 3]) cents: Long) {
+        }
+
+        companion object {
+            @JvmStatic
+            fun jvmStaticRule(start: Int): Boolean = start >= 2
+
+            fun jvmStaticRule(start: Int, end: Int): Boolean = start <= end
+
+            fun publicRule(start: Int): Boolean = start >= 2
+
+            internal fun publicRule(start: Int, end: Int): Boolean = start <= end
+
+            @JvmStatic
+            fun jvmStaticFallback(label: String): Boolean = label.isEmpty()
+
+            fun jvmStaticFallback(start: Int): Boolean = start >= 2
+
+            fun publicFallback(label: String): Boolean = label.isEmpty()
+
+            internal fun publicFallback(start: Int): Boolean = start >= 2
+
+            @JvmStatic
+            internal fun internalStaticRule(start: Int): Boolean = start >= 2
+
+            fun internalStaticRule(start: Int, end: Int): Boolean = start <= end
+
+            fun valueClassFallback(amount: Money): Boolean = amount.cents > 0
+
+            internal fun valueClassFallback(cents: Long): Boolean = cents <= 2
+        }
+    }
+
+    class JvmOverloadsFixture {
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["upTo"])
+        fun startOnly(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @GeneratedParametersTest(filters = ["upTo"])
+        fun startAndEnd(
+            @IntRangeSource(min = 1, max = 3) start: Int,
+            @IntRangeSource(min = 1, max = 3) end: Int
+        ) {
+        }
+
+        @GeneratedParametersTest(filters = ["upTo"])
+        fun everyParameter(
+            @IntRangeSource(min = 1, max = 3) start: Int,
+            @IntRangeSource(min = 1, max = 3) end: Int,
+            @IntSource([1]) step: Int
+        ) {
+        }
+
+        companion object {
+            @JvmStatic
+            @JvmOverloads
+            fun upTo(start: Int, end: Int = 2, step: Int = 1): Boolean = start <= end && step > 0
+        }
     }
 
     class SameNameOuterFixture {

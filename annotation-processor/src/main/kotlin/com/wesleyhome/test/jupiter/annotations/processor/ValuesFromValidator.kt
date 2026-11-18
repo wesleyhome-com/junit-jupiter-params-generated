@@ -26,7 +26,7 @@ internal class ValuesFromValidator(private val resolver: Resolver) {
             is Lookup.Found -> lookup.function
             is Lookup.Problem -> return listOf(lookup.message)
         }
-        val arguments = function.parameters.size + if (function.extensionReceiver != null) 1 else 0
+        val arguments = argumentsOf(function)
         if (arguments != 0) {
             return listOf(reference.takesArguments(arguments))
         }
@@ -49,7 +49,7 @@ internal class ValuesFromValidator(private val resolver: Resolver) {
                 ?: return topLevel(className, reference)
         }
         hierarchyOf(owner).forEach { type ->
-            callableFunctions(type).firstOrNull { it.simpleName.asString() == reference.functionName }
+            fewestArguments(callableFunctions(type).filter { it.simpleName.asString() == reference.functionName })
                 ?.let { return Lookup.Found(it) }
         }
         val instanceFunction = hierarchyOf(owner)
@@ -67,11 +67,24 @@ internal class ValuesFromValidator(private val resolver: Resolver) {
     private fun topLevel(className: String, reference: ValuesFromReference): Lookup {
         val packageName = className.substringBeforeLast('.', "")
         val qualified = if (packageName.isEmpty()) reference.functionName else "$packageName.${reference.functionName}"
-        return resolver.getFunctionDeclarationsByName(resolver.getKSNameFromString(qualified), includeTopLevel = true)
-            .firstOrNull { it.parentDeclaration == null }
+        val functions = resolver
+            .getFunctionDeclarationsByName(resolver.getKSNameFromString(qualified), includeTopLevel = true)
+            .filter { it.parentDeclaration == null }
+        return fewestArguments(functions)
             ?.let { Lookup.Found(it) }
             ?: Lookup.Problem(reference.missingClass())
     }
+
+    /**
+     * The extension calls the overload that takes no arguments, so that is the one to check. Without
+     * one, the error names the fewest arguments any overload takes, as the extension's does.
+     */
+    private fun fewestArguments(overloads: Sequence<KSFunctionDeclaration>): KSFunctionDeclaration? =
+        overloads.minByOrNull { argumentsOf(it) }
+
+    /** An extension function's receiver is one more argument in the compiled method. */
+    private fun argumentsOf(function: KSFunctionDeclaration): Int =
+        function.parameters.size + if (function.extensionReceiver != null) 1 else 0
 
     private fun hierarchyOf(type: KSClassDeclaration): Sequence<KSClassDeclaration> =
         generateSequence(type) { current ->

@@ -44,6 +44,16 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   `prices_filter_small$my_module`, and now show `prices_filter_small`. Update anything that matches
   on the old name. Naming an `internal` function by its compiled name in `filters = [...]` or
   `@ValuesFrom` still works, and a filter reached by both names is listed once.
+- **A filter with several overloads that could each filter the test now fails it** (#122). With
+  `startRule(start: Int)` and `startRule(start: Int, end: Int)` in one companion object, or a single
+  `@JvmOverloads` filter, a test generating both `start` and `end` used whichever overload reflection
+  listed first. The JVM doesn't specify that order, and it changes between builds and even between
+  runs of the same build, so the same test could run a different set of combinations each time it
+  ran. The test now fails with
+  `Filter [startRule] is overloaded, and 2 overloads can filter this test: startRule(int),
+  startRule(int, int)`. Give the overloads different names, or drop `@JvmOverloads`. Where the
+  choice never depended on that order, the same overload is still used: a public one before an
+  `internal` one, then a static or `@JvmStatic` one before one declared only in a companion object.
 - **A filter that names a different parameter than its position gave it now gets the one it
   names** (#120). For a Java test compiled without `-parameters`, a filter with no `-parameters`
   names either was bound by position: each of its parameters took the test parameter in the same
@@ -73,6 +83,18 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   `@ValuesFrom` used to fail with `No filter named […]` or `no function named […]`. Conventional
   filters are now looked for on the class running the test rather than the one declaring it, so
   they also apply to inherited tests and to an interface's default tests.
+- **Overloaded filters and `@ValuesFrom` functions are chosen the same way every time** (#122).
+  Which overload was used depended on the order reflection listed methods in, so a test could pass
+  in one run and fail in the next with `Filter [...] declares [label], which is not a generated
+  parameter of the test` or `[pts] must take no arguments, but takes 1`. A filter now uses the
+  overload whose parameters all match generated parameters, even beside a `@JvmStatic` or public
+  overload that doesn't match, which used to be chosen every time and fail the test. `@ValuesFrom`
+  uses the overload that takes no arguments, and the annotation processor checks that overload too,
+  so declaring `pts(n: Int)` before `pts()` no longer fails the build. An override that narrows the
+  return type, such as `override fun pts(): List<Int>` for an interface's `fun pts(): T`, is used
+  rather than the bridge the compiler adds for it, which sometimes failed with `[pts] must return a
+  List, Sequence or array, but returns Any`. If no overload of a filter can filter the test, the
+  failure lists what's wrong with each one.
 - **Filters work without `javaParameters` or `-parameters`** (#120). Kotlin filters failed with
   `Filter [...] declares [arg0], which is not a generated parameter of the test` unless compiled
   with `javaParameters`, which isn't Kotlin's default. They now bind by the names in Kotlin's
