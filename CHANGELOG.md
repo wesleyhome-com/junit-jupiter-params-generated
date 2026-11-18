@@ -180,6 +180,7 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   before publishing. Before building, and again before publishing, they check that `main` hasn't
   moved, that the release tag doesn't exist yet, and that the deploy key can still reach the
   repository for pushing. The release plugin's tasks are listed by `./gradlew tasks`.
+- JaCoCo 0.8.16 measures the coverage gate.
 
 ## [4.1.0] - 2026-11-14
 
