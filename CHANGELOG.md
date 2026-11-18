@@ -51,8 +51,8 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   could run a different set of combinations after an unrelated change. The test now fails with
   `Filter [startRule] is overloaded, and 2 overloads can filter this test: startRule(int),
   startRule(int, int)`. Give the overloads different names, or drop `@JvmOverloads`. Where the
-  choice never depended on that order, the same overload is still used: a static or `@JvmStatic`
-  one before one declared only in a companion object, and a public one before an `internal` one.
+  choice never depended on that order, the same overload is still used: a public one before an
+  `internal` one, then a static or `@JvmStatic` one before one declared only in a companion object.
 
 ### Fixed
 

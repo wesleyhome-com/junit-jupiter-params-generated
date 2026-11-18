@@ -298,8 +298,8 @@ fun prices(...)
 - A filter must return `Boolean` and must not return null.
 - A filter's name can be **overloaded**. The overload used is the one that can filter the test:
   every parameter names a generated parameter, with a type that can hold it, and it returns
-  `Boolean`. Where several in the nearest class can, a static or `@JvmStatic` one comes before one
-  declared only in a companion object, and a public one before an `internal` one. If that still
+  `Boolean`. Where several in the nearest class can, a public one comes before an `internal` one,
+  then a static or `@JvmStatic` one before one declared only in a companion object. If that still
   leaves more than one, the test fails and lists them. Which one applied used to depend on the order
   reflection listed them in, and that can change between builds. `@JvmOverloads` makes overloads
   too: `@JvmOverloads fun upTo(start: Int, end: Int = 2)` filters a test that generates only

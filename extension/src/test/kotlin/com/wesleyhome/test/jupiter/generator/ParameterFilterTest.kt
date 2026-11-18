@@ -582,6 +582,11 @@ class ParameterFilterTest {
                 "Filter [upTo] is overloaded, and 2 overloads can filter this test: upTo(int), upTo(int, int). " +
                     "Give them different names."
             )
+        assertThat(executionFailure(JvmOverloadsFixture::class.java, "everyParameter"))
+            .hasMessage(
+                "Filter [upTo] is overloaded, and 3 overloads can filter this test: " +
+                    "upTo(int), upTo(int, int), upTo(int, int, int). Give them different names."
+            )
     }
 
     /** Overloaded filters, run against [ShortOverloadsFirstFixture] and [LongOverloadsFirstFixture]. */
@@ -713,10 +718,18 @@ class ParameterFilterTest {
         ) {
         }
 
+        @GeneratedParametersTest(filters = ["upTo"])
+        fun everyParameter(
+            @IntRangeSource(min = 1, max = 3) start: Int,
+            @IntRangeSource(min = 1, max = 3) end: Int,
+            @IntSource([1]) step: Int
+        ) {
+        }
+
         companion object {
             @JvmStatic
             @JvmOverloads
-            fun upTo(start: Int, end: Int = 2): Boolean = start <= end
+            fun upTo(start: Int, end: Int = 2, step: Int = 1): Boolean = start <= end && step > 0
         }
     }
 
