@@ -27,3 +27,4 @@ build/
 /consumer-tests/*/.kotlin/
 /.ai/
 /.claude/
+/requirements/
