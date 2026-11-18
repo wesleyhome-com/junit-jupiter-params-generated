@@ -45,9 +45,9 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   a filter of `<test>`.
   That failed the test with errors such as `Filter [price_filter_applies] must be static…` or
   `Filter [prices_filter_small$lambda$0] declares [$start]…`.
-- **Filters and `@ValuesFrom` functions are found everywhere Kotlin and Java can put them** (#121):
-  in a named companion object, as `internal` functions, in an interface the test class implements,
-  and for a `@Nested` class in the classes enclosing it. Naming one in `filters = [...]` or
+- **Filters and `@ValuesFrom` functions are found in named companions, `internal` functions,
+  interfaces and enclosing classes** (#121): in a named companion object, as `internal` functions,
+  in an interface the test class implements, and for a `@Nested` class in the classes enclosing it. Naming one in `filters = [...]` or
   `@ValuesFrom` used to fail with `No filter named […]` or `no function named […]`. Conventional
   filters are now looked for on the class running the test rather than the one declaring it, so
   they also apply to inherited tests and to an interface's default tests.
