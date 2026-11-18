@@ -74,12 +74,13 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   fails with `Filter [rule] is overloaded, and 2 overloads can filter this test`; give them
   different names. And an overload that bound by position, but whose names now don't all match,
   fails the test as it would alone, rather than giving way to another overload.
-- **A Kotlin filter parameter that isn't nullable can't take a generated null** (#123). This
-  failed already, with a `NullPointerException` partway through the run, unless the filter was
-  compiled with `-Xno-param-assertions`, which drops that check, so the filter took the null in a
-  parameter declared not to hold one. Such a filter now fails before anything runs. Declare its
-  parameter nullable (`label: String?`). A filter after one that takes the same parameter is still
-  accepted, because that one can turn the null away.
+- **A Kotlin filter parameter that isn't nullable can't take a generated null** (#123). Kotlin
+  checks the parameters of every function but a `private` one for null, so such a filter failed
+  already, with a `NullPointerException` partway through the run. Compiled with
+  `-Xno-param-assertions`, it has no such check and took the null in a parameter declared not to
+  hold one. It now fails before anything runs. Declare its parameter nullable (`label: String?`).
+  This doesn't affect a `private` filter, or a filter whose parameter another of the test's filters
+  also takes: those still take the null.
 
 ### Fixed
 
@@ -123,15 +124,17 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   fail with a bare `InvocationTargetException: null`. It now fails with an `InvalidFilterException`
   such as `Filter [ordered_filter] on [start=2, end=1] threw IllegalStateException: boom`, with the
   filter's exception as its cause, as a throwing `@ValuesFrom` function already did. An
-  `OutOfMemoryError` is still thrown as it is, so JUnit still stops the run.
+  `OutOfMemoryError` is now thrown as it is, so JUnit stops the run, as for any `OutOfMemoryError`.
 - **A Kotlin filter parameter that isn't nullable is rejected for a parameter that generates
   null** (#123), from `@WithNull` or a nullable type, with the message a primitive one gets:
   `Filter [label_filter] declares [label] as String, which cannot hold the null this parameter
-  generates`. The test used to run until the null reached the filter, then fail with a
-  `NullPointerException` from inside it. A value class is judged by its Kotlin type, so `name: Name`
-  is rejected and `name: Name?` accepted. One over a nullable type, such as
-  `Nickname(val value: String?)`, still takes the null as `Nickname(null)`. Java filters are
-  unchanged.
+  generates`. It's rejected before anything runs where Kotlin's own null check would fail the test
+  once the null reached the filter, with a `NullPointerException` from inside it: in a filter that
+  isn't `private`, when no other filter of the test takes the same parameter. A value class is
+  judged by its Kotlin type, so `name: Name` is rejected and `name: Name?` accepted. One over a
+  nullable type, such as `Nickname(val value: String?)`, still takes the null as `Nickname(null)`.
+  A `private` filter and a Java filter take the null as before. Any filter that then throws on the
+  null is reported as a throwing filter.
 
 ### Build and docs
 

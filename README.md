@@ -300,11 +300,15 @@ fun prices(...)
   generated `Int` - but a filter declaring `Long` against a generated `Int` is rejected rather than
   silently widened by reflection.
 - A filter parameter must hold the null its parameter generates, from `@WithNull` or a nullable
-  type. A primitive is rejected before anything runs, and so is a Kotlin type that isn't nullable,
-  such as `String` or a value class like `Name`, unless an earlier filter takes the same parameter
-  and can turn the null away. Conventional filters run before the ones in `filters = [...]`, which
-  run in the order listed. Java filters' object types take the null as before, and so does a value
-  class over a nullable type: `Nickname(val value: String?)` takes it as `Nickname(null)`.
+  type. A primitive is rejected before anything runs. So is a Kotlin type that isn't nullable, such
+  as `String` or a value class like `Name`, where Kotlin's own null check would fail the test once
+  the null reached it: in a filter that isn't `private`, when no other filter of the test takes the
+  same parameter. Another filter may turn the null away first. Conventional filters run before the
+  ones in `filters = [...]`, which run in the order listed, but conventional filters run among
+  themselves in no fixed order. A `private` Kotlin filter has no null check, so it takes the null,
+  as a Java filter's object types do. So does a value class over a nullable type:
+  `Nickname(val value: String?)` takes it as `Nickname(null)`. A filter that throws on the null is
+  reported as a filter that throws, below.
 - A filter must return `Boolean` and must not return null.
 - A filter that throws fails the test. The message names the filter and the combination it threw
   on, as `{argumentsWithNames}` shows it, and the exception is the cause:
