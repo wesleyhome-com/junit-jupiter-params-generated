@@ -73,10 +73,10 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   Which overload was used depended on the order reflection listed methods in, so a test could pass
   in one build and fail in another with `Filter [...] declares [label], which is not a generated
   parameter of the test` or `[pts] must take no arguments, but takes 1`. A filter now uses the
-  overload whose parameters all match generated parameters, also where the overload ranked first,
-  a `@JvmStatic` or public one, never could. `@ValuesFrom` uses the overload that takes no
-  arguments. If no overload of a filter can filter the test, the failure lists what's wrong with
-  each one.
+  overload whose parameters all match generated parameters, even beside a `@JvmStatic` or public
+  overload that doesn't match, which used to be chosen every time and fail the test. `@ValuesFrom`
+  uses the overload that takes no arguments. If no overload of a filter can filter the test, the
+  failure lists what's wrong with each one.
 
 ### Build and docs
 
