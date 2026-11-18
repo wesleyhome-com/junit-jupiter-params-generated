@@ -57,21 +57,21 @@ Maven:
 | Component | Supported | Verified against |
 | --- | --- | --- |
 | Java | 17+ | 17 (class file major version 61) |
-| Kotlin/JVM | 2.2+ | 2.4.21, with the full suite re-run on `kotlin-stdlib` and `kotlin-reflect` 2.2.21, and a Kotlin 2.2.21 project built against it |
+| Kotlin/JVM | 2.2+ | 2.4.21, with the full suite re-run on `kotlin-stdlib` and `kotlin-reflect` 2.2.21, and a Kotlin 2.2.21 project built against it with and without Spring Boot 4.0.9's dependency management |
 | KSP, for the annotation processor | KSP2, 2.2.21-2.0.4+ | 2.2.21-2.0.4 in that Kotlin 2.2.21 project, and 2.3.14 in the processor's tests |
 | JUnit Jupiter | 6.0.3+ | 6.1.3, with the full suite re-run against 6.0.3 |
 | Gradle | any version supporting the above | 9.7.1 |
 | Maven | `test` scope for the extension | - |
 
 The library is compiled by Kotlin 2.4 for Kotlin 2.2, Spring Boot 4.0's: its classes carry Kotlin
-2.2 metadata, which compilers from 2.2 on read, and it asks for `kotlin-stdlib` and `kotlin-reflect`
-2.2.21. Spring Boot 4.0 and 4.1 projects use it with the Kotlin versions Boot manages.
+2.2 metadata, which compilers from 2.2 on read. The extension asks for the `kotlin-stdlib` and
+`kotlin-reflect` of the Kotlin it's compiled with, 2.4.21, at run time only, so they never reach your
+compile classpath:
 
-On a newer Kotlin, Gradle still resolves your Kotlin plugin's `kotlin-stdlib`, but your own
-`kotlin-reflect` only if you declare it, as `testRuntimeOnly(kotlin("reflect"))`. kotlin-reflect 2.2
-can't read context parameters, so a test class that declares a function with them needs a newer
-one. Maven takes the nearest declaration, so declare both `kotlin-stdlib` and `kotlin-reflect` at
-your Kotlin version there.
+- In a Spring Boot 4.0 or 4.1 project, Boot's dependency management sets them to its own Kotlin
+  version, 2.2.21 or 2.3.21, and the library runs on it.
+- In a Kotlin 2.2 or 2.3 project without it, your code compiles against your own `kotlin-stdlib`
+  and your tests run on 2.4.21's. A newer standard library runs code compiled for an older one.
 
 The optional annotation processor runs under KSP, so compile-time validation applies to Kotlin
 sources only. Java sources get the full runtime behaviour, but misconfigured annotations surface

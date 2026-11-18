@@ -110,37 +110,47 @@ about 40%.
 ## Kotlin Versions
 
 The build compiles with the version catalog's Kotlin, but builds the published code for Kotlin 2.2,
-Spring Boot 4.0's, so that Kotlin 2.2 projects can use it. `buildlogic.kotlin-common-conventions`:
+Spring Boot 4.0's, so that Kotlin 2.2 projects can use it. `buildlogic.kotlin-common-conventions`
+sets `apiVersion` and `languageVersion` 2.2 on each module's main `compileKotlin`. A compiler reads
+class metadata at most one minor version newer than its own, so classes compiled for 2.4 fail to
+compile in a 2.2 project. Only the class metadata changes:
 
-- sets `apiVersion` and `languageVersion` 2.2 on each module's main `compileKotlin`. A compiler
-  reads class metadata at most one minor version newer than its own, so classes compiled for 2.4
-  fail to compile in a 2.2 project.
-- sets `coreLibrariesVersion = "2.2.21"`, so the POM and Gradle module metadata ask for
-  `kotlin-stdlib` and `kotlin-reflect` 2.2.21.
-- leaves test sources on the compiler's language and API versions, and runs the tests on the
-  compiler's `kotlin-stdlib` and `kotlin-reflect`, unless `-PkotlinRuntime` says otherwise.
-  `KotlinRuntimeTest` fails if they run on any other version.
+- The POM and Gradle module metadata still ask for the catalog Kotlin's `kotlin-stdlib` and
+  `kotlin-reflect`, as they did before, so upgrading changes no project's Kotlin libraries. Asking
+  for 2.2.21 instead would hand `kotlin-reflect` 2.2.21 to Kotlin 2.4 projects that don't declare
+  their own, and it can't read their context parameters. A 2.2 project only gets the newer ones at
+  run time and for KSP, never on its compile classpath, and Spring Boot's dependency management
+  replaces them with Boot's.
+- Test sources keep the compiler's language and API versions, and the tests run on the compiler's
+  `kotlin-stdlib` and `kotlin-reflect`, unless `-PkotlinRuntime` says otherwise. `KotlinRuntimeTest`
+  fails if they run on any other version.
 
 On the 2.2 runtime, kotlin-reflect can't read context parameters, a Kotlin 2.4 feature, and fails
 when looking up a class's functions reaches one. The fixtures that use them have classes of their
 own, so they don't take other tests with them, and their tests are skipped on a runtime older than
 2.4.
 
-`consumer-tests/kotlin-2.2` is a separate Gradle build: a Spring Boot 4.0 project's test setup,
-compiled by Kotlin 2.2.21 with Spring Boot 4.0.9's dependency management, so it runs on JUnit 6.0.3
-and `kotlin-stdlib` and `kotlin-reflect` 2.2.21. It runs a generated test with a filter,
-`@ValuesFrom` and a value class, and the annotation processor under KSP 2.2.21-2.0.4, the oldest KSP
-it supports. The processor's own tests run the KSP it's compiled against, from the version catalog.
-`.github/scripts/consumer-smoke-test.sh` publishes the three modules with `publishToMavenLocal`
-into `build/consumer-repository` (through `-Dmaven.repo.local`, so `~/.m2` is untouched), then
-builds that project against them with this repository's Gradle wrapper. The project resolves
-`com.wesleyhome.test` from that repository only, so it can't pick up a published release. The
-script also fails:
+`consumer-tests/kotlin-2.2` is a separate Gradle build: a project's test setup, compiled by Kotlin
+2.2.21. It runs a generated test with a filter, `@ValuesFrom` and a value class, and the annotation
+processor under KSP 2.2.21-2.0.4, the oldest KSP it supports. The processor's own tests run the KSP
+it's compiled against, from the version catalog. `.github/scripts/consumer-smoke-test.sh`
+publishes the three modules with `publishToMavenLocal` into `build/consumer-repository` (through
+`-Dmaven.repo.local`, so `~/.m2` is untouched), then builds and tests that project against them
+twice, with this repository's Gradle wrapper:
 
-- unless the published POMs and module metadata ask for `kotlin-stdlib` and `kotlin-reflect`
-  2.2.21 and nothing else. Spring Boot's dependency management would hide it in the project.
+- with Spring Boot 4.0.9's dependency management, so it runs on JUnit 6.0.3 and `kotlin-stdlib`
+  and `kotlin-reflect` 2.2.21;
+- without it, so its tests and KSP run on the `kotlin-stdlib` and `kotlin-reflect` the published
+  POM asks for, while the Kotlin 2.2 compiler sees only the project's own.
+
+The test checks it ran on the versions expected. The project resolves `com.wesleyhome.test` from
+that repository only, so it can't pick up a published release. The script also fails:
+
+- unless the published POMs and module metadata ask for the catalog Kotlin's `kotlin-stdlib` and
+  `kotlin-reflect` and nothing else;
 - unless the annotation processor's warning about the project's deliberately unused filter
-  appears, which shows that KSP ran it.
+  appears, which shows that KSP ran it;
+- if the compiler or KSP reports anything else, such as a class file from too new a Kotlin.
 
 Pull request and `main` builds run it after `build`, in the same job, so the required `build`
 check covers it. Publishing to a local repository rather than including this build in the
