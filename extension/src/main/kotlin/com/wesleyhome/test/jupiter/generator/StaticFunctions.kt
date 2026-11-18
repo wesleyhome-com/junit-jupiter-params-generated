@@ -8,26 +8,35 @@ import kotlin.reflect.full.companionObject
 internal data class StaticFunction(val method: Method, val receiver: Any?)
 
 /**
- * Finds [name] as a static method, a member of an object, or a member of a companion object, in
+ * Finds [name] as static methods, members of an object, or members of a companion object, in
  * [type] and its supertypes, then in the classes enclosing it if it's `@Nested`. A function shared
  * by several test classes can live in a base class, an interface, or the class enclosing a
  * `@Nested` one.
  */
-internal fun findStaticFunction(type: Class<*>, name: String): StaticFunction? =
-    findStaticFunction(enclosingClassesOf(type).toList(), name)
+internal fun findOverloads(type: Class<*>, name: String): List<List<StaticFunction>> =
+    findOverloads(enclosingClassesOf(type).toList(), name)
 
 /**
- * Looks in [classes] only, each with its supertypes, and takes the nearest that has [name].
+ * Looks in [classes] only, each with its supertypes, and returns the functions named [name] in the
+ * nearest that has any, in ranks. 4.1.0 used the first function of the first rank, but within a rank
+ * it took whichever reflection listed first, and the JVM doesn't specify that order.
  *
- * An `internal` function compiles to `name$module`, and only that compiled name used to find it.
- * Within one class, a function the old matching finds still wins over one found by its Kotlin name
- * alone, so an `internal` overload doesn't displace the function chosen before.
+ * An `internal` function compiles to `name$module`, and only that compiled name used to find it, so
+ * functions the old matching finds rank before those found by their Kotlin name alone. Then static
+ * methods rank before an object's members, and those before a companion object's. A `@JvmStatic`
+ * function is both a static method and a companion member, and is listed once.
  */
-internal fun findStaticFunction(classes: List<Class<*>>, name: String): StaticFunction? =
-    scopesOf(classes).firstNotNullOfOrNull { scope ->
-        val named = callableIn(scope).filter { it.method.isNamed(name) }.toList()
-        named.firstOrNull { it.method.wasNamed(name) } ?: named.firstOrNull()
-    }
+internal fun findOverloads(classes: List<Class<*>>, name: String): List<List<StaticFunction>> {
+    val groups = scopesOf(classes)
+        .map { scope -> callableIn(scope).map { group -> group.filter { it.method.isNamed(name) }.toList() } }
+        .firstOrNull { groups -> groups.any { it.isNotEmpty() } }
+        .orEmpty()
+    val signatures = mutableSetOf<Pair<String, List<Class<*>>>>()
+    return (groups.map { group -> group.filter { it.method.wasNamed(name) } } +
+        groups.map { group -> group.filterNot { it.method.wasNamed(name) } })
+        .map { rank -> rank.filter { signatures.add(it.method.name to it.method.parameterTypes.asList()) } }
+        .filter { it.isNotEmpty() }
+}
 
 /** Whether [name] exists only as an instance method, which nothing can call before the test instance exists. */
 internal fun hasInstanceFunction(type: Class<*>, name: String): Boolean =
@@ -60,10 +69,11 @@ private fun Method.isNamed(name: String): Boolean =
 private fun Method.wasNamed(name: String): Boolean = this.name == name || '$' !in this.name || '-' in this.name
 
 /** Static methods, then an object's members, then its companion object's: the order a name is looked for. */
-private fun callableIn(scope: Class<*>): Sequence<StaticFunction> =
-    scope.declaredMethods.asSequence().filter { Modifier.isStatic(it.modifiers) }.map { StaticFunction(it, null) } +
-        membersOf(objectInstanceOf(scope)) +
-        membersOf(companionOf(scope))
+private fun callableIn(scope: Class<*>): List<Sequence<StaticFunction>> = listOf(
+    scope.declaredMethods.asSequence().filter { Modifier.isStatic(it.modifiers) }.map { StaticFunction(it, null) },
+    membersOf(objectInstanceOf(scope)),
+    membersOf(companionOf(scope))
+)
 
 private fun membersOf(instance: Any?): Sequence<StaticFunction> =
     if (instance == null) {

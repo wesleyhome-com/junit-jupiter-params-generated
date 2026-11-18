@@ -48,8 +48,47 @@ internal class ParameterFilter(
             classes: List<Class<*>>,
             name: String,
             layout: GeneratedParameterLayout
+        ): ParameterFilter = choose(name, find(classes, name), layout).also { it.method.isAccessible = true }
+
+        /**
+         * 4.1.0 used the first overload of the first of [ranks], in whatever order reflection listed
+         * them, so with several in one rank the overload used changed between builds. One that can't
+         * filter the test could only fail it. The first rank with one that can decides, and if several
+         * there can, which of them applied was never settled, so the test fails.
+         */
+        internal fun choose(
+            name: String,
+            ranks: List<List<StaticFunction>>,
+            layout: GeneratedParameterLayout
         ): ParameterFilter {
-            val (method, receiver) = find(classes, name)
+            ranks.flatten().singleOrNull()?.let { return bind(name, it, layout) }
+            val problems = mutableListOf<String>()
+            for (rank in ranks) {
+                val fitting = rank.mapNotNull { overload ->
+                    try {
+                        bind(name, overload, layout)
+                    } catch (e: InvalidFilterException) {
+                        problems += "${signatureOf(name, overload.method)} ${e.message!!.removePrefix("Filter [$name] ")}"
+                        null
+                    }
+                }
+                if (fitting.size > 1) {
+                    throw InvalidFilterException(
+                        "Filter [$name] is overloaded, and ${fitting.size} overloads can filter this test: " +
+                            fitting.map { signatureOf(name, it.method) }.sorted().joinToString(", ") +
+                            ". Give them different names."
+                    )
+                }
+                fitting.singleOrNull()?.let { return it }
+            }
+            throw InvalidFilterException(
+                "Filter [$name] is overloaded, and no overload can filter this test: " +
+                    problems.sorted().joinToString("; ")
+            )
+        }
+
+        private fun bind(name: String, function: StaticFunction, layout: GeneratedParameterLayout): ParameterFilter {
+            val (method, receiver) = function
             // Boolean::class.java is the primitive type in Kotlin, so a boxed return needs its own check.
             if (method.returnType != Boolean::class.javaPrimitiveType &&
                 method.returnType != Boolean::class.javaObjectType
@@ -59,9 +98,11 @@ internal class ParameterFilter(
                 )
             }
             val slots = method.parameters.mapIndexed { index, parameter -> slotFor(name, method, index, parameter, layout) }
-            method.isAccessible = true
             return ParameterFilter(name, method, receiver, slots.toIntArray())
         }
+
+        private fun signatureOf(name: String, method: Method): String =
+            method.parameterTypes.joinToString(", ", "$name(", ")") { it.simpleName }
 
         /**
          * Types are checked here rather than left to [Method.invoke], which reports a mismatch as a
@@ -113,15 +154,17 @@ internal class ParameterFilter(
             else -> this
         }
 
-        private fun find(classes: List<Class<*>>, name: String): StaticFunction =
-            findStaticFunction(classes, name) ?: throw InvalidFilterException(
-                if (hasInstanceFunction(classes, name)) {
-                    "Filter [$name] must be static or declared in a companion object, because filtering " +
-                        "happens before the test instance exists"
-                } else {
-                    "No filter named [$name] on ${classes.first().name}"
-                }
-            )
+        private fun find(classes: List<Class<*>>, name: String): List<List<StaticFunction>> =
+            findOverloads(classes, name).ifEmpty {
+                throw InvalidFilterException(
+                    if (hasInstanceFunction(classes, name)) {
+                        "Filter [$name] must be static or declared in a companion object, because filtering " +
+                            "happens before the test instance exists"
+                    } else {
+                        "No filter named [$name] on ${classes.first().name}"
+                    }
+                )
+            }
 
         private fun Method.declaresKotlinType(index: Int, type: KClass<*>): Boolean =
             kotlinFunction?.let { it.valueParameters[index].type.classifier == type } == true

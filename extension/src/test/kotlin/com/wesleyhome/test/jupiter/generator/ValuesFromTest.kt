@@ -98,6 +98,23 @@ class ValuesFromTest {
     }
 
     @Test
+    fun testTheOverloadTakingNoArgumentsIsChosen() {
+        for (fixture in OVERLOAD_ORDERS) {
+            assertThat(invocationNames(fixture, "overloaded")).isEqualTo(listOf("1", "2"))
+            assertThat(invocationNames(fixture, "jvmStaticTakesArguments")).isEqualTo(listOf("3", "4"))
+        }
+    }
+
+    @Test
+    fun testOverloadsThatAllTakeArgumentsReportTheFewest() {
+        for (fixture in OVERLOAD_ORDERS) {
+            assertThat(executionFailure(fixture, "noneWithoutArguments"))
+                .isInstanceOf(InvalidValuesFromException::class)
+                .hasMessage("@ValuesFrom(\"counted\") on [value]: [counted] must take no arguments, but takes 1")
+        }
+    }
+
+    @Test
     fun testANestedClassUsesFunctionsFromItsEnclosingClasses() {
         assertThat(invocationNames(OuterFixture.Inner::class.java, "fromOuter")).isEqualTo(listOf("7", "8"))
         assertThat(invocationNames(JavaValuesFromFixture.Inner::class.java, "fromOuter"))
@@ -563,7 +580,62 @@ class ValuesFromTest {
     }
 
     class ImplementingFixture : DefaultTestContract
+
+    /** Overloaded functions, run against [NoArgumentsFirstFixture] and [ArgumentsFirstFixture]. */
+    abstract class OverloadedValuesTests {
+        @GeneratedParametersTest(name = "{arguments}")
+        fun overloaded(@ValuesFrom("ints") value: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun jvmStaticTakesArguments(@ValuesFrom("staticInts") value: Int) {
+        }
+
+        @GeneratedParametersTest
+        fun noneWithoutArguments(@ValuesFrom("counted") value: Int) {
+        }
+    }
+
+    /** Reflection lists overloads in no specified order, so each set is declared in both. */
+    class NoArgumentsFirstFixture : OverloadedValuesTests() {
+        companion object {
+            fun ints(): List<Int> = listOf(1, 2)
+
+            fun ints(count: Int): List<Int> = List(count) { it }
+
+            fun staticInts(): List<Int> = listOf(3, 4)
+
+            @JvmStatic
+            fun staticInts(count: Int): List<Int> = List(count) { it }
+
+            fun counted(count: Int): List<Int> = List(count) { it }
+
+            fun counted(count: Int, start: Int): List<Int> = List(count) { start + it }
+        }
+    }
+
+    class ArgumentsFirstFixture : OverloadedValuesTests() {
+        companion object {
+            fun ints(count: Int): List<Int> = List(count) { it }
+
+            fun ints(): List<Int> = listOf(1, 2)
+
+            @JvmStatic
+            fun staticInts(count: Int): List<Int> = List(count) { it }
+
+            fun staticInts(): List<Int> = listOf(3, 4)
+
+            fun counted(count: Int, start: Int): List<Int> = List(count) { start + it }
+
+            fun counted(count: Int): List<Int> = List(count) { it }
+        }
+    }
 }
+
+private val OVERLOAD_ORDERS = listOf(
+    ValuesFromTest.NoArgumentsFirstFixture::class.java,
+    ValuesFromTest.ArgumentsFirstFixture::class.java
+)
 
 data class Point(val x: Int, val y: Int)
 
