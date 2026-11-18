@@ -116,6 +116,43 @@ class ValuesFromValidatorTest {
         )
     }
 
+    /** The extension calls the overload that takes no arguments, whichever is declared first. */
+    @Test
+    fun testTheOverloadTakingNoArgumentsIsChecked() {
+        val source = """
+            package fixtures
+
+            import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
+            import com.wesleyhome.test.jupiter.annotations.ValuesFrom
+
+            fun topInts(count: Int): List<Int> = List(count) { it }
+            fun topInts(): List<Int> = listOf(1)
+
+            class Sample {
+                @GeneratedParametersTest
+                fun test(
+                    @ValuesFrom("ints") a: Int,
+                    @ValuesFrom("fixtures.SampleKt#topInts") b: Int,
+                    @ValuesFrom("counted") c: Int,
+                    @ValuesFrom("received") d: Int
+                ) {}
+
+                companion object {
+                    fun ints(count: Int): List<Int> = List(count) { it }
+                    fun ints(): List<Int> = listOf(1)
+                    fun counted(count: Int, start: Int): List<Int> = List(count) { start + it }
+                    fun counted(count: Int): List<Int> = List(count) { it }
+                    fun received(count: Int, start: Int): List<Int> = List(count) { start + it }
+                    fun Int.received(): List<Int> = listOf(this)
+                }
+            }
+        """.trimIndent()
+        assertThat(errors(source)).containsExactly(
+            "@ValuesFrom(\"counted\") on [c]: [counted] must take no arguments, but takes 1",
+            "@ValuesFrom(\"received\") on [d]: [received] must take no arguments, but takes 1"
+        )
+    }
+
     @Test
     fun testFunctionInheritedFromABaseClassCompiles() {
         val source = """

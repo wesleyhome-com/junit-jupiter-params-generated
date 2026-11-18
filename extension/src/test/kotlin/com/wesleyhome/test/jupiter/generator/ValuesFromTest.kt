@@ -2,6 +2,7 @@ package com.wesleyhome.test.jupiter.generator
 
 import assertk.assertFailure
 import assertk.assertThat
+import assertk.assertions.containsExactly
 import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
@@ -20,6 +21,7 @@ import com.wesleyhome.test.jupiter.testkit.invocationCounts
 import com.wesleyhome.test.jupiter.testkit.invocationNames
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import kotlin.reflect.full.companionObjectInstance
 
 class ValuesFromTest {
 
@@ -95,6 +97,43 @@ class ValuesFromTest {
     @Test
     fun testAPublicOverloadIsChosenOverAnInternalOne() {
         assertThat(invocationNames(InternalFixture::class.java, "overloaded")).isEqualTo(listOf("1", "2"))
+    }
+
+    @Test
+    fun testTheOverloadTakingNoArgumentsIsChosen() {
+        for (fixture in OVERLOAD_ORDERS) {
+            assertThat(invocationNames(fixture, "overloaded")).isEqualTo(listOf("1", "2"))
+            assertThat(invocationNames(fixture, "jvmStaticTakesArguments")).isEqualTo(listOf("3", "4"))
+        }
+    }
+
+    @Test
+    fun testOverloadsThatAllTakeArgumentsReportTheFewest() {
+        for (fixture in OVERLOAD_ORDERS) {
+            assertThat(executionFailure(fixture, "noneWithoutArguments"))
+                .isInstanceOf(InvalidValuesFromException::class)
+                .hasMessage("@ValuesFrom(\"counted\") on [value]: [counted] must take no arguments, but takes 1")
+        }
+    }
+
+    /** An override with a narrower return type gets a bridge of the same name returning the wider one. */
+    @Test
+    fun testTheOverrideIsUsedRatherThanItsBridge() {
+        for (fixture in BRIDGED) {
+            assertThat(invocationNames(fixture, "fromOverride")).isEqualTo(listOf("1", "2"))
+        }
+    }
+
+    /** Which comes first in reflection changes between runs, so this gives the bridge first. */
+    @Test
+    fun testABridgeNeverDisplacesTheMethodItBridgesTo() {
+        for (fixture in BRIDGED) {
+            val companion = fixture.kotlin.companionObjectInstance!!
+            val bridgeFirst = companion.javaClass.declaredMethods.filter { it.name == "pts" }.sortedBy { !it.isBridge }
+            assertThat(bridgeFirst.map { it.isBridge }).containsExactly(true, false)
+            val ranked = rankOverloads("pts", listOf(emptyList(), emptyList(), bridgeFirst.map { StaticFunction(it, companion) }))
+            assertThat(ranked.flatten().map { it.method }).containsExactly(bridgeFirst.last())
+        }
     }
 
     @Test
@@ -580,7 +619,95 @@ class ValuesFromTest {
     }
 
     class ImplementingFixture : DefaultTestContract
+
+    /** Overloaded functions, run against [NoArgumentsFirstFixture] and [ArgumentsFirstFixture]. */
+    abstract class OverloadedValuesTests {
+        @GeneratedParametersTest(name = "{arguments}")
+        fun overloaded(@ValuesFrom("ints") value: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun jvmStaticTakesArguments(@ValuesFrom("staticInts") value: Int) {
+        }
+
+        @GeneratedParametersTest
+        fun noneWithoutArguments(@ValuesFrom("counted") value: Int) {
+        }
+    }
+
+    /** Reflection lists overloads in no specified order, so each set is declared in both. */
+    class NoArgumentsFirstFixture : OverloadedValuesTests() {
+        companion object {
+            fun ints(): List<Int> = listOf(1, 2)
+
+            fun ints(count: Int): List<Int> = List(count) { it }
+
+            fun staticInts(): List<Int> = listOf(3, 4)
+
+            @JvmStatic
+            fun staticInts(count: Int): List<Int> = List(count) { it }
+
+            fun counted(count: Int): List<Int> = List(count) { it }
+
+            fun counted(count: Int, start: Int): List<Int> = List(count) { start + it }
+        }
+    }
+
+    class ArgumentsFirstFixture : OverloadedValuesTests() {
+        companion object {
+            fun ints(count: Int): List<Int> = List(count) { it }
+
+            fun ints(): List<Int> = listOf(1, 2)
+
+            @JvmStatic
+            fun staticInts(count: Int): List<Int> = List(count) { it }
+
+            fun staticInts(): List<Int> = listOf(3, 4)
+
+            fun counted(count: Int, start: Int): List<Int> = List(count) { start + it }
+
+            fun counted(count: Int): List<Int> = List(count) { it }
+        }
+    }
+
+    interface ValuesSource<T> {
+        fun pts(): T
+    }
+
+    abstract class AnyValues {
+        abstract fun pts(): Any
+    }
+
+    class GenericBridgeFixture {
+        @GeneratedParametersTest(name = "{arguments}")
+        fun fromOverride(@ValuesFrom("pts") value: Int) {
+        }
+
+        companion object : ValuesSource<List<Int>> {
+            override fun pts(): List<Int> = listOf(1, 2)
+        }
+    }
+
+    class CovariantBridgeFixture {
+        @GeneratedParametersTest(name = "{arguments}")
+        fun fromOverride(@ValuesFrom("pts") value: Int) {
+        }
+
+        companion object : AnyValues() {
+            override fun pts(): List<Int> = listOf(1, 2)
+        }
+    }
 }
+
+private val BRIDGED = listOf(
+    ValuesFromTest.GenericBridgeFixture::class.java,
+    ValuesFromTest.CovariantBridgeFixture::class.java
+)
+
+private val OVERLOAD_ORDERS = listOf(
+    ValuesFromTest.NoArgumentsFirstFixture::class.java,
+    ValuesFromTest.ArgumentsFirstFixture::class.java
+)
 
 data class Point(val x: Int, val y: Int)
 
