@@ -25,7 +25,7 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
         val requiredTestMethod = context.requiredTestMethod.kotlinFunction!!
         val generated = requiredTestMethod.findAnnotation<GeneratedParametersTest>()
         namePattern = generated?.name ?: DEFAULT_DISPLAY_NAME
-        filterNames = conventionalFilterNames(requiredTestMethod.name, context.requiredTestMethod.declaringClass) +
+        filterNames = conventionalFilterNames(requiredTestMethod.name, context.requiredTestClass) +
             (generated?.filters?.toSet() ?: emptySet())
         strategy = generated?.strategy ?: GenerationStrategy.CARTESIAN
         val parameters = requiredTestMethod.parameters.filter { it.kind == KParameter.Kind.VALUE }
@@ -48,12 +48,14 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
      * Filters named `<test>_filter` and `<test>_filter_<something>` apply to their test without
      * being listed, so the common case needs no attribute. They are unioned with any named
      * explicitly rather than overridden by them, so adding one can never silently do nothing.
+     *
+     * They are looked for from the class running the test, where explicit filters are resolved,
+     * rather than the one declaring it: an inherited test takes its subclass's filters, and an
+     * interface's default test reaches the extension as a bridge in the implementing class.
      */
     private fun conventionalFilterNames(testName: String, testClass: Class<*>): Set<String> {
         val prefix = "$testName$FILTER_SUFFIX"
-        return generateSequence(testClass) { it.superclass }
-            .takeWhile { it != Any::class.java }
-            .flatMap { type -> type.declaredMethods.asSequence() + companionMethods(type) }
+        return declaredFunctionsOf(testClass)
             .filter { it.name.startsWith(prefix) && it.couldBeAFilter() }
             .map { it.kotlinName() }
             .filter { it == prefix || it.startsWith("${prefix}_") }
@@ -72,14 +74,6 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
     private fun Method.couldBeAFilter(): Boolean =
         ('$' !in name || kotlinFunction != null) &&
             !AnnotationSupport.isAnnotated(this, Testable::class.java)
-
-    private fun companionMethods(type: Class<*>): Sequence<Method> =
-        runCatching { type.getDeclaredField("Companion").apply { isAccessible = true }.get(null) }
-            .getOrNull()
-            ?.javaClass
-            ?.declaredMethods
-            ?.asSequence()
-            ?: emptySequence()
 
     /**
      * A Kotlin nullable type still implies a null case, so tests written before [WithNull] keep

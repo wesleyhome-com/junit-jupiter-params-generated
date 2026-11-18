@@ -279,9 +279,15 @@ fun prices(...)
 
 ### Rules
 
-- A filter must be **static**, or declared in a **companion object**. Filtering happens before the
-  test instance exists, which is the same constraint `@MethodSource` has. Filters may live in a
-  superclass.
+- A filter must be **static**, or declared in a **companion object**, named or not. Filtering
+  happens before the test instance exists, which is the same constraint `@MethodSource` has.
+- Filters are looked for on the class running the test, then its superclasses, then the interfaces
+  it implements. Kotlin doesn't allow a companion object in a `@Nested` class, so the classes
+  enclosing it come after that, each with its own superclasses and interfaces. The first function
+  of that name wins. So a subclass's `<test>_filter` applies to a test it inherits, and an enclosing
+  class's `<test>_filter` applies to every test of that name in its `@Nested` classes.
+- An `internal` filter is found by the name it's declared with, although its compiled name has the
+  module name appended.
 - Parameter types must match the generated parameter. A supertype is fine - `Number` accepts a
   generated `Int` - but a filter declaring `Long` against a generated `Int` is rejected rather than
   silently widened by reflection.
@@ -291,7 +297,9 @@ fun prices(...)
   the full product and `generated.invocations` still reports it.
 
 The annotation processor warns about any `*_filter` method that matches no test in its class, so
-renaming a test cannot silently leave its rule unused.
+renaming a test cannot silently leave its rule unused. It only compares a class's filters with the
+tests that class declares, so for now it also warns about a filter written for an inherited test or
+for a test in a `@Nested` class.
 
 ## Invocation Display Names
 
@@ -498,8 +506,9 @@ class DateRangeTest {
 
 The function takes no arguments and returns a `List`, `Sequence` or array of the parameter's type.
 It is found by name the way a filter is: static, or in an object or companion object, on the test
-class or one of its superclasses. `@JvmStatic` is optional. To share a function between test classes,
-name its class as well:
+class, its superclasses or its interfaces, and for a `@Nested` class on the classes enclosing it.
+`@JvmStatic` is optional, and so is `public`. To share a function between test classes, name its
+class as well:
 
 ```kotlin
 object Fixtures {
@@ -540,6 +549,10 @@ when the test does, and each failure names the parameter and the function:
 ```text
 @ValuesFrom("ranges") on [a]: [ranges] returns String values, but [a] is DateRange
 ```
+
+The processor doesn't yet look in the test class's interfaces or enclosing classes, and reports a
+function there as missing. Name its class, as in `@ValuesFrom("com.example.OuterTest#ranges")`, and
+both find it.
 
 A compiled version of these, checked by the annotation processor, is `examples.ValuesFrom` in the
 `examples` module.

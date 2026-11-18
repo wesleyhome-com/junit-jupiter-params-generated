@@ -18,6 +18,23 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   combinations than its filter accepts. It now runs all of them, which can mean more invocations
   than before. If the test relied on that extra filtering, write the rule as a filter of its own.
   Filters named plain `<test>_filter` were never affected.
+- **Conventional filters that were silently ignored now apply** (#121), so those tests run fewer
+  combinations, and fail if the filter is wrong or can't be called. A `<test>_filter` is now found:
+  - in a named companion object (`companion object Rules`) without `@JvmStatic`;
+  - when it's `internal` and named plain `<test>_filter` (suffixed ones already applied);
+  - in a subclass, for a test inherited from a base class;
+  - in an interface, for the interface's default test;
+  - in an enclosing class, for a test in a `@Nested` class. That includes a filter written for the
+    enclosing class's own test of the same name, which now applies to the nested test as well.
+    Rename one of the tests, or list the filters each one needs in `filters = [...]`.
+- **A function the lookup used to skip can now take precedence** (#121). A filter or `@ValuesFrom`
+  function in a named companion object, or an `internal` one, was invisible, so a function of the
+  same name in a superclass was used instead. The nearer class's own function is used now. If the
+  superclass's was the one you meant, rename one of them.
+- **`internal` filters are reported by their declared name** (#121). The `generated.filters` report
+  entry and the "rejected by" failure message used to show the compiled name, such as
+  `prices_filter_small$my_module`, and now show `prices_filter_small`. Update anything that matches
+  on the old name.
 
 ### Fixed
 
@@ -28,6 +45,12 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   a filter of `<test>`.
   That failed the test with errors such as `Filter [price_filter_applies] must be static…` or
   `Filter [prices_filter_small$lambda$0] declares [$start]…`.
+- **Filters and `@ValuesFrom` functions are found everywhere Kotlin and Java can put them** (#121):
+  in a named companion object, as `internal` functions, in an interface the test class implements,
+  and for a `@Nested` class in the classes enclosing it. Naming one in `filters = [...]` or
+  `@ValuesFrom` used to fail with `No filter named […]` or `no function named […]`. Conventional
+  filters are now looked for on the class running the test rather than the one declaring it, so
+  they also apply to inherited tests and to an interface's default tests.
 
 ### Build and docs
 

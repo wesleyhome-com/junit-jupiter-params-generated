@@ -18,6 +18,7 @@ import com.wesleyhome.test.jupiter.provider.ValuesFromDataProvider
 import com.wesleyhome.test.jupiter.testkit.executionFailure
 import com.wesleyhome.test.jupiter.testkit.invocationCounts
 import com.wesleyhome.test.jupiter.testkit.invocationNames
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 class ValuesFromTest {
@@ -75,6 +76,32 @@ class ValuesFromTest {
     @Test
     fun testFunctionInheritedFromABaseClass() {
         assertThat(invocationNames(SubclassFixture::class.java, "inherited")).isEqualTo(listOf("Point(x=30, y=30)"))
+    }
+
+    @Test
+    fun testFunctionInANamedCompanion() {
+        assertThat(invocationNames(NamedCompanionFixture::class.java, "named")).isEqualTo(listOf("1", "2"))
+    }
+
+    /** An `internal` function's JVM name is mangled to `<name>$<module>`. */
+    @Test
+    fun testInternalFunction() {
+        assertThat(invocationNames(InternalFixture::class.java, "fromInternal")).isEqualTo(listOf("3", "4"))
+        assertThat(invocationNames(InternalFixture::class.java, "fromInternalJvmStatic")).isEqualTo(listOf("5", "6"))
+    }
+
+    @Test
+    fun testANestedClassUsesFunctionsFromItsEnclosingClasses() {
+        assertThat(invocationNames(OuterFixture.Inner::class.java, "fromOuter")).isEqualTo(listOf("7", "8"))
+        assertThat(invocationNames(JavaValuesFromFixture.Inner::class.java, "fromOuter"))
+            .isEqualTo(listOf("Point(x=40, y=40)"))
+    }
+
+    @Test
+    fun testFunctionOnAnInterface() {
+        assertThat(invocationNames(ImplementingFixture::class.java, "fromInterface")).isEqualTo(listOf("9"))
+        assertThat(invocationNames(JavaValuesFromFixture.Implementing::class.java, "fromInterface"))
+            .isEqualTo(listOf("Point(x=50, y=50)"))
     }
 
     @Test
@@ -217,6 +244,16 @@ class ValuesFromTest {
             "objectWithoutFunction",
             "@ValuesFrom(\"com.wesleyhome.test.jupiter.generator.SharedPoints#nope\") on [point]: no function named " +
                 "[nope] on SharedPoints or its companion object"
+        )
+    }
+
+    /** A top-level function's class is a file facade, which has no companion object to look in. */
+    @Test
+    fun testFullyQualifiedFileWithoutTheFunction() {
+        assertFails(
+            "fileWithoutFunction",
+            "@ValuesFrom(\"com.wesleyhome.test.jupiter.generator.ValuesFromTestKt#nope\") on [point]: no function " +
+                "named [nope] on ValuesFromTestKt or its companion object"
         )
     }
 
@@ -373,6 +410,10 @@ class ValuesFromTest {
         fun objectWithoutFunction(@ValuesFrom("com.wesleyhome.test.jupiter.generator.SharedPoints#nope") point: Point) {
         }
 
+        @GeneratedParametersTest
+        fun fileWithoutFunction(@ValuesFrom("com.wesleyhome.test.jupiter.generator.ValuesFromTestKt#nope") point: Point) {
+        }
+
         fun instancePoints(): List<Point> = listOf(Point(0, 0))
 
         companion object {
@@ -450,6 +491,58 @@ class ValuesFromTest {
         fun inherited(@ValuesFrom("inheritedPoints") point: Point) {
         }
     }
+
+    class NamedCompanionFixture {
+        @GeneratedParametersTest(name = "{arguments}")
+        fun named(@ValuesFrom("namedInts") value: Int) {
+        }
+
+        companion object Values {
+            fun namedInts(): List<Int> = listOf(1, 2)
+        }
+    }
+
+    class InternalFixture {
+        @GeneratedParametersTest(name = "{arguments}")
+        fun fromInternal(@ValuesFrom("internalInts") value: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun fromInternalJvmStatic(@ValuesFrom("internalJvmStaticInts") value: Int) {
+        }
+
+        companion object {
+            internal fun internalInts(): List<Int> = listOf(3, 4)
+
+            @JvmStatic
+            internal fun internalJvmStaticInts(): List<Int> = listOf(5, 6)
+        }
+    }
+
+    class OuterFixture {
+        @Nested
+        inner class Inner {
+            @GeneratedParametersTest(name = "{arguments}")
+            fun fromOuter(@ValuesFrom("outerInts") value: Int) {
+            }
+        }
+
+        companion object {
+            fun outerInts(): List<Int> = listOf(7, 8)
+        }
+    }
+
+    interface DefaultTestContract {
+        @GeneratedParametersTest(name = "{arguments}")
+        fun fromInterface(@ValuesFrom("interfaceInts") value: Int) {
+        }
+
+        companion object {
+            fun interfaceInts(): List<Int> = listOf(9)
+        }
+    }
+
+    class ImplementingFixture : DefaultTestContract
 }
 
 data class Point(val x: Int, val y: Int)

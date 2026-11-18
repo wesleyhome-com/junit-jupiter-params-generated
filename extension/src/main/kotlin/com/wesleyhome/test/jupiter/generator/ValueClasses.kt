@@ -63,7 +63,8 @@ internal fun Any?.adaptedTo(declared: Class<*>): Any? {
 
 /**
  * The name the function was declared with. A function taking a value class compiles to a mangled
- * name such as `test-abc12`, and a backticked name may contain a hyphen of its own, so the suffix
- * cannot simply be cut off.
+ * name such as `test-abc12`, and an `internal` one to `test$<module>`. A backticked name may contain
+ * a hyphen of its own, so the suffix cannot simply be cut off.
  */
-internal fun Method.kotlinName(): String = if ('-' in name) kotlinFunction?.name ?: name else name
+internal fun Method.kotlinName(): String =
+    if ('-' in name || '$' in name) kotlinFunction?.name ?: name else name

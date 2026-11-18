@@ -41,6 +41,7 @@ class GeneratedParametersTestExtensionTest {
             val method = testFunction?.javaMethod!!
             every { context.requiredTestMethod } returns method
             if (isAnnotated && !isParameterizedTest) {
+                every { context.requiredTestClass } returns this::class.java
                 every { context.getStore(any()) } returns store
             }
         }
