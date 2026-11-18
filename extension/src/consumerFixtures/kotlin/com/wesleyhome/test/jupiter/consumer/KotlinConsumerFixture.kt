@@ -132,6 +132,9 @@ open class KotlinConsumerFilters {
         /** Never chosen while the public overload binds; it would filter on `start`. */
         @JvmStatic
         internal fun rank(start: Number): Boolean = start.toInt() >= 2
+
+        @JvmStatic
+        fun labelNotB(a: String): Boolean = a != "b"
     }
 }
 

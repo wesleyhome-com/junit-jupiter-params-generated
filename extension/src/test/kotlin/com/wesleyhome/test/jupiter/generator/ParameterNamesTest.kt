@@ -242,6 +242,16 @@ class ParameterNamesTest {
             }).isEmpty()
         }
 
+        /** The warning says how the filter bound, which explains the parameter the rejection names. */
+        @Test
+        fun testAFilterThatBindsByPositionIsWarnedAboutBeforeItsNullIsRejected() {
+            assertThat(warningsWhile {
+                assertThat(executionFailure(JavaKotlinFiltersFixture::class.java, "positionalNull"))
+                    .isInstanceOf(InvalidFilterException::class)
+                    .hasMessage("Filter [labelNotB] declares [a] as String, which cannot hold the null this parameter generates")
+            }).containsExactly(otherNamesWarning("labelNotB", "positionalNull", "[a]"))
+        }
+
         /** Both overloads bound by position, which was ambiguous, and still is. */
         @Test
         fun testAnOverloadThatBoundByPositionStillCountsTowardsAnAmbiguity() {
