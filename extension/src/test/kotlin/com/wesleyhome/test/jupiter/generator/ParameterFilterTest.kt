@@ -600,6 +600,12 @@ class ParameterFilterTest {
         assertThat(invocationNames(NullFixture::class.java, "guarded")).isEqualTo(listOf("a"))
     }
 
+    /** A guard of one parameter may itself refuse the null of another, which a guard of its own turns away. */
+    @Test
+    fun testAGuardThatRefusesAnotherParametersNullStillGuardsItsOwn() {
+        assertThat(invocationNames(NullFixture::class.java, "chainedGuards")).isEqualTo(listOf("a, x"))
+    }
+
     /** Kotlin checks an `internal` or `protected` function's parameters too; only a private one goes unchecked. */
     @Test
     fun testAnInternalOrProtectedFilterCannotTakeAGeneratedNull() {
@@ -1906,6 +1912,13 @@ class ParameterFilterTest {
         fun privateGuarded(@StringSource(["a", "b"]) @WithNull label: String?) {
         }
 
+        @GeneratedParametersTest(name = "{arguments}", filters = ["otherGuard", "mixedGuard", "pubRule"])
+        fun chainedGuards(
+            @StringSource(["a", "b"]) @WithNull label: String?,
+            @StringSource(["x"]) @WithNull other: String?
+        ) {
+        }
+
         @GeneratedParametersTest(name = "{arguments}", filters = ["bothNonNull"])
         fun neitherGuarded(
             @StringSource(["a"]) @WithNull first: String?,
@@ -1965,6 +1978,15 @@ class ParameterFilterTest {
 
             @JvmStatic
             fun onlySecondNonNull(first: String?, second: String): Boolean = first != second
+
+            @JvmStatic
+            fun otherGuard(other: String?): Boolean = other != null
+
+            @JvmStatic
+            fun mixedGuard(label: String?, other: String): Boolean = label != null && other.isNotEmpty()
+
+            @JvmStatic
+            fun pubRule(label: String): Boolean = label != "b"
 
             /** Private, so Kotlin doesn't check `label`, and a null reaches the body, where the template renders it. */
             @JvmStatic
