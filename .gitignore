@@ -23,3 +23,5 @@ build/
 !/DEVELOPERS.md
 !/CHANGELOG.md
 !/CLAUDE.md
+/consumer-tests/*/.gradle/
+/consumer-tests/*/.kotlin/

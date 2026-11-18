@@ -25,6 +25,8 @@ jobs:
           distribution: 'corretto'
       - name: Run build with Gradle Wrapper
         run: ./gradlew build dokkaGenerate --no-daemon
+      - name: Test a Kotlin 2.2 consumer
+        run: bash .github/scripts/consumer-smoke-test.sh --no-daemon
       - name: Detect snapshot version
         id: version
         shell: bash
