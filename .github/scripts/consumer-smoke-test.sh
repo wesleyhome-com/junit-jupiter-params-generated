@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Publishes this build into a throwaway repository, then builds and tests consumer-tests/kotlin-2.2
-# against it, a Kotlin 2.2 project with the annotation processor run by KSP: once with Spring Boot
-# 4.0's dependency management, and once without. Any arguments, such as --no-daemon, are passed to
-# every Gradle run.
+# Publishes this build into a throwaway repository, then builds and tests Kotlin 2.2 projects against
+# it: consumer-tests/kotlin-2.2 in Gradle, with the annotation processor run by KSP, once with Spring
+# Boot 4.0's dependency management and once without, and consumer-tests/kotlin-2.2-maven in Maven
+# when Maven is installed. Any arguments, such as --no-daemon, are passed to every Gradle run.
 set -euo pipefail
 
 cd "$(dirname "$0")/../.."
@@ -38,6 +38,19 @@ if [[ "$(awk '{ print $2 }' <<< "$asked_for")" != "$kotlin" ]]; then
   exit 1
 fi
 
+# A Kotlin 2.2 compiler also reads 2.3 metadata, so the consumers below would pass with classes built
+# for 2.3, whose code could then call 2.3 APIs that fail on Spring Boot 4.0's 2.2 runtime.
+javap="${JAVA_HOME:+$JAVA_HOME/bin/}javap"
+for jar in "$published"/*/"$version"/*-"$version".jar; do
+  classes=($(unzip -Z1 "$jar" | grep '\.class$' | sed 's/\.class$//; s#/#.#g'))
+  metadata="$("$javap" -v -cp "$jar" "${classes[@]}" | grep -oE '^ *mv=\[[0-9,]+\]' | tr -d ' ' | sort | uniq -c)"
+  echo "$(basename "$jar"): ${#classes[@]} classes, Kotlin metadata versions: $metadata"
+  if [[ "$(awk '{ print $2 }' <<< "$metadata")" != "mv=[2,2,0]" ]]; then
+    echo "The published classes should carry Kotlin 2.2 metadata only." >&2
+    exit 1
+  fi
+done
+
 warning='renamedOrder_filter\] looks like a filter'
 consumer() {
   local name="$1"
@@ -63,3 +76,25 @@ consumer spring-boot-4.0 -PspringBoot=4.0.9 -PkotlinRuntime=2.2.21 -PjunitVersio
 # Without it, Gradle resolves the newer kotlin-stdlib and kotlin-reflect the library asks for, at run
 # time and for KSP. The Kotlin 2.2 compiler never sees them.
 consumer without-spring-boot "-PkotlinRuntime=$kotlin"
+
+# Maven does put them on the test compile classpath, so the Maven project declares its own
+# kotlin-reflect, as the README says to. Its downloads stay in a repository of their own between runs.
+if command -v mvn > /dev/null; then
+  echo "### Kotlin 2.2 consumer: maven"
+  maven_repository="$root/build/consumer-maven-repository"
+  rm -rf build/consumer-maven-repository/com/wesleyhome
+  mkdir -p build/consumer-maven-repository/com
+  cp -r build/consumer-repository/com/wesleyhome build/consumer-maven-repository/com/
+  log="build/consumer-smoke-test-maven.log"
+  mvn -B -ntp -f consumer-tests/kotlin-2.2-maven/pom.xml \
+    "-Dmaven.repo.local=$maven_repository" "-Dlibrary.version=$version" test 2>&1 | tee "$log"
+  if ! grep -q 'Tests run: 6, Failures: 0, Errors: 0, Skipped: 0' "$log"; then
+    echo "The Maven project should have run its 6 tests." >&2
+    exit 1
+  fi
+elif [[ -n "${CI:-}" ]]; then
+  echo "Maven isn't installed, so the Maven project can't run." >&2
+  exit 1
+else
+  echo "Maven isn't installed, so the Maven project is skipped."
+fi
