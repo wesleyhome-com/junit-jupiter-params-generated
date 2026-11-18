@@ -587,6 +587,31 @@ class ParameterFilterTest {
         )
     }
 
+    /**
+     * A filter that refuses the null can't turn it away for another: whichever of the two runs first
+     * is handed the null. A private filter takes it, and so can, as a nullable parameter can.
+     */
+    @Test
+    fun testOnlyAFilterThatCanHoldTheNullGuardsIt() {
+        assertThat(executionFailure(NullFixture::class.java, "twoRefusers")).hasMessage(
+            "Filter [startsWithA] declares [label] as String, which cannot hold the null this parameter generates"
+        )
+        assertThat(invocationNames(NullFixture::class.java, "privateGuarded")).isEqualTo(listOf("a"))
+        assertThat(invocationNames(NullFixture::class.java, "guarded")).isEqualTo(listOf("a"))
+    }
+
+    /** Kotlin checks an `internal` or `protected` function's parameters too; only a private one goes unchecked. */
+    @Test
+    fun testAnInternalOrProtectedFilterCannotTakeAGeneratedNull() {
+        for ((method, filter) in listOf("internalFilter" to "internalRule", "protectedFilter" to "protectedRule")) {
+            assertThat(executionFailure(VisibilityFixture::class.java, method))
+                .isInstanceOf(InvalidFilterException::class)
+                .hasMessage(
+                    "Filter [$filter] declares [label] as String, which cannot hold the null this parameter generates"
+                )
+        }
+    }
+
     /** The first parameter that can't take the null is the one named. */
     @Test
     fun testTheFirstParameterThatCannotHoldTheNullIsNamed() {
@@ -1873,6 +1898,14 @@ class ParameterFilterTest {
         ) {
         }
 
+        @GeneratedParametersTest(name = "{arguments}", filters = ["startsWithA", "notB"])
+        fun twoRefusers(@StringSource(["a", "b"]) @WithNull label: String?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["privateGuard", "startsWithA"])
+        fun privateGuarded(@StringSource(["a", "b"]) @WithNull label: String?) {
+        }
+
         @GeneratedParametersTest(name = "{arguments}", filters = ["bothNonNull"])
         fun neitherGuarded(
             @StringSource(["a"]) @WithNull first: String?,
@@ -1933,6 +1966,10 @@ class ParameterFilterTest {
             @JvmStatic
             fun onlySecondNonNull(first: String?, second: String): Boolean = first != second
 
+            /** Private, so Kotlin doesn't check `label`, and a null reaches the body, where the template renders it. */
+            @JvmStatic
+            private fun privateGuard(label: String): Boolean = "$label" != "null"
+
             @JvmStatic
             fun leakyGuard_filter(label: String?): Boolean = label != "b"
 
@@ -1941,6 +1978,28 @@ class ParameterFilterTest {
 
             @JvmStatic
             fun <T> genericNotB(label: T): Boolean = label != "b"
+        }
+    }
+
+    open class ProtectedRulesBase {
+        companion object {
+            protected fun protectedRule(label: String): Boolean = label != "b"
+        }
+    }
+
+    class VisibilityFixture : ProtectedRulesBase() {
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["internalRule"])
+        fun internalFilter(@StringSource(["a", "b"]) @WithNull label: String?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["protectedRule"])
+        fun protectedFilter(@StringSource(["a", "b"]) @WithNull label: String?) {
+        }
+
+        companion object {
+            @JvmStatic
+            internal fun internalRule(label: String): Boolean = label != "b"
         }
     }
 
