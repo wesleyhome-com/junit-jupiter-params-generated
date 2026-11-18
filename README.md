@@ -264,8 +264,8 @@ A filter declares only the parameters it is about, matched **by name**, so sever
 compose instead of one predicate that has to know about everything. A combination runs only if every
 filter accepts it. The names come from Kotlin's metadata, or for Java from `-parameters` or the
 debug information Gradle and Maven compile with by default, so no compiler flag is needed. See
-[Parameter Names](#parameter-names) for a build that records none. Use a suffix when a test has more
-than one:
+[Parameter Names](#parameter-names) for the Java filters that still bind by position, as they did
+before names were read. Use a suffix when a test has more than one:
 
 ```kotlin
 @JvmStatic fun prices_filter_ordered(start: Int, end: Int): Boolean = start <= end
@@ -353,14 +353,40 @@ be recorded in the compiled class files.
 - **Java display names** use `-parameters` names only. Without them, `{argumentsWithNames}` and the
   `generated.parameters` report entry show `arg0`, `arg1`.
 
-A Java build that records no names at all, without `-parameters` and with `-g:none`, binds a
-filter's parameters to the test's by position: its first parameter to the test's first, whatever
-either is called. That is only right for a filter that repeats the test's parameters in order, so
-each such filter logs a warning:
+#### When a filter binds by position
 
-```text
-Filter [ordered_filter] binds to the test's parameters by position, because the class files don't record their names. Compile with -parameters to bind by name.
-```
+A Java test compiled without `-parameters` has names only in its debug information, if at all, and
+4.1.0 bound filters to it by position: a filter's first parameter took the test's first, whatever
+either was called. That applies when the filter has no `-parameters` names either, which is the
+case for a Java filter compiled the same way and for a Kotlin filter compiled without
+`javaParameters`. Position still decides those, so a filter that repeats the test's parameters in
+order keeps working, whatever it calls them. That includes a filter shared by tests whose names
+differ.
+
+Names decide instead when one of the filter's names belongs to a generated parameter at another
+position: `endNotOne_filter(int end)` on `test(int start, int end)` filters on `end`, not `start`. The
+filter's names then all have to be the test's, as everywhere else.
+
+When position decides and names could have told it otherwise, the filter logs a warning, once for
+each test that uses it:
+
+- Neither side records names, as with `-g:none`:
+
+  ```text
+  Filter [ordered_filter] binds to the parameters of [ordered] by position, because the class files don't record their names. Compile with -parameters to bind by name.
+  ```
+
+- The filter's names aren't all the test's:
+
+  ```text
+  Filter [loBeforeHi] binds to the parameters of [ordered] by position, because the test has no parameter named [lo, hi]. Name the filter's parameters as the test does to bind by name.
+  ```
+
+A filter whose names aren't recorded anywhere, such as one from a jar compiled with `-g:none`,
+binds by its `arg0`, `arg1`. So with a test whose names are recorded (Kotlin, or Java with
+`-parameters`), it fails with `declares [arg0], which is not a generated parameter of the test`, as
+it did in 4.1.0. With a Java test compiled without `-parameters`, it binds by position and logs the
+first warning.
 
 To record the names everywhere, compile Java with `-parameters`:
 

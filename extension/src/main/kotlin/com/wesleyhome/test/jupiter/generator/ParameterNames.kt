@@ -11,12 +11,9 @@ import kotlin.reflect.jvm.kotlinFunction
  * The names [this] method's parameters were declared with, or null when its class file doesn't
  * record them. Kotlin records them in its own metadata. Java records them with `-parameters`, and
  * otherwise in the debug information that `-g` adds, which Gradle and Maven pass by default.
- *
- * A bridge for a generic override declares nothing. Kotlin gives it the overriding method's names
- * in the debug information, but only the overriding method should bind by them.
  */
 internal fun Method.declaredParameterNames(): List<String>? =
-    if (isBridge) null else kotlinParameterNames() ?: compiledParameterNames() ?: LocalVariableNames.of(this)
+    kotlinParameterNames() ?: compiledParameterNames() ?: LocalVariableNames.of(this)
 
 /**
  * Kotlin reflection describes a Java method too, with the names Java reflection gives it, so only a
@@ -95,7 +92,7 @@ internal object LocalVariableNames {
         return strings
     }
 
-    /** A local variable never takes a parameter's slot, so a parameter's slot holds only its name. */
+    /** A parameter's entry starts at the first instruction; a local's starts later, and may reuse a slot. */
     private fun readLocals(input: DataInputStream, strings: Array<String>): Map<Int, String> {
         val locals = mutableMapOf<Int, String>()
         forEachAttribute(input, strings, "Code") {
@@ -104,10 +101,12 @@ internal object LocalVariableNames {
             input.skipBytes(8 * input.readUnsignedShort())
             forEachAttribute(input, strings, "LocalVariableTable") {
                 repeat(input.readUnsignedShort()) {
-                    input.skipBytes(4)
+                    val start = input.readUnsignedShort()
+                    input.skipBytes(2)
                     val name = strings[input.readUnsignedShort()]
                     input.skipBytes(2)
-                    locals[input.readUnsignedShort()] = name
+                    val slot = input.readUnsignedShort()
+                    if (start == 0) locals[slot] = name
                 }
             }
         }

@@ -44,17 +44,19 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   `prices_filter_small$my_module`, and now show `prices_filter_small`. Update anything that matches
   on the old name. Naming an `internal` function by its compiled name in `filters = [...]` or
   `@ValuesFrom` still works, and a filter reached by both names is listed once.
-- **Filters for Java tests compiled without `-parameters` bind by name** (#120). Neither side's
-  names were visible before, so each filter parameter took the test parameter at the same
-  position, whatever either was called: `endNotOne_filter(int end)` on `test(int start, int end)`
-  filtered on `start`, and passed. Names now come from the debug information Gradle and Maven
-  compile with by default, so the filter gets the parameter it names and the test runs the
-  combinations it was written for. That can mean different invocations, and failures the old
-  binding hid. A filter whose parameter names aren't the test's, such as `(int a, int b)` for
-  `(int start, int end)`, now fails with `declares [a], which is not a generated parameter of the
-  test`: rename its parameters to the test's. A filter that repeats the test's parameters in order
-  runs as before, and so does any build with `-parameters`. A build that records no names at all
-  (`-g:none`) still binds by position, and now logs a warning for each such filter.
+- **A filter that names a different parameter than its position gave it now gets the one it
+  names** (#120). For a Java test compiled without `-parameters`, a filter with no `-parameters`
+  names either was bound by position: each of its parameters took the test parameter in the same
+  place, whatever either was called. That covers a Java filter compiled the same way, and a Kotlin
+  filter compiled without `javaParameters`. Position still decides, unless one of the filter's
+  names belongs to a generated parameter in another place. `endNotOne_filter(int end)` on
+  `test(int start, int end)` filtered on `start`, and passed; it now filters on `end`. The test runs
+  the combinations it was written for, which can mean different invocations, and failures the old
+  binding hid. Once one name decides, they all must be the test's, so a filter such as
+  `(int end, int other)` now fails with `declares [other], which is not a generated parameter of
+  the test`: rename the parameter. A filter whose names agree with their positions, or that names
+  none of the test's parameters, such as `(int a, int b)`, binds as before, with a warning. For
+  Kotlin tests and tests compiled with `-parameters`, only filters that used to fail are affected.
 
 ### Fixed
 
@@ -77,8 +79,10 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   metadata, `@JvmSynthetic` ones included. Java filters read their names from the debug
   information, so they also bind for a test whose first parameter is resolved by another
   extension, such as `TestInfo`. Messages about a filter's parameters, and `@ValuesFrom` messages
-  for Java tests, name parameters as declared rather than `arg0`. Display names and report entries
-  are unchanged: for Java they still need `-parameters` to show declared names.
+  for Java tests, name parameters as declared rather than `arg0`. A Java filter that still binds
+  by position logs a warning, once for each test that uses it, when the class files record no
+  names or the filter's names aren't the test's. Display names and report entries are unchanged:
+  for Java they still need `-parameters` to show declared names.
 
 ### Build and docs
 

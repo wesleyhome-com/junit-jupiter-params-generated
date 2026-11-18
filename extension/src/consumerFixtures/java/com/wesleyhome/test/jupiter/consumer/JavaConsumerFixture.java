@@ -46,6 +46,42 @@ public class JavaConsumerFixture extends JavaStrippedFilters implements JavaCons
     public void inOrder(@IntRangeSource(min = 1, max = 3) int start, @IntRangeSource(min = 1, max = 3) int end) {
     }
 
+    @GeneratedParametersTest(name = "{arguments}")
+    public void otherNames(@IntRangeSource(min = 1, max = 3) int start, @IntRangeSource(min = 1, max = 3) int end) {
+    }
+
+    static boolean otherNames_filter(int a, int b) {
+        return a <= b;
+    }
+
+    @GeneratedParametersTest(name = "{arguments}", filters = {"loBeforeHi"})
+    public void sharedAsStartEnd(@IntRangeSource(min = 1, max = 3) int start, @IntRangeSource(min = 1, max = 3) int end) {
+    }
+
+    @GeneratedParametersTest(name = "{arguments}", filters = {"loBeforeHi"})
+    public void sharedAsMinMax(@IntRangeSource(min = 1, max = 3) int min, @IntRangeSource(min = 1, max = 3) int max) {
+    }
+
+    static boolean loBeforeHi(int lo, int hi) {
+        return lo <= hi;
+    }
+
+    @GeneratedParametersTest(name = "{arguments}")
+    public void oneNameMatches(@IntRangeSource(min = 1, max = 3) int start, @IntRangeSource(min = 1, max = 3) int end) {
+    }
+
+    static boolean oneNameMatches_filter(int a, int end) {
+        return a <= end;
+    }
+
+    @GeneratedParametersTest(name = "{arguments}")
+    public void contradicted(@IntRangeSource(min = 1, max = 3) int start, @IntRangeSource(min = 1, max = 3) int end) {
+    }
+
+    static boolean contradicted_filter(int end, int other) {
+        return end != other;
+    }
+
     static boolean inOrder_filter(int start, int end) {
         return start <= end;
     }

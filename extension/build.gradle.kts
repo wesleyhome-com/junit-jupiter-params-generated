@@ -12,8 +12,8 @@ plugins {
 // The conventions compile everything here with javaParameters and -parameters, which a consumer's
 // build doesn't, so these fixtures are compiled as one is: consumerFixtures with Gradle's defaults,
 // and strippedFixtures with no debug information for Java either. The tests in src/test drive them.
-val consumerFixtures: SourceSet by sourceSets.creating
-val strippedFixtures: SourceSet by sourceSets.creating
+val consumerFixtures: SourceSet = sourceSets.create("consumerFixtures")
+val strippedFixtures: SourceSet = sourceSets.create("strippedFixtures")
 
 for (fixtures in listOf(consumerFixtures, strippedFixtures)) {
     tasks.named<KotlinJvmCompile>(fixtures.getCompileTaskName("kotlin")) {
@@ -28,9 +28,9 @@ tasks.named<JavaCompile>(strippedFixtures.compileJavaTaskName) {
 }
 
 dependencies {
-    consumerFixtures.implementationConfigurationName(project)
+    consumerFixtures.implementationConfigurationName(project(path))
     consumerFixtures.implementationConfigurationName(strippedFixtures.output)
-    strippedFixtures.implementationConfigurationName(project)
+    strippedFixtures.implementationConfigurationName(project(path))
     testImplementation(consumerFixtures.output)
     testImplementation(strippedFixtures.output)
 }
