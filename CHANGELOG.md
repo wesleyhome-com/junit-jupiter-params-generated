@@ -9,6 +9,26 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
 
 ## [Unreleased]
 
+### Upgrade notes
+
+- **A lambda or local function inside a suffixed `<test>_filter_<name>` filter is no longer
+  applied as a filter of its own.** The compiler names them after the filter
+  (`prices_filter_small$lambda$0`, `prices_filter_small$isSmall`). If their own parameters happened
+  to match generated parameters, they were silently applied as extra filters, so the test ran fewer
+  combinations than its filter accepts. It now runs all of them, which can mean more invocations
+  than before. If the test relied on that extra filtering, write the rule as a filter of its own.
+  Filters named plain `<test>_filter` were never affected.
+
+### Fixed
+
+- **Conventional filters no longer pick up methods that aren't filters** (#124). A test of its own
+  named `<test>_filter_<something>` (`@Test`, `@ParameterizedTest`, `@GeneratedParametersTest` or any
+  other JUnit test annotation), or a method the compiler generates for a `<test>_filter_<name>`
+  filter - for a lambda or local function inside it, or for a default argument - used to be taken as
+  a filter of `<test>`.
+  That failed the test with errors such as `Filter [price_filter_applies] must be static…` or
+  `Filter [prices_filter_small$lambda$0] declares [$start]…`.
+
 ### Build and docs
 
 - The release workflow creates the GitHub release. Its notes are this changelog's section for the

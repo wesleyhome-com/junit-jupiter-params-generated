@@ -115,6 +115,12 @@ class ValueClassTest {
             .isEqualTo(listOf("Money(cents=0), 1", "Money(cents=0), 2", "Money(cents=1), 2"))
     }
 
+    /** The default argument compiles to `withDefault_filter_small-<hash>$default`, which is not a filter. */
+    @Test
+    fun testConventionalFilterTakingAValueClassWithADefaultArgumentApplies() {
+        assertThat(invocationNames(Fixture::class.java, "withDefault")).isEqualTo(listOf("Money(cents=1)"))
+    }
+
     @Test
     fun testFilterDeclaringAValueClassReceivesIt() {
         assertThat(invocationNames(Fixture::class.java, "explicitFilter")).isEqualTo(listOf("Money(cents=2)"))
@@ -265,6 +271,10 @@ class ValueClassTest {
         }
 
         @GeneratedParametersTest(name = "{arguments}")
+        fun withDefault(@LongSource([1, 2, 3]) amount: Money) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
         fun rejectedThroughFilter(@LongSource([1, -1]) amount: Money) {
         }
 
@@ -294,6 +304,9 @@ class ValueClassTest {
 
             @JvmStatic
             fun onlyTwo(amount: Money): Boolean = amount.cents == 2L
+
+            @JvmStatic
+            fun withDefault_filter_small(amount: Money = Money(1)): Boolean = amount.cents < 2
 
             @JvmStatic
             fun rejectedThroughFilter_filter(amount: Money): Boolean = amount.cents > 5
