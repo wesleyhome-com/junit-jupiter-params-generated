@@ -107,20 +107,17 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
 
 ### Added
 
-- **Kotlin 2.2 and 2.3 projects can use the library** (#170), such as Spring Boot 4.0's (Kotlin
-  2.2.21) and 4.1's (2.3.21). It's still compiled by Kotlin 2.4, but for Kotlin 2.2, so its classes
-  carry metadata a 2.2 compiler reads. With 4.1.0, a Kotlin 2.2 project failed to compile: `The
-  actual metadata version is 2.4.0, but the compiler version 2.2.0 can read versions up to 2.3.0`.
-  Nothing else in the published library changes: the POMs still ask for `kotlin-stdlib` and
-  `kotlin-reflect` 2.4.21, at run time, and the classes differ only in their Kotlin metadata. The
-  annotation processor needs KSP2, from 2.2.21-2.0.4. No Kotlin 2.3 project was built; its
-  compiler reads the same metadata. Tested:
-  - a Kotlin 2.2.21 project with Spring Boot 4.0.9's dependency management, which runs on
-    `kotlin-stdlib` and `kotlin-reflect` 2.2.21 and JUnit 6.0.3;
-  - the same project without it, which runs on 2.4.21's;
-  - the annotation processor in that project under KSP 2.2.21-2.0.4, 2.2.21-2.0.5, 2.3.0, 2.3.4
-    and 2.3.14;
-  - this library's own tests on `kotlin-stdlib` and `kotlin-reflect` 2.2.21 with JUnit 6.0.3.
+- **Kotlin 2.2 projects, such as Spring Boot 4.0's, can use the library** (#170). It's still
+  compiled by Kotlin 2.4, but its classes are built for Kotlin 2.2, so a 2.2 compiler reads them.
+  With 4.1.0 it failed: `The actual metadata version is 2.4.0, but the compiler version 2.2.0 can
+  read versions up to 2.3.0`. Kotlin 2.3 projects, such as Spring Boot 4.1's, already compiled
+  against 4.1.0, since a 2.3 compiler reads 2.4 metadata. They're now inside the supported range.
+  The POMs still ask for `kotlin-stdlib` and `kotlin-reflect` 2.4.21 at run time, as before. A
+  Maven project on Kotlin 2.2 without Spring Boot's dependency management declares its own
+  `kotlin-reflect`, as the README describes. The annotation processor needs KSP2, from
+  2.2.21-2.0.4. In the class files, only what the compiler records for Kotlin changes: the Kotlin
+  metadata, which is 2.2's and so no longer repeats the classes' annotations as 2.4's does, and one
+  coroutine's debug metadata.
 
 ### Fixed
 
@@ -238,9 +235,13 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
 - `./gradlew test -PkotlinRuntime=2.2.21` runs every project's tests on another `kotlin-stdlib` and
   `kotlin-reflect`, such as 2.2.21, the oldest this library supports (#170). Tests of context
   parameters, which kotlin-reflect reads from 2.4 on, are skipped on an older one.
-- Pull request and `main` builds also build and test a Kotlin 2.2.21 project against the library,
-  with and without Spring Boot 4.0.9's dependency management, and with the annotation processor
-  under KSP 2.2.21-2.0.4 (#170). `bash .github/scripts/consumer-smoke-test.sh` runs it locally.
+- Pull request and `main` builds also build and test Kotlin 2.2.21 projects against the library
+  (#170): in Gradle, with and without Spring Boot 4.0.9's dependency management and with the
+  annotation processor under KSP 2.2.21-2.0.4, and in Maven. They also check that every published
+  class carries Kotlin 2.2 metadata. `bash .github/scripts/consumer-smoke-test.sh` runs them
+  locally.
+- A `floor-versions` check runs every test on `kotlin-stdlib` and `kotlin-reflect` 2.2.21 and JUnit
+  6.0.3, beside the `build` check (#170).
 
 ## [4.1.0] - 2026-11-14
 

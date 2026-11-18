@@ -113,14 +113,16 @@ The build compiles with the version catalog's Kotlin, but builds the published c
 Spring Boot 4.0's, so that Kotlin 2.2 projects can use it. `buildlogic.kotlin-common-conventions`
 sets `apiVersion` and `languageVersion` 2.2 on each module's main `compileKotlin`. A compiler reads
 class metadata at most one minor version newer than its own, so classes compiled for 2.4 fail to
-compile in a 2.2 project. Only the class metadata changes:
+compile in a 2.2 project. The published library changes only in what the compiler records for
+Kotlin itself: the classes' Kotlin metadata, and the debug metadata of one coroutine.
 
 - The POM and Gradle module metadata still ask for the catalog Kotlin's `kotlin-stdlib` and
   `kotlin-reflect`, as they did before, so upgrading changes no project's Kotlin libraries. Asking
   for 2.2.21 instead would hand `kotlin-reflect` 2.2.21 to Kotlin 2.4 projects that don't declare
-  their own, and it can't read their context parameters. A 2.2 project only gets the newer ones at
-  run time and for KSP, never on its compile classpath, and Spring Boot's dependency management
-  replaces them with Boot's.
+  their own, and it can't read their context parameters. Spring Boot's dependency management
+  replaces them with Boot's. A Gradle project on Kotlin 2.2 gets the newer ones only at run time and
+  for KSP, never on its compile classpath. Maven puts them on the test compile classpath, so a Maven
+  project on Kotlin 2.2 declares its own `kotlin-reflect`, as the README says.
 - Test sources keep the compiler's language and API versions, and the tests run on the compiler's
   `kotlin-stdlib` and `kotlin-reflect`, unless `-PkotlinRuntime` says otherwise. `KotlinRuntimeTest`
   fails if they run on any other version.
@@ -144,10 +146,16 @@ twice, with this repository's Gradle wrapper:
   POM asks for, while the Kotlin 2.2 compiler sees only the project's own.
 
 The test checks it ran on the versions expected. The project resolves `com.wesleyhome.test` from
-that repository only, so it can't pick up a published release. The script also fails:
+that repository only, so it can't pick up a published release. When Maven is installed, the script
+then runs the same test in `consumer-tests/kotlin-2.2-maven`, a Kotlin 2.2.21 Maven project that
+declares its own `kotlin-reflect`, without the annotation processor, which KSP doesn't support in
+Maven. CI's runners have Maven, and in CI the script fails without it. The script also fails:
 
 - unless the published POMs and module metadata ask for the catalog Kotlin's `kotlin-stdlib` and
   `kotlin-reflect` and nothing else;
+- unless every published class carries Kotlin 2.2 metadata. A 2.2 compiler also reads 2.3's, so the
+  projects would still pass with classes built for 2.3, which could then call APIs that Spring Boot
+  4.0's runtime lacks;
 - unless the annotation processor's warning about the project's deliberately unused filter
   appears, which shows that KSP ran it;
 - if the compiler or KSP reports anything else, such as a class file from too new a Kotlin.
@@ -156,6 +164,10 @@ Pull request and `main` builds run it after `build`, in the same job, so the req
 check covers it. Publishing to a local repository rather than including this build in the
 project's makes the project read the POMs and module metadata that are published, rather than the
 project's own variants, and keeps Kotlin 2.4's Gradle plugin out of a build that uses 2.2's.
+
+The `floor-versions` job of the same workflows runs `./gradlew check -PkotlinRuntime=2.2.21
+-PjunitVersion=6.0.3`, every test on the oldest Kotlin runtime and JUnit supported. It runs beside
+`build` rather than in it, so `build` is no slower.
 
 Renovate leaves `consumer-tests` alone: its versions are the oldest this library supports, and
 raising them would stop testing those. Raise them only when a major release raises the minimums.
@@ -244,9 +256,11 @@ Main release/publish behavior is driven by GitHub workflows under `.github/workf
 
 - `build-pr.yml`:
   - builds and tests every pull request to `main`, including the [coverage gate](#coverage-gate)
-    and the [Kotlin 2.2 project](#kotlin-versions); its `build` check is required to merge.
+    and the [Kotlin 2.2 projects](#kotlin-versions); its `build` check is required to merge,
+  - reruns the tests on the oldest Kotlin runtime and JUnit supported, as the `floor-versions` check.
 - `build-main.yml`:
-  - builds/tests, including the Kotlin 2.2 project,
+  - builds/tests, including the Kotlin 2.2 projects, and reruns the tests on the oldest Kotlin
+    runtime and JUnit supported,
   - publishes SNAPSHOT artifacts when `version` ends with `-SNAPSHOT`,
   - generates docs and publishes them as the snapshot docs (see below).
 - `release.yml`:
