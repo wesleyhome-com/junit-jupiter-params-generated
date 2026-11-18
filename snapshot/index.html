@@ -142,7 +142,7 @@
             </tr>
             <tr>
               <td>Maven</td>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@6efb0044 lang-kotlin">test</code> scope for the extension</td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@6af8428 lang-kotlin">test</code> scope for the extension</td>
               <td>-</td>
             </tr>
           </tbody>
@@ -329,7 +329,16 @@
       <h3 class="">Rules</h3>
       <ul>
         <li>
-          <p class="paragraph">A filter must be <strong>static</strong>, or declared in a <strong>companion object</strong>. Filtering happens before the   test instance exists, which is the same constraint <code class="lang-kotlin">@MethodSource</code> has. Filters may live in a   superclass.</p>
+          <p class="paragraph">A filter must be <strong>static</strong>, or declared in a <strong>companion object</strong>, named or not. Filtering   happens before the test instance exists, which is the same constraint <code class="lang-kotlin">@MethodSource</code> has.</p>
+        </li>
+        <li>
+          <p class="paragraph">Filters are looked for on the class running the test, then its superclasses, then the interfaces   it and its superclasses implement. Kotlin doesn't allow a companion object in a <code class="lang-kotlin">@Nested</code> class,   so the classes enclosing it come after that, each with its own superclasses and interfaces. The   first function of that name wins, so a subclass's <code class="lang-kotlin">&lt;test&gt;_filter</code> applies to a test it inherits.</p>
+        </li>
+        <li>
+          <p class="paragraph">An enclosing class's <code class="lang-kotlin">&lt;test&gt;_filter</code> applies to a test of that name in its <code class="lang-kotlin">@Nested</code> classes,   unless the enclosing class, or a class between them, has a test of that name of its own, declared   or inherited. The filter is then taken to be that test's. <code class="lang-kotlin">filters = [...]</code> always looks in   enclosing classes.</p>
+        </li>
+        <li>
+          <p class="paragraph">An <code class="lang-kotlin">internal</code> filter is found by the name it's declared with, although its compiled name has the   module name appended. The compiled name works too. Where one class has several functions of that   name, an <code class="lang-kotlin">internal</code> one doesn't displace the function 4.1.0 chose.</p>
         </li>
         <li>
           <p class="paragraph">Parameter types must match the generated parameter. A supertype is fine - <code class="lang-kotlin">Number</code> accepts a   generated <code class="lang-kotlin">Int</code> - but a filter declaring <code class="lang-kotlin">Long</code> against a generated <code class="lang-kotlin">Int</code> is rejected rather than   silently widened by reflection.</p>
@@ -344,7 +353,7 @@
           <p class="paragraph">Filtering reduces what <em>runs</em>, not what is <em>generated</em>, so the invocation ceiling still applies to   the full product and <code class="lang-kotlin">generated.invocations</code> still reports it.</p>
         </li>
       </ul>
-      <p class="paragraph">The annotation processor warns about any <code class="lang-kotlin">*_filter</code> method that matches no test in its class, so renaming a test cannot silently leave its rule unused.</p>
+      <p class="paragraph">The annotation processor warns about any <code class="lang-kotlin">*_filter</code> method that matches no test in its class, so renaming a test cannot silently leave its rule unused. It only compares a class's filters with the tests that class declares. So for now, a class that declares generated tests of its own also gets this warning for a filter written for a test it doesn't declare: one it inherits, or one in a <code class="lang-kotlin">@Nested</code> class.</p>
       <h2 class="">Invocation Display Names</h2>
       <p class="paragraph">Each invocation is named the way <code class="lang-kotlin">@ParameterizedTest</code> names its own, so IDEs and test reports read generated invocations the same way:</p>
       <div class="sample-container">
@@ -368,23 +377,23 @@
           </thead>
           <tbody>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@6efb0044 lang-kotlin">{index}</code></td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@6af8428 lang-kotlin">{index}</code></td>
               <td>the 1-based invocation number</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@6efb0044 lang-kotlin">{arguments}</code></td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@6af8428 lang-kotlin">{arguments}</code></td>
               <td>the generated values, comma separated</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@6efb0044 lang-kotlin">{argumentsWithNames}</code></td>
-              <td>the generated values as <code class="org.jetbrains.dokka.pages.commenttable@6efb0044 lang-kotlin">name=value</code>, comma separated</td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@6af8428 lang-kotlin">{argumentsWithNames}</code></td>
+              <td>the generated values as <code class="org.jetbrains.dokka.pages.commenttable@6af8428 lang-kotlin">name=value</code>, comma separated</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@6efb0044 lang-kotlin">{displayName}</code></td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@6af8428 lang-kotlin">{displayName}</code></td>
               <td>the test method's own display name</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@6efb0044 lang-kotlin">{0}</code>, <code class="org.jetbrains.dokka.pages.commenttable@6efb0044 lang-kotlin">{1}</code>, ...</td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@6af8428 lang-kotlin">{0}</code>, <code class="org.jetbrains.dokka.pages.commenttable@6af8428 lang-kotlin">{1}</code>, ...</td>
               <td>a single generated value, by position</td>
             </tr>
           </tbody>
@@ -468,7 +477,7 @@
 <span class="copy-tooltip">
           <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
 <span class="copy-icon"></span></span></div>
-      <p class="paragraph">The function takes no arguments and returns a <code class="lang-kotlin">List</code>, <code class="lang-kotlin">Sequence</code> or array of the parameter's type. It is found by name the way a filter is: static, or in an object or companion object, on the test class or one of its superclasses. <code class="lang-kotlin">@JvmStatic</code> is optional. To share a function between test classes, name its class as well:</p>
+      <p class="paragraph">The function takes no arguments and returns a <code class="lang-kotlin">List</code>, <code class="lang-kotlin">Sequence</code> or array of the parameter's type. It is found by name the way a filter is: static, or in an object or companion object, on the test class, its superclasses or its interfaces, and for a <code class="lang-kotlin">@Nested</code> class on the classes enclosing it. <code class="lang-kotlin">@JvmStatic</code> is optional, and so is <code class="lang-kotlin">public</code>. To share a function between test classes, name its class as well:</p>
       <div class="sample-container">
         <pre><code class="block lang-kotlin" theme="idea">object Fixtures {<br>    fun ranges(): List&lt;DateRange&gt; = listOf(/* ... */)<br>}<br><br>@GeneratedParametersTest<br>fun overlapsItself(@ValuesFrom(&quot;com.example.Fixtures#ranges&quot;) range: DateRange) {<br>    assertTrue(range.overlaps(range))<br>}</code></pre>
 <span class="copy-tooltip">
@@ -501,6 +510,7 @@
 <span class="copy-tooltip">
           <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
 <span class="copy-icon"></span></span></div>
+      <p class="paragraph">The processor doesn't yet look in the test class's interfaces or enclosing classes, and reports a function there as missing. Name its class, as in <code class="lang-kotlin">@ValuesFrom(&quot;com.example.OuterTest#ranges&quot;)</code>, and both find it.</p>
       <p class="paragraph">A compiled version of these, checked by the annotation processor, is <code class="lang-kotlin">examples.ValuesFrom</code> in the <code class="lang-kotlin">examples</code> module.</p>
       <h2 class="">Generated vs Random Values</h2>
       <ul>
@@ -563,7 +573,7 @@
           <thead>
             <tr>
               <th>Concern</th>
-              <th><code class="org.jetbrains.dokka.pages.commenttable@6efb0044 lang-kotlin">@MethodSource</code></th>
+              <th><code class="org.jetbrains.dokka.pages.commenttable@6af8428 lang-kotlin">@MethodSource</code></th>
               <th>Generated Sources</th>
             </tr>
           </thead>
