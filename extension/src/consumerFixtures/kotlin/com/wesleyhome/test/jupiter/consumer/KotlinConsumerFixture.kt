@@ -2,7 +2,9 @@ package com.wesleyhome.test.jupiter.consumer
 
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.ValuesFrom
+import com.wesleyhome.test.jupiter.annotations.WithNull
 import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource
+import com.wesleyhome.test.jupiter.annotations.number.IntSource
 import com.wesleyhome.test.jupiter.annotations.number.LongSource
 
 /** Compiled without javaParameters, as Kotlin is by default. Driven by ParameterNamesTest; not run directly. */
@@ -44,6 +46,10 @@ class KotlinConsumerFixture {
     fun wrongType(@IntRangeSource(min = 1, max = 2) start: Int) {
     }
 
+    @GeneratedParametersTest(filters = ["expectsPrimitive"])
+    fun nullIntoPrimitive(@IntSource([1, 2]) @WithNull start: Int?) {
+    }
+
     @GeneratedParametersTest(filters = ["receiverRule"])
     fun extensionReceiver(@IntRangeSource(min = 1, max = 2) start: Int) {
     }
@@ -76,6 +82,9 @@ class KotlinConsumerFixture {
 
         @JvmStatic
         fun expectsString(start: String): Boolean = true
+
+        @JvmStatic
+        fun expectsPrimitive(start: Int): Boolean = true
 
         @JvmStatic
         fun Int.receiverRule(): Boolean = this > 1

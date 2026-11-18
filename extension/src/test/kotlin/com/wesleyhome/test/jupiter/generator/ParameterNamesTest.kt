@@ -78,6 +78,11 @@ class ParameterNamesTest {
             assertThat(executionFailure(KotlinConsumerFixture::class.java, "wrongType"))
                 .isInstanceOf(InvalidFilterException::class)
                 .hasMessage("Filter [expectsString] declares [start] as String, but the generated parameter is Integer")
+            assertThat(executionFailure(KotlinConsumerFixture::class.java, "nullIntoPrimitive"))
+                .isInstanceOf(InvalidFilterException::class)
+                .hasMessage(
+                    "Filter [expectsPrimitive] declares [start] as int, which cannot hold the null this parameter generates"
+                )
             assertThat(executionFailure(KotlinConsumerFixture::class.java, "valuesFromMissing"))
                 .isInstanceOf(InvalidValuesFromException::class)
                 .hasMessage(
