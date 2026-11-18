@@ -533,6 +533,15 @@ class ParameterFilterTest {
         assertThat(failure.cause).isNotNull().isInstanceOf(AssertionError::class).hasMessage("start is 3")
     }
 
+    /** Only an OutOfMemoryError is left as it is, not every error the JVM itself raises. */
+    @Test
+    fun testAStackOverflowErrorThrownByAFilterIsWrapped() {
+        val failure = executionFailure(ThrowingFixture::class.java, "overflowing")
+        assertThat(failure).isInstanceOf(InvalidFilterException::class)
+            .hasMessage("Filter [overflowsAtThree] on [start=3] threw StackOverflowError: too deep")
+        assertThat(failure.cause).isNotNull().isInstanceOf(StackOverflowError::class).hasMessage("too deep")
+    }
+
     /** JUnit stops the whole run on an OutOfMemoryError, which wrapping would turn into one failed test. */
     @Test
     fun testAnOutOfMemoryErrorThrownByAFilterIsRethrownAsItIs() {
@@ -565,13 +574,44 @@ class ParameterFilterTest {
         assertThat(invocationNames(NullFixture::class.java, "guardedPairwise")).isEqualTo(listOf("1, a", "2, a"))
     }
 
-    /** Named filters run in the order they are listed, and a guard listed after the filter is too late. */
+    /**
+     * Conventional filters run in no fixed order, so another filter of the parameter counts as a guard
+     * wherever it runs. Listed after the filter, it is too late, and the filter throws on the null.
+     */
     @Test
-    fun testAGuardProtectsOnlyTheFiltersAfterIt() {
+    fun testAGuardCountsWhereverItRuns() {
         assertThat(invocationNames(NullFixture::class.java, "guardFirst")).isEqualTo(listOf("a"))
         assertThat(executionFailure(NullFixture::class.java, "guardSecond")).hasMessage(
-            "Filter [startsWithA] declares [label] as String, which cannot hold the null this parameter generates"
+            "Filter [startsWithA] on [label=null] threw NullPointerException: Parameter specified as non-null " +
+                "is null: method ${NullFixture::class.java.name}\$Companion.startsWithA, parameter label"
         )
+    }
+
+    /** The first parameter that can't take the null is the one named. */
+    @Test
+    fun testTheFirstParameterThatCannotHoldTheNullIsNamed() {
+        assertThat(executionFailure(NullFixture::class.java, "neitherGuarded")).hasMessage(
+            "Filter [bothNonNull] declares [first] as String, which cannot hold the null this parameter generates"
+        )
+        assertThat(executionFailure(NullFixture::class.java, "secondNonNull")).hasMessage(
+            "Filter [onlySecondNonNull] declares [second] as String, which cannot hold the null this parameter generates"
+        )
+    }
+
+    /**
+     * Kotlin checks a parameter for null on entry to any function but a private one. A private filter
+     * takes the null, as on 4.1.0, and as a Java filter does.
+     */
+    @Test
+    fun testAPrivateFilterTakesTheNullAsBefore() {
+        assertThat(invocationNames(PrivateFilterFixture::class.java, "jvmStatic")).isEqualTo(listOf("a", "null"))
+        assertThat(invocationNames(PrivateFilterFixture::class.java, "member")).isEqualTo(listOf("a", "null"))
+        assertThat(invocationNames(PrivateFilterFixture::class.java, "conventional")).isEqualTo(listOf("a", "null"))
+        assertThat(invocationNames(PrivateFilterFixture::class.java, "valueClass"))
+            .isEqualTo(listOf("Name(value=a)", "null"))
+        assertThat(invocationNames(PrivateFilterFixture::class.java, "two")).isEqualTo(listOf("a, a", "null, null"))
+        assertThat(invocationNames(PrivateFilterFixture::class.java, "twoPairwise"))
+            .isEqualTo(listOf("a, a", "null, null"))
     }
 
     /**
@@ -1761,6 +1801,10 @@ class ParameterFilterTest {
         fun asserting(@IntRangeSource(min = 1, max = 3) start: Int) {
         }
 
+        @GeneratedParametersTest(name = "{arguments}", filters = ["overflowsAtThree"])
+        fun overflowing(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
         companion object {
             @JvmStatic
             fun throwsAtTwo(start: Int): Boolean {
@@ -1774,6 +1818,12 @@ class ParameterFilterTest {
             @JvmStatic
             fun assertsSmall(start: Int): Boolean {
                 if (start == 3) throw AssertionError("start is 3")
+                return true
+            }
+
+            @JvmStatic
+            fun overflowsAtThree(start: Int): Boolean {
+                if (start == 3) throw StackOverflowError("too deep")
                 return true
             }
 
@@ -1823,6 +1873,20 @@ class ParameterFilterTest {
         ) {
         }
 
+        @GeneratedParametersTest(name = "{arguments}", filters = ["bothNonNull"])
+        fun neitherGuarded(
+            @StringSource(["a"]) @WithNull first: String?,
+            @StringSource(["b"]) @WithNull second: String?
+        ) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["onlySecondNonNull"])
+        fun secondNonNull(
+            @StringSource(["a"]) @WithNull first: String?,
+            @StringSource(["b"]) @WithNull second: String?
+        ) {
+        }
+
         @GeneratedParametersTest(name = "{arguments}", filters = ["startsWithA"])
         fun leakyGuard(@StringSource(["a", "b"]) @WithNull label: String?) {
         }
@@ -1867,6 +1931,9 @@ class ParameterFilterTest {
             fun bothNonNull(first: String, second: String): Boolean = first != second
 
             @JvmStatic
+            fun onlySecondNonNull(first: String?, second: String): Boolean = first != second
+
+            @JvmStatic
             fun leakyGuard_filter(label: String?): Boolean = label != "b"
 
             @JvmStatic
@@ -1874,6 +1941,49 @@ class ParameterFilterTest {
 
             @JvmStatic
             fun <T> genericNotB(label: T): Boolean = label != "b"
+        }
+    }
+
+    class PrivateFilterFixture {
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["privateStatic"])
+        fun jvmStatic(@StringSource(["a", "b"]) @WithNull label: String?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["privateMember"])
+        fun member(@StringSource(["a", "b"]) @WithNull label: String?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun conventional(@StringSource(["a", "b"]) @WithNull label: String?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["privateName"])
+        fun valueClass(@StringSource(["a", "b"]) @WithNull name: Name?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["privateSame"])
+        fun two(@StringSource(["a"]) @WithNull first: String?, @StringSource(["a"]) @WithNull second: String?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["privateSame"], strategy = GenerationStrategy.PAIRWISE)
+        fun twoPairwise(@StringSource(["a"]) @WithNull first: String?, @StringSource(["a"]) @WithNull second: String?) {
+        }
+
+        companion object {
+            @JvmStatic
+            private fun privateStatic(label: String): Boolean = label != "b"
+
+            private fun privateMember(label: String): Boolean = label != "b"
+
+            @JvmStatic
+            private fun conventional_filter(label: String): Boolean = label != "b"
+
+            @JvmStatic
+            private fun privateName(name: Name): Boolean = name.value != "b"
+
+            @JvmStatic
+            private fun privateSame(first: String, second: String): Boolean = first == second
         }
     }
 

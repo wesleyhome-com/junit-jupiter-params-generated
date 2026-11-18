@@ -7,6 +7,8 @@ import java.lang.reflect.Parameter
 import java.util.logging.Logger
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
+import kotlin.reflect.KVisibility
+import kotlin.reflect.jvm.kotlinFunction
 
 /**
  * One filter bound to the generated slots its parameters name, so a rule declares only the
@@ -65,16 +67,16 @@ internal class ParameterFilter(
 
         /**
          * Rejects a filter whose Kotlin parameter can't hold the null its slot generates, as [slotFor]
-         * rejects a primitive one, unless an earlier filter takes that parameter too. That one may turn
-         * away every combination holding the null, and a filter written behind it runs. Without one,
-         * whatever combinations reach the filter, the same ones holding the null reach it as well.
+         * rejects a primitive one, unless another of the test's filters takes that parameter too.
+         * Conventional filters run in no fixed order, so that one may run first and turn away every
+         * combination holding the null. Without one, whatever combinations reach the filter, the same
+         * ones holding the null reach it as well.
          */
         fun requireNullsHeld(filters: List<ParameterFilter>) {
-            val guarded = HashSet<Int>()
             for (filter in filters) {
-                filter.refusedNulls.entries.firstOrNull { it.key !in guarded }
+                filter.refusedNulls.entries
+                    .firstOrNull { (slot, _) -> filters.none { other -> other !== filter && slot in other.slots } }
                     ?.let { throw InvalidFilterException(it.value) }
-                filter.slots.toCollection(guarded)
             }
         }
 
@@ -184,13 +186,19 @@ internal class ParameterFilter(
         private fun signatureOf(name: String, method: Method): String =
             method.parameterTypes.joinToString(", ", "$name(", ")") { it.simpleName }
 
-        /** A Java type, or a type parameter, takes null as before. */
+        /**
+         * Only where Kotlin's own null check would fail the test anyway. Kotlin compiles that check into
+         * every function but a private one, so a private filter takes the null, as a Java filter does.
+         * A type parameter isn't judged: an unbounded one takes the null, and one bounded by `Any` fails
+         * on it when it's reached, reported as the filter throwing.
+         */
         private fun refusedNulls(
             name: String,
             method: Method,
             slots: List<Int>,
             binding: FilterBinding
         ): Map<Int, String> {
+            if (method.kotlinFunction?.visibility == KVisibility.PRIVATE) return emptyMap()
             val kotlinParameters = method.kotlinValueParameters() ?: return emptyMap()
             return slots.withIndex().mapNotNull { (index, slot) ->
                 val type = kotlinParameters[index].type
