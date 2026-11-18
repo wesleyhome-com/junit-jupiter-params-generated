@@ -284,7 +284,8 @@ fun prices(...)
 - Filters are looked for on the class running the test, then its superclasses, then the interfaces
   it and its superclasses implement. Kotlin doesn't allow a companion object in a `@Nested` class,
   so the classes enclosing it come after that, each with its own superclasses and interfaces. The
-  first function of that name wins, so a subclass's `<test>_filter` applies to a test it inherits.
+  first class with a function of that name wins, so a subclass's `<test>_filter` applies to a test
+  it inherits. If that class has several functions of that name, the overload rule below picks one.
 - An enclosing class's `<test>_filter` applies to a test of that name in its `@Nested` classes,
   unless the enclosing class, or a class between them, has a test of that name of its own, declared
   or inherited. The filter is then taken to be that test's. `filters = [...]` always looks in
@@ -565,9 +566,7 @@ when the test does, and each failure names the parameter and the function:
 
 The processor doesn't yet look in the test class's interfaces or enclosing classes, and reports a
 function there as missing. Name its class, as in `@ValuesFrom("com.example.OuterTest#ranges")`, and
-both find it. It also checks only the first function of that name in the source, so it reports an
-overloaded name as taking arguments when an overload that takes them is declared first. Declare the
-overload without arguments first.
+both find it.
 
 A compiled version of these, checked by the annotation processor, is `examples.ValuesFrom` in the
 `examples` module.

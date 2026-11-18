@@ -558,11 +558,12 @@ class ParameterFilterTest {
         IntArray(intParameters.size) { it }
     )
 
-    /** Ranking a `@JvmStatic` overload first, and a public one before an `internal` one, never depended on reflection. */
+    /** A public overload ranks before an `internal` one, then a `@JvmStatic` one first; neither depended on reflection. */
     @Test
     fun testAnOverloadThatAlwaysTookPrecedenceStillDoes() {
         assertThat(invocationNames(OverloadPrecedenceFixture::class.java, "jvmStaticFirst")).isEqualTo(listOf("2, 1", "2, 2"))
         assertThat(invocationNames(OverloadPrecedenceFixture::class.java, "publicFirst")).isEqualTo(listOf("2, 1", "2, 2"))
+        assertThat(invocationNames(OverloadPrecedenceFixture::class.java, "publicBeforeStatic")).isEqualTo(ORDERED)
     }
 
     /** The overload ranked first used to be chosen even when it could only fail the test. */
@@ -570,6 +571,7 @@ class ParameterFilterTest {
     fun testAnOverloadThatCanFilterIsChosenOverOneRankedBeforeIt() {
         assertThat(invocationNames(OverloadPrecedenceFixture::class.java, "jvmStaticCannot")).isEqualTo(listOf("2", "3"))
         assertThat(invocationNames(OverloadPrecedenceFixture::class.java, "publicCannot")).isEqualTo(listOf("2", "3"))
+        assertThat(invocationNames(OverloadPrecedenceFixture::class.java, "valueClassCannot")).isEqualTo(listOf("1", "2"))
     }
 
     /** `@JvmOverloads` compiles each shorter form to an overload of its own. */
@@ -684,6 +686,18 @@ class ParameterFilterTest {
         fun publicCannot(@IntRangeSource(min = 1, max = 3) start: Int) {
         }
 
+        @GeneratedParametersTest(name = "{arguments}", filters = ["internalStaticRule"])
+        fun publicBeforeStatic(
+            @IntRangeSource(min = 1, max = 3) start: Int,
+            @IntRangeSource(min = 1, max = 3) end: Int
+        ) {
+        }
+
+        /** The two overloads compile to `valueClassFallback-<hash>(long)` and `valueClassFallback$<module>(long)`. */
+        @GeneratedParametersTest(name = "{arguments}", filters = ["valueClassFallback"])
+        fun valueClassCannot(@LongSource([1, 2, 3]) cents: Long) {
+        }
+
         companion object {
             @JvmStatic
             fun jvmStaticRule(start: Int): Boolean = start >= 2
@@ -702,6 +716,15 @@ class ParameterFilterTest {
             fun publicFallback(label: String): Boolean = label.isEmpty()
 
             internal fun publicFallback(start: Int): Boolean = start >= 2
+
+            @JvmStatic
+            internal fun internalStaticRule(start: Int): Boolean = start >= 2
+
+            fun internalStaticRule(start: Int, end: Int): Boolean = start <= end
+
+            fun valueClassFallback(amount: Money): Boolean = amount.cents > 0
+
+            internal fun valueClassFallback(cents: Long): Boolean = cents <= 2
         }
     }
 

@@ -18,23 +18,36 @@ internal fun findOverloads(type: Class<*>, name: String): List<List<StaticFuncti
 
 /**
  * Looks in [classes] only, each with its supertypes, and returns the functions named [name] in the
- * nearest that has any, in ranks. 4.1.0 used the first function of the first rank, but within a rank
- * it took whichever reflection listed first, and the JVM doesn't specify that order.
+ * nearest that has any, ranked by [rankOverloads].
+ */
+internal fun findOverloads(classes: List<Class<*>>, name: String): List<List<StaticFunction>> =
+    rankOverloads(
+        name,
+        scopesOf(classes)
+            .map { scope -> callableIn(scope).map { group -> group.filter { it.method.isNamed(name) }.toList() } }
+            .firstOrNull { groups -> groups.any { it.isNotEmpty() } }
+            .orEmpty()
+    )
+
+/**
+ * Ranks one class's functions named [name], given as its static methods, its object's members and its
+ * companion's. 4.1.0 used the first function of the first rank, but within a rank it took whichever
+ * reflection listed first, and the JVM doesn't specify that order: it can change between runs.
  *
  * An `internal` function compiles to `name$module`, and only that compiled name used to find it, so
  * functions the old matching finds rank before those found by their Kotlin name alone. Then static
- * methods rank before an object's members, and those before a companion object's. A `@JvmStatic`
- * function is both a static method and a companion member, and is listed once.
+ * methods rank before an object's members, and those before a companion object's. A method with the
+ * JVM name and parameters of one ranked before it is the same function, listed once: a `@JvmStatic`
+ * function's companion member, or a bridge the compiler adds for an override's return type.
  */
-internal fun findOverloads(classes: List<Class<*>>, name: String): List<List<StaticFunction>> {
-    val groups = scopesOf(classes)
-        .map { scope -> callableIn(scope).map { group -> group.filter { it.method.isNamed(name) }.toList() } }
-        .firstOrNull { groups -> groups.any { it.isNotEmpty() } }
-        .orEmpty()
+internal fun rankOverloads(name: String, groups: List<List<StaticFunction>>): List<List<StaticFunction>> {
     val signatures = mutableSetOf<Pair<String, List<Class<*>>>>()
     return (groups.map { group -> group.filter { it.method.wasNamed(name) } } +
         groups.map { group -> group.filterNot { it.method.wasNamed(name) } })
-        .map { rank -> rank.filter { signatures.add(it.method.name to it.method.parameterTypes.asList()) } }
+        .map { rank ->
+            rank.sortedBy { it.method.isBridge }
+                .filter { signatures.add(it.method.name to it.method.parameterTypes.asList()) }
+        }
 }
 
 /** Whether [name] exists only as an instance method, which nothing can call before the test instance exists. */

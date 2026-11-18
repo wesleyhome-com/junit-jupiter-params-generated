@@ -15,8 +15,7 @@ import org.apiguardian.api.API.Status.EXPERIMENTAL
  * If the name is overloaded, the overload that takes no arguments is used. Name it as
  * `com.example.Fixtures#ranges` to share one between test classes. The annotation processor checks
  * all of this at compile time, except that it doesn't yet look in the test class's interfaces or
- * enclosing classes; name the class there. It also checks only the first overload declared, so
- * declare the one without arguments first.
+ * enclosing classes; name the class there.
  *
  * A worked version, compiled and checked by the annotation processor, is `examples.ValuesFrom` in the
  * `examples` module; the README shows it in full.
