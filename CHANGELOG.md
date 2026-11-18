@@ -74,6 +74,13 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   fails with `Filter [rule] is overloaded, and 2 overloads can filter this test`; give them
   different names. And an overload that bound by position, but whose names now don't all match,
   fails the test as it would alone, rather than giving way to another overload.
+- **A Kotlin filter parameter that isn't nullable can't take a generated null** (#123). Kotlin
+  checks the parameters of every function but a `private` one for null, so such a filter failed
+  already, with a `NullPointerException` partway through the run. Compiled with
+  `-Xno-param-assertions`, it has no such check and took the null in a parameter declared not to
+  hold one. It now fails before anything runs. Declare its parameter nullable (`label: String?`).
+  This doesn't affect a `private` filter, which has no check, or a filter whose parameter another
+  of the test's filters takes and can hold the null: those run as before.
 
 ### Fixed
 
@@ -113,6 +120,21 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   a warning, once for each test that uses it, when the class files record no names or the
   filter's names aren't the test's. Display names and report entries are unchanged: for Java they
   still need `-parameters` to show declared names.
+- **A filter that throws is named, with the combination it threw on** (#123). The test used to
+  fail with a bare `InvocationTargetException: null`. It now fails with an `InvalidFilterException`
+  such as `Filter [ordered_filter] on [start=2, end=1] threw IllegalStateException: boom`, with the
+  filter's exception as its cause, as a throwing `@ValuesFrom` function already did. An
+  `OutOfMemoryError` is now thrown as it is, so JUnit stops the run, as for any `OutOfMemoryError`.
+- **A Kotlin filter parameter that isn't nullable is rejected for a parameter that generates
+  null** (#123), from `@WithNull` or a nullable type, with the message a primitive one gets:
+  `Filter [label_filter] declares [label] as String, which cannot hold the null this parameter
+  generates`. It's rejected before anything runs where Kotlin's own null check would fail the test
+  once the null reached the filter, with a `NullPointerException` from inside it: in a filter that
+  isn't `private`, unless another filter of the test takes the same parameter and can hold the
+  null. A value class is judged by its Kotlin type, so `name: Name` is rejected and `name: Name?`
+  accepted. One over a nullable type, such as `Nickname(val value: String?)`, still takes the null
+  as `Nickname(null)`. A `private` filter and a Java filter take the null as before. Any filter
+  that then throws on the null is reported as a throwing filter.
 
 ### Build and docs
 

@@ -1,6 +1,8 @@
 package com.wesleyhome.test.jupiter.java.filter;
 
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest;
+import com.wesleyhome.test.jupiter.annotations.StringSource;
+import com.wesleyhome.test.jupiter.annotations.WithNull;
 import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource;
 import org.junit.jupiter.api.Test;
 
@@ -25,5 +27,13 @@ public class JavaFilterFixture {
 
     public static boolean ordered_filter_$small(int start) {
         return start <= 2;
+    }
+
+    @GeneratedParametersTest(name = "{arguments}")
+    public void nullable(@StringSource(values = {"a", "b"}) @WithNull String label) {
+    }
+
+    public static boolean nullable_filter(String label) {
+        return !"b".equals(label);
     }
 }

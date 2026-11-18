@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
+import kotlin.reflect.KType
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
@@ -17,7 +18,10 @@ internal class ValueClassShape private constructor(private val type: KClass<*>) 
 
     private val constructor = type.primaryConstructor!!.apply { isAccessible = true }
 
-    val underlying: KClass<*> = constructor.parameters.single().type.classifier as? KClass<*> ?: Any::class
+    /** The wrapped value's declared type, `String?` for `Nickname(val value: String?)`. */
+    val underlyingType: KType = constructor.parameters.single().type
+
+    val underlying: KClass<*> = underlyingType.classifier as? KClass<*> ?: Any::class
 
     private val property = type.declaredMemberProperties
         .single { it.name == constructor.parameters.single().name }

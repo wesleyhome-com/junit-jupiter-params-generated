@@ -299,7 +299,26 @@ fun prices(...)
 - Parameter types must match the generated parameter. A supertype is fine - `Number` accepts a
   generated `Int` - but a filter declaring `Long` against a generated `Int` is rejected rather than
   silently widened by reflection.
+- A filter parameter must hold the null its parameter generates, from `@WithNull` or a nullable
+  type. A primitive is rejected before anything runs. So is a Kotlin type that isn't nullable, such
+  as `String` or a value class like `Name`, where Kotlin's own null check would fail the test once
+  the null reached it: in a filter that isn't `private`, unless another filter of the test takes the
+  same parameter and can hold the null. That one may turn the null away first. Conventional filters
+  run before the ones in `filters = [...]`, which run in the order listed, but conventional filters
+  run among themselves in no fixed order. A `private` Kotlin filter has no null check, so it takes
+  the null, as a Java filter's object types do. So does a value class over a nullable type:
+  `Nickname(val value: String?)` takes it as `Nickname(null)`. A filter that throws on the null is
+  reported as a filter that throws, below.
 - A filter must return `Boolean` and must not return null.
+- A filter that throws fails the test. The message names the filter and the combination it threw
+  on, as `{argumentsWithNames}` shows it, and the exception is the cause:
+
+  ```text
+  Filter [ordered_filter] on [start=2, end=1] threw IllegalStateException: boom
+  ```
+
+  With `CARTESIAN`, the invocations before that combination have run. `PAIRWISE` checks every
+  combination before choosing, so nothing has. An `OutOfMemoryError` is thrown as it is.
 - A filter's name can be **overloaded**. The overload used is the one that can filter the test:
   every parameter binds to a generated parameter (see [Parameter Names](#parameter-names)), with
   a type that can hold it, and it returns `Boolean`. Where several in the nearest class can, a
@@ -530,7 +549,8 @@ primitive it is an error, because the compiled method takes a `long` there.
 
 Filters can declare the value-class parameter as itself (`fun formatsAmounts_filter(amount: Money)`).
 Declaring the underlying type (`amount: Long`) is an error: both compile to `long`, so the Kotlin
-declaration is the only thing that tells them apart.
+declaration is the only thing that tells them apart. For a parameter that generates null, declare
+it nullable in the filter too (`amount: Money?`), unless the value class wraps a nullable type.
 
 A value class with no source annotation is left to other parameter resolvers, even when it wraps a
 type such as `Boolean` that would otherwise be generated.

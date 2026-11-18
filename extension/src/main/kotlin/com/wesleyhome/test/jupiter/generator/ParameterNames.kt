@@ -4,6 +4,7 @@ import java.io.DataInputStream
 import java.lang.invoke.MethodType
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import kotlin.reflect.KParameter
 import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.kotlinFunction
 
@@ -16,15 +17,18 @@ internal fun Method.declaredParameterNames(): List<String>? =
     kotlinParameterNames() ?: compiledParameterNames() ?: LocalVariableNames.of(this)
 
 /**
- * Kotlin reflection describes a Java method too, with the names Java reflection gives it, so only a
- * Kotlin class's are taken. An extension receiver or a context parameter is a JVM parameter without
- * being a value parameter, so those names don't line up and aren't used.
+ * [this] method's parameters as Kotlin declared them, one for each JVM parameter, or null when they
+ * aren't known. Kotlin reflection describes a Java method too, with the names Java reflection gives
+ * it and platform types, so only a Kotlin class's are taken. An extension receiver or a context
+ * parameter is a JVM parameter without being a value parameter, so those don't line up and aren't used.
  */
-private fun Method.kotlinParameterNames(): List<String>? {
+internal fun Method.kotlinValueParameters(): List<KParameter>? {
     if (!declaringClass.isAnnotationPresent(Metadata::class.java)) return null
     val function = kotlinFunction ?: return null
-    return function.valueParameters.mapNotNull { it.name }.takeIf { it.size == parameterCount }
+    return function.valueParameters.takeIf { it.size == parameterCount }
 }
+
+private fun Method.kotlinParameterNames(): List<String>? = kotlinValueParameters()?.map { it.name ?: return null }
 
 private fun Method.compiledParameterNames(): List<String>? =
     parameters.takeIf { all -> all.all { it.isNamePresent } }?.map { it.name }

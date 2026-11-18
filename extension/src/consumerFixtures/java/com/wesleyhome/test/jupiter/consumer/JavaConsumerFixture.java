@@ -163,6 +163,17 @@ public class JavaConsumerFixture extends JavaStrippedFilters implements JavaCons
     public void valuesFromMissing(@ValuesFrom("nope") String label) {
     }
 
+    @GeneratedParametersTest(filters = {"throwsAtTwo"})
+    public void throwing(@IntRangeSource(min = 1, max = 3) int start, @IntRangeSource(min = 1, max = 2) int end) {
+    }
+
+    static boolean throwsAtTwo(int start) {
+        if (start == 2) {
+            throw new IllegalStateException("boom");
+        }
+        return true;
+    }
+
     public static class Rules {
 
         public boolean companionRule(int end, int start) {
