@@ -41,6 +41,10 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
 - Pull requests must pass a `changelog` check: an entry under `[Unreleased]`, a release-note label,
   and an Upgrade note for anything labeled `breaking`.
 - `CLAUDE.md` gives Claude Code sessions the project's contribution rules.
+- Releases build on JDK 17, as pull requests and `main` do, and run every project's build and tests
+  before publishing. Before building, and again before publishing, they check that `main` hasn't
+  moved, that the release tag doesn't exist yet, and that the deploy key can still reach the
+  repository for pushing. The release plugin's tasks are listed by `./gradlew tasks`.
 
 ## [4.1.0] - 2026-11-14
 

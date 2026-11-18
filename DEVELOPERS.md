@@ -186,16 +186,57 @@ Main release/publish behavior is driven by GitHub workflows under `.github/workf
   - generates docs and publishes them as the snapshot docs (see below).
 - `release.yml`:
   - manual release workflow (`workflow_dispatch`),
-  - runs `net.researchgate.release`,
-  - publishes non-SNAPSHOT release artifacts to Maven Central,
-  - pushes the release commits and tag with the `RELEASE_DEPLOY_KEY` deploy key, the only actor
-    allowed to push to `main` directly,
+  - runs `net.researchgate.release` on JDK 17, the same as the pull request and `main` builds,
+  - checks that the release will be able to push (see below),
   - renames `CHANGELOG.md`'s `[Unreleased]` section to the release version before building, and
     stops the release there if that section is empty (see below),
+  - runs the same `build dokkaGenerate` as CI, in every project, then publishes non-SNAPSHOT release
+    artifacts to Maven Central,
+  - pushes the release commits and tag with the `RELEASE_DEPLOY_KEY` deploy key, the only actor
+    allowed to push to `main` directly,
   - creates the GitHub release: that version's changelog section, then the pull requests since the
     previous GA tag (or the tag just before a pre-release) grouped by label. An `X.Y.Z` version is
     marked Latest, anything else a pre-release. If that last step fails, the artifacts are already
     published; create the release by hand.
+
+### Publishing Before Pushing
+
+The release publishes to Maven Central before the release plugin pushes its commits and tag, and
+Central never replaces or removes a published version. So `.github/scripts/check-release-push.sh`
+runs twice before anything is published: right after checkout, and as `checkReleasePush`, the last
+task before the upload. It stops the release if `main` on GitHub is no longer the commit being
+released, the tag already exists, or a dry-run push with the deploy key fails, and also if git
+can't make one of those checks.
+
+A dry-run push sends no ref update, so it never reaches `main`'s ruleset. It proves the deploy key
+authenticates, not that the ruleset still lets it push. If the push fails after publishing (the
+deployment shows as published on the [Central Portal](https://central.sonatype.com/publishing/deployments)),
+don't run the release again for that version. Fix what stopped the push, then do by hand what the
+run didn't push. The log shows which release plugin task failed:
+
+- **`preTagCommit`: nothing was pushed.** Recreate the release commits from the commit the run built
+  (`gh run view <run id> --json headSha`):
+  ```bash
+  git switch -c release-<version> <headSha>
+  # set version=<version> in gradle.properties
+  ./gradlew releaseChangelog
+  # releaseChangelog dates the section today: change it in CHANGELOG.md to the day it was published
+  git commit -am "[Gradle Release Plugin] - pre tag commit: 'v<version>'."
+  git tag -a v<version> -m "[Gradle Release Plugin] - creating tag: 'v<version>'."
+  # set version=<next version> in gradle.properties
+  git commit -am "[Gradle Release Plugin] - new version commit: 'v<next version>'."
+  git push origin v<version> release-<version>
+  ```
+  Open a pull request from `release-<version>`, label it `skip-changelog`, and merge it with a merge
+  commit, so the tagged commit stays in `main`'s history. If `main` has moved since `<headSha>`,
+  which is the likely reason the push failed, the pull request can conflict on `CHANGELOG.md`: merge
+  `main` into the branch rather than rebasing it, which would leave the tag off `main`, and keep the
+  newer entries under `[Unreleased]`, above the `[<version>]` section.
+- **`createReleaseTag`: `main` has the pre-tag commit but there's no tag.** Tag that commit with
+  `git tag -a v<version>`, push the tag, then set the next version in a pull request.
+- **`commitNewVersion`: the tag is pushed.** Set the next version in a pull request.
+
+Then create the GitHub release by hand. Pushing the tag publishes the versioned docs.
 
 ## Changelog and Labels
 
