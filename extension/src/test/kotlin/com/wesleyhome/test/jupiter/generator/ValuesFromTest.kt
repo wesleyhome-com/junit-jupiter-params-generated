@@ -104,6 +104,17 @@ class ValuesFromTest {
             .isEqualTo(listOf("Point(x=40, y=40)"))
     }
 
+    /** An enclosing class's instance function says why it can't be used, rather than that it's missing. */
+    @Test
+    fun testAnInstanceFunctionOnAnEnclosingClassIsReported() {
+        assertThat(executionFailure(OuterFixture.Inner::class.java, "fromOuterInstance"))
+            .isInstanceOf(InvalidValuesFromException::class)
+            .hasMessage(
+                "@ValuesFrom(\"outerInstanceInts\") on [value]: [outerInstanceInts] must be static or declared in " +
+                    "an object or companion object, because values are generated before the test instance exists"
+            )
+    }
+
     @Test
     fun testFunctionOnAnInterface() {
         assertThat(invocationNames(ImplementingFixture::class.java, "fromInterface")).isEqualTo(listOf("9"))
@@ -545,7 +556,13 @@ class ValuesFromTest {
             @GeneratedParametersTest(name = "{arguments}")
             fun fromOuter(@ValuesFrom("outerInts") value: Int) {
             }
+
+            @GeneratedParametersTest
+            fun fromOuterInstance(@ValuesFrom("outerInstanceInts") value: Int) {
+            }
         }
+
+        fun outerInstanceInts(): List<Int> = listOf(1)
 
         companion object {
             fun outerInts(): List<Int> = listOf(7, 8)
