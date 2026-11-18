@@ -17,10 +17,14 @@ class Kotlin22ConsumerTest {
         orders += "$quantity x ${price.value}"
     }
 
+    /** The build passes the versions this run should resolve; kotlin-reflect isn't on the compile classpath. */
     @Test
-    fun runsOnSpringBoot40Versions() {
-        assertEquals("2.2.21", KotlinVersion.CURRENT.toString())
-        assertEquals("6.0.3", Test::class.java.`package`.implementationVersion)
+    fun runsOnTheExpectedVersions() {
+        val kotlinRuntime = System.getProperty("kotlinRuntime")
+        assertEquals(kotlinRuntime, KotlinVersion.CURRENT.toString())
+        val reflect = Class.forName("kotlin.reflect.full.IllegalCallableAccessException").`package`
+        assertEquals(kotlinRuntime, reflect.implementationVersion?.substringBefore('-'))
+        System.getProperty("junitVersion")?.let { assertEquals(it, Test::class.java.`package`.implementationVersion) }
     }
 
     companion object {
