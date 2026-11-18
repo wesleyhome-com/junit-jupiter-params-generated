@@ -45,6 +45,18 @@ tasks.named<Test>("test") {
     useJUnitPlatform()
 }
 
+// `-PjunitVersion=6.0.3` runs the tests on another JUnit, such as the oldest one supported. Only the
+// tests' runtime classpath changes: everything is still compiled and published against the catalog's.
+providers.gradleProperty("junitVersion").orNull?.let { junitVersion ->
+    configurations.named("testRuntimeClasspath") {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "org.junit.jupiter" || requested.group == "org.junit.platform") {
+                useVersion(junitVersion)
+            }
+        }
+    }
+}
+
 mavenPublishing {
     publishToMavenCentral(automaticRelease = true)
     signAllPublications()

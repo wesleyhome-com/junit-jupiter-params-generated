@@ -21,8 +21,20 @@ import com.wesleyhome.test.jupiter.testkit.executeFixture
 import com.wesleyhome.test.jupiter.testkit.executionFailure
 import com.wesleyhome.test.jupiter.testkit.invocationCounts
 import com.wesleyhome.test.jupiter.testkit.invocationNames
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
+import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.api.extension.ParameterContext
 import org.junit.jupiter.api.extension.ParameterResolutionException
+import org.junit.jupiter.api.extension.ParameterResolver
+import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.api.io.TempDir
+import org.mockito.Mock
+import org.mockito.Mockito.mockingDetails
+import org.mockito.junit.jupiter.MockitoExtension
+import java.nio.file.Path
 import java.util.UUID
 
 /**
@@ -302,6 +314,274 @@ class ValueClassTest {
     @Test
     fun testFilterDeclaringAValueClassStillTakesAGeneratedValueOfItsUnderlyingType() {
         assertThat(invocationNames(FilterFixture::class.java, "underlyingValue")).isEqualTo(listOf("2"))
+    }
+
+    /**
+     * Each fixture checks it was given what its Kotlin declaration says. JUnit 6.0 calls the test
+     * with `Method.invoke`, so a box that fits the compiled type used to arrive as the value.
+     */
+    @Test
+    fun testTestMethodOverAValueClassWhoseBoxFitsTheCompiledTypeGetsTheWrappedValue() {
+        assertThat(invocationNames(TestMethodFixture::class.java, "anyBox"))
+            .isEqualTo(listOf("AnyBox(value=x)", "AnyBox(value=y)"))
+        assertThat(invocationNames(TestMethodFixture::class.java, "anyBoxOfAnyBox"))
+            .isEqualTo(listOf("AnyBox(value=AnyBox(value=x))"))
+        assertThat(invocationNames(TestMethodFixture::class.java, "nullableAnyBox"))
+            .isEqualTo(listOf("AnyBox(value=x)", "AnyBox(value=y)", "null"))
+        assertThat(invocationNames(TestMethodFixture::class.java, "label")).isEqualTo(listOf("Label(text=a)"))
+        assertThat(invocationNames(TestMethodFixture::class.java, "tagged")).isEqualTo(listOf("Tagged(box=AnyBox(value=x))"))
+    }
+
+    @Test
+    fun testTestMethodOverAGenericValueClassGetsTheWrappedValue() {
+        assertThat(invocationNames(TestMethodFixture::class.java, "box")).isEqualTo(listOf("Box(value=1)", "Box(value=2)"))
+        assertThat(invocationNames(TestMethodFixture::class.java, "boxOfValueClass"))
+            .isEqualTo(listOf("Box(value=Money(cents=1))"))
+        assertThat(invocationNames(TestMethodFixture::class.java, "boundedBox"))
+            .isEqualTo(listOf("AnyBoxBox(value=AnyBox(value=y))"))
+    }
+
+    @Test
+    fun testTestMethodOverAResultGetsTheResult() {
+        assertThat(invocationNames(TestMethodFixture::class.java, "result"))
+            .isEqualTo(listOf("Success(1)", "Failure(java.lang.IllegalStateException: none)"))
+    }
+
+    @Test
+    fun testNullableValueClassOverAValueClassOverAPrimitiveReachesTheTestMethod() {
+        assertThat(invocationNames(TestMethodFixture::class.java, "nullableWallet"))
+            .isEqualTo(listOf("Wallet(money=Money(cents=1))", "null"))
+    }
+
+    /** One argument passed boxed and one unboxed, which kotlin-reflect can't take together. */
+    @Test
+    fun testTestMethodTakingValueClassesBothBoxedAndUnboxedGetsEach() {
+        assertThat(invocationNames(TestMethodFixture::class.java, "moneyAndAnyBox"))
+            .isEqualTo(listOf("Money(cents=1), AnyBox(value=x)", "Money(cents=1), AnyBox(value=y)"))
+        assertThat(invocationNames(TestMethodFixture::class.java, "moneyAndNullableMoney"))
+            .isEqualTo(listOf("Money(cents=1), Money(cents=2)", "Money(cents=1), null"))
+    }
+
+    @Test
+    fun testValueClassOverANullableValueClassHoldingNullReachesTheTestMethod() {
+        assertThat(invocationNames(TestMethodFixture::class.java, "outerMoney"))
+            .isEqualTo(listOf("OuterMoney(inner=Money(cents=1))", "OuterMoney(inner=null)"))
+        assertThat(invocationNames(TestMethodFixture::class.java, "outerName"))
+            .isEqualTo(listOf("OuterName(inner=Name(value=a))", "OuterName(inner=null)"))
+        assertThat(invocationNames(TestMethodFixture::class.java, "outerBox"))
+            .isEqualTo(listOf("OuterBox(inner=Box(value=1))", "OuterBox(inner=null)"))
+        assertThat(invocationNames(TestMethodFixture::class.java, "suspendingOuterName"))
+            .isEqualTo(listOf("OuterName(inner=null)"))
+    }
+
+    @Test
+    fun testFailureOfATestMethodTakingAValueClassIsWhatItThrew() {
+        assertThat(executionFailure(TestMethodFixture::class.java, "throwing"))
+            .isInstanceOf(IllegalStateException::class)
+            .hasMessage("thrown by the test")
+    }
+
+    /**
+     * JUnit calls a suspending test through kotlin-reflect on 6.0 too, with kotlinx-coroutines,
+     * which mockk brings onto the test classpath. It's given the box, as kotlin-reflect expects.
+     */
+    @Test
+    fun testSuspendingTestMethodIsLeftForJUnitToCall() {
+        assertThat(invocationNames(TestMethodFixture::class.java, "suspending"))
+            .isEqualTo(listOf("AnyBox(value=x)", "AnyBox(value=y)"))
+    }
+
+    @Test
+    fun testValueClassesAlongsideOtherResolvers() {
+        assertThat(invocationNames(OtherResolversFixture::class.java, "alongsideOtherResolvers"))
+            .isEqualTo(listOf("Money(cents=1), Money(cents=2), AnyBox(value=x)", "Money(cents=1), null, AnyBox(value=x)"))
+    }
+
+    /** JUnit 6.1 has kotlin-reflect unbox a box another resolver gives, so the test is still given what's inside. */
+    @Test
+    fun testValueClassBoxFromAnotherResolverIsUnboxed() {
+        assertThat(invocationNames(OtherResolversFixture::class.java, "alongsideAResolvedBox")).isEqualTo(listOf("1"))
+    }
+
+    class TestMethodFixture {
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun anyBox(@ValuesFrom("anyBoxes") box: AnyBox) {
+            check(box.value == "x" || box.value == "y")
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun anyBoxOfAnyBox(@ValuesFrom("anyBoxesOfAnyBoxes") box: AnyBox) {
+            check(box.value == AnyBox("x"))
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun nullableAnyBox(@ValuesFrom("anyBoxes") @WithNull box: AnyBox?) {
+            check(box == null || box.value == "x" || box.value == "y")
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun label(@ValuesFrom("labels") label: Label) {
+            check(label.text == "a")
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun tagged(@ValuesFrom("taggedBoxes") tagged: Tagged) {
+            check(tagged.box.value == "x")
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun box(@ValuesFrom("intBoxes") box: Box<Int>) {
+            check(box.value in 1..2)
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun boxOfValueClass(@ValuesFrom("moneyBoxes") box: Box<Money>) {
+            check(box.value.cents == 1L)
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun boundedBox(@ValuesFrom("boundedBoxes") box: AnyBoxBox<AnyBox>) {
+            check(box.value == AnyBox(AnyBox("y")))
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun result(@ValuesFrom("results") result: Result<Int>) {
+            check(result.getOrNull() == 1 || result.exceptionOrNull() is IllegalStateException)
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun nullableWallet(@LongSource([1]) @WithNull wallet: Wallet?) {
+            check(wallet == null || wallet.money.cents == 1L)
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun moneyAndAnyBox(@LongSource([1]) amount: Money, @ValuesFrom("anyBoxes") box: AnyBox) {
+            check(amount.cents == 1L && (box.value == "x" || box.value == "y"))
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun moneyAndNullableMoney(@LongSource([1]) amount: Money, @LongSource([2]) @WithNull other: Money?) {
+            check(amount.cents == 1L && (other == null || other.cents == 2L))
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun outerMoney(@ValuesFrom("outerMoneys") outer: OuterMoney) {
+            check(outer.inner == null || outer.inner.cents == 1L)
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun outerName(@ValuesFrom("outerNames") outer: OuterName) {
+            check(outer.inner == null || outer.inner.value == "a")
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun outerBox(@ValuesFrom("outerBoxes") outer: OuterBox) {
+            check(outer.inner == null || outer.inner.value == 1)
+        }
+
+        @GeneratedParametersTest
+        fun throwing(@LongSource([1]) amount: Money?) {
+            throw IllegalStateException("thrown by the test")
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        suspend fun suspending(@ValuesFrom("anyBoxes") box: AnyBox) {
+            check(box.value == "x" || box.value == "y")
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        suspend fun suspendingOuterName(@ValuesFrom("nullOuterNames") outer: OuterName) {
+            check(outer.inner == null)
+        }
+
+        companion object {
+            @JvmStatic
+            fun anyBoxes(): List<AnyBox> = listOf(AnyBox("x"), AnyBox("y"))
+
+            @JvmStatic
+            fun anyBoxesOfAnyBoxes(): List<AnyBox> = listOf(AnyBox(AnyBox("x")))
+
+            @JvmStatic
+            fun labels(): List<Label> = listOf(Label("a"))
+
+            @JvmStatic
+            fun taggedBoxes(): List<Tagged> = listOf(Tagged(AnyBox("x")))
+
+            @JvmStatic
+            fun intBoxes(): List<Box<Int>> = listOf(Box(1), Box(2))
+
+            @JvmStatic
+            fun moneyBoxes(): List<Box<Money>> = listOf(Box(Money(1)))
+
+            @JvmStatic
+            fun boundedBoxes(): List<AnyBoxBox<AnyBox>> = listOf(AnyBoxBox(AnyBox(AnyBox("y"))))
+
+            @JvmStatic
+            fun results(): List<Result<Int>> = listOf(Result.success(1), Result.failure(IllegalStateException("none")))
+
+            @JvmStatic
+            fun outerMoneys(): List<OuterMoney> = listOf(OuterMoney(Money(1)), OuterMoney(null))
+
+            @JvmStatic
+            fun outerNames(): List<OuterName> = listOf(OuterName(Name("a")), OuterName(null))
+
+            @JvmStatic
+            fun outerBoxes(): List<OuterBox> = listOf(OuterBox(Box(1)), OuterBox(null))
+
+            @JvmStatic
+            fun nullOuterNames(): List<OuterName> = listOf(OuterName(null))
+        }
+    }
+
+    /** Arguments that other resolvers own, beside generated ones passed both boxed and unboxed. */
+    @ExtendWith(MockitoExtension::class)
+    class OtherResolversFixture(private val constructorInfo: TestInfo) {
+
+        private lateinit var lifecycleInfo: TestInfo
+
+        @BeforeEach
+        fun setUp(info: TestInfo) {
+            lifecycleInfo = info
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun alongsideOtherResolvers(
+            testInfo: TestInfo,
+            @LongSource([1]) amount: Money,
+            @LongSource([2]) @WithNull other: Money?,
+            @TempDir dir: Path,
+            @ValuesFrom("anyBoxes") box: AnyBox,
+            @Mock names: MutableList<String>
+        ) {
+            check(amount.cents == 1L && (other == null || other.cents == 2L) && box.value == "x")
+            check(testInfo.displayName == lifecycleInfo.displayName && constructorInfo.testMethod.isPresent)
+            check(dir.toFile().isDirectory && mockingDetails(names).isMock)
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun alongsideAResolvedBox(@IntSource([1]) n: Int, @ResolvedBox resolved: AnyBox) {
+            check(resolved.value == "resolved")
+        }
+
+        companion object {
+            @JvmStatic
+            fun anyBoxes(): List<AnyBox> = listOf(AnyBox("x"))
+
+            @JvmStatic
+            @RegisterExtension
+            val boxResolver: ParameterResolver = object : ParameterResolver {
+                override fun supportsParameter(
+                    parameterContext: ParameterContext,
+                    extensionContext: ExtensionContext
+                ): Boolean = parameterContext.isAnnotated(ResolvedBox::class.java)
+
+                override fun resolveParameter(
+                    parameterContext: ParameterContext,
+                    extensionContext: ExtensionContext
+                ): Any = AnyBox("resolved")
+            }
+        }
     }
 
     class FilterFixture {
@@ -637,6 +917,19 @@ value class Wallet(val money: Money)
 
 @JvmInline
 value class Handle(val name: Name)
+
+@JvmInline
+value class OuterMoney(val inner: Money?)
+
+@JvmInline
+value class OuterName(val inner: Name?)
+
+@JvmInline
+value class OuterBox(val inner: Box<Int>?)
+
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class ResolvedBox
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)

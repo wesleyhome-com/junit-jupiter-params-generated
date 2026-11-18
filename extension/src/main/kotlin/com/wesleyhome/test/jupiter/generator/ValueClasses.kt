@@ -82,13 +82,13 @@ internal class RejectedValue(val valueClass: KClass<*>, val raw: Any, val cause:
 }
 
 /**
- * Unboxes value classes until [declared] can hold the result. Generated values are kept boxed, so
- * this is where a `Money` becomes the `long` the compiled method takes.
+ * Unboxes value classes until [declared] can hold the result, for a test method whose Kotlin
+ * parameters don't line up with its compiled ones, so can't say how far to unbox.
  */
 internal fun Any?.adaptedTo(declared: Class<*>): Any? {
     var current = this
     while (current != null && !declared.kotlin.javaObjectType.isInstance(current)) {
-        current = ValueClassShape.of(current::class)?.unbox(current) ?: return current
+        current = (ValueClassShape.of(current::class) ?: return current).unbox(current)
     }
     return current
 }

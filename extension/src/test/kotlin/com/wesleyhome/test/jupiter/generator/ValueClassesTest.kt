@@ -2,6 +2,7 @@ package com.wesleyhome.test.jupiter.generator
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
 import org.junit.jupiter.api.Test
 
 class ValueClassesTest {
@@ -16,6 +17,11 @@ class ValueClassesTest {
     @Test
     fun testValueThatIsNotAValueClassPassesThroughUnchanged() {
         assertThat("text".adaptedTo(Int::class.javaPrimitiveType!!)).isEqualTo("text")
+    }
+
+    @Test
+    fun testValueClassHoldingNullUnboxesToNull() {
+        assertThat(OuterMoney(null).adaptedTo(Money::class.java)).isNull()
     }
 
     class Fixture {

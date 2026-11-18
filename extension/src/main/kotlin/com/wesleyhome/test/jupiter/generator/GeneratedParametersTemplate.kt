@@ -12,6 +12,15 @@ internal class GeneratedParametersTemplate(
 ) {
 
     /**
+     * The value classes each of the test method's parameters takes unboxed, as its Kotlin type says.
+     * Null when the Kotlin parameters don't line up with the compiled ones, as for a Java test or a
+     * suspending one.
+     */
+    private val unboxing: Array<Array<ValueClassShape>>? = testMethod.kotlinValueParameters()?.let { parameters ->
+        Array(parameters.size) { index -> unboxedLayers(parameters[index].type, testMethod.parameterTypes[index]) }
+    }
+
+    /**
      * A resolver is consulted for constructor and lifecycle-method parameters too, so matching on
      * index alone would claim a constructor parameter that happens to sit at a generated position.
      */
@@ -22,7 +31,8 @@ internal class GeneratedParametersTemplate(
             GeneratedParameterLayout.NO_SLOT
         }
 
-    fun resolve(slot: Int, values: Array<Any?>, declaredType: Class<*>): Any? {
+    fun resolve(parameterContext: ParameterContext, values: Array<Any?>): Any? {
+        val slot = slotOf(parameterContext)
         val value = values[slot]
         if (value is RejectedValue) {
             throw ParameterResolutionException(
@@ -31,7 +41,26 @@ internal class GeneratedParametersTemplate(
                 value.cause
             )
         }
-        return value.adaptedTo(declaredType)
+        val unboxing = unboxing ?: return value.adaptedTo(parameterContext.parameter.type)
+        return value.unboxedFrom(unboxing[parameterContext.index])
+    }
+
+    /**
+     * The test method's [arguments] as its compiled signature takes them, for calling it with
+     * `Method.invoke` as JUnit 6.0 does, or null to leave the call to JUnit. JUnit 6.1 calls it
+     * through kotlin-reflect when an argument is a value class's box, and kotlin-reflect takes every
+     * value-class argument to be boxed, which the `long` a `Money` compiles to isn't. [resolve] has
+     * already compiled each generated value. Another resolver's box is unboxed, as kotlin-reflect does.
+     */
+    fun compiledArguments(arguments: List<Any?>): Array<Any?>? {
+        val unboxing = unboxing ?: return null
+        return Array(arguments.size) { index ->
+            if (layout.slotOf(index) == GeneratedParameterLayout.NO_SLOT) {
+                arguments[index].unboxedFrom(unboxing[index])
+            } else {
+                arguments[index]
+            }
+        }
     }
 
     fun valuesByName(values: Array<Any?>): Map<String, String> =

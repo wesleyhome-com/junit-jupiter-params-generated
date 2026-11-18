@@ -30,6 +30,9 @@ Run from repository root.
   - `./gradlew :junit-jupiter-params-generated:test`
 - Run one test class:
   - `./gradlew :junit-jupiter-params-generated:test --tests com.wesleyhome.test.jupiter.provider.datetime.RandomInstanceSourceDataProviderTest`
+- Run the tests on another JUnit version, such as 6.0.3, the oldest supported. Only the tests'
+  runtime classpath changes; everything is still compiled against the version catalog's JUnit:
+  - `./gradlew test -PjunitVersion=6.0.3`
 - Check test coverage against the gate (see [Coverage Gate](#coverage-gate)):
   - `./gradlew jacocoTestCoverageVerification`
 - Generate docs:
