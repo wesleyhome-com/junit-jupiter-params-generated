@@ -112,3 +112,45 @@ object KotlinConsumerRules {
     @JvmOverloads
     fun upTo(start: Int, end: Int = 2): Boolean = start <= end
 }
+
+/** Kotlin filters for Java tests, which bound by position before names were read. */
+open class KotlinConsumerFilters {
+    companion object {
+        @JvmStatic
+        fun kotlinReversed(end: Int, start: Int): Boolean = start <= end
+
+        @JvmStatic
+        fun crossRank(a: Int): Boolean = a >= 2
+
+        /** Never chosen while the public overload can be: it would filter on `end` instead of `start`. */
+        @JvmStatic
+        internal fun crossRank(end: Number): Boolean = end.toInt() >= 2
+
+        @JvmStatic
+        fun rank(end: Int, other: Int): Boolean = end <= other
+
+        /** Never chosen while the public overload binds; it would filter on `start`. */
+        @JvmStatic
+        internal fun rank(start: Number): Boolean = start.toInt() >= 2
+    }
+}
+
+/** A Kotlin interface's default tests reach the extension as bridges in the implementing class. */
+interface KotlinConsumerContract {
+
+    @GeneratedParametersTest(name = "{arguments}")
+    fun fromInterface(@IntRangeSource(min = 1, max = 3) start: Int) {
+    }
+
+    @GeneratedParametersTest(name = "{arguments}", filters = ["keepBig"])
+    fun explicitFromInterface(@IntRangeSource(min = 1, max = 3) start: Int) {
+    }
+
+    companion object {
+        fun fromInterface_filter(start: Int): Boolean = start >= 2
+
+        fun keepBig(start: Int): Boolean = start >= 2
+    }
+}
+
+class KotlinConsumerImplementing : KotlinConsumerContract

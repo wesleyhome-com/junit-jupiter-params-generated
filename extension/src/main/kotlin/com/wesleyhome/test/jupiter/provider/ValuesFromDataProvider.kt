@@ -4,7 +4,7 @@ import com.wesleyhome.test.jupiter.InvalidValuesFromException
 import com.wesleyhome.test.jupiter.MAX_PERMUTATIONS_PROPERTY
 import com.wesleyhome.test.jupiter.annotations.ValuesFrom
 import com.wesleyhome.test.jupiter.annotations.validation.ValuesFromReference
-import com.wesleyhome.test.jupiter.generator.findStaticFunction
+import com.wesleyhome.test.jupiter.generator.findOverloads
 import com.wesleyhome.test.jupiter.generator.hasInstanceFunction
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -32,7 +32,10 @@ internal class ValuesFromDataProvider : ParameterDataProvider<Any> {
         val reference = ValuesFromReference.parse(raw, testParameter.name)
             ?: throw InvalidValuesFromException(ValuesFromReference.malformed(raw, testParameter.name))
         val owner = reference.className?.let { load(it, testClass, reference) } ?: testClass
-        val function = findStaticFunction(owner, reference.functionName) ?: throw InvalidValuesFromException(
+        // Only an overload taking no arguments can be called. Without one, reporting the fewest any
+        // overload takes keeps the error the same in every build.
+        val function = findOverloads(owner, reference.functionName).flatten()
+            .minByOrNull { it.method.parameterCount } ?: throw InvalidValuesFromException(
             if (hasInstanceFunction(owner, reference.functionName)) {
                 reference.instanceFunction()
             } else {

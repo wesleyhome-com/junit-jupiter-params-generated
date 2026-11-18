@@ -39,11 +39,31 @@ public class JavaStrippedFixture extends KotlinNamedFilters {
         return value != 2;
     }
 
+    @GeneratedParametersTest(filters = {"expectsText"})
+    public void wrongTypeForANamedFilter(@IntRangeSource(min = 1, max = 2) int start) {
+    }
+
     @GeneratedParametersTest
     public void displayed(@IntRangeSource(min = 1, max = 2) int start, @IntRangeSource(min = 1, max = 2) int end) {
     }
 
     @GeneratedParametersTest
     public void valuesFromMissing(@ValuesFrom("nope") String label) {
+    }
+
+    @GeneratedParametersTest(name = "{arguments}", filters = {"always"})
+    public void noParameters(@IntRangeSource(min = 1, max = 2) int start) {
+    }
+
+    static boolean always() {
+        return true;
+    }
+
+    @GeneratedParametersTest(name = "{arguments}", filters = {"twice_filter"})
+    public void twice(@IntRangeSource(min = 1, max = 3) int start, @IntRangeSource(min = 1, max = 3) int end) {
+    }
+
+    static boolean twice_filter(int start, int end) {
+        return start <= end;
     }
 }

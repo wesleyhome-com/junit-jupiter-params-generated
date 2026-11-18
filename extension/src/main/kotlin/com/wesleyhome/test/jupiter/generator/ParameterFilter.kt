@@ -19,6 +19,7 @@ internal class ParameterFilter(
     val method: Method,
     private val receiver: Any?,
     private val slots: IntArray,
+    private val boundByPositionBecause: String?,
     private val layout: GeneratedParameterLayout,
     /** The message for each slot generating a null that the filter's Kotlin parameter type can't hold. */
     private val refusedNulls: Map<Int, String>
@@ -28,6 +29,11 @@ internal class ParameterFilter(
 
     /** What reports call it: the declared name, whichever name found it. */
     val declaredName: String get() = method.kotlinName()
+
+    /** Called once for each filter a test uses, after a filter reached by two names has become one. */
+    fun warnIfBoundByPosition(test: String) {
+        boundByPositionBecause?.let { logger.warning("Filter [$name] binds to the parameters of [$test] by position, because $it") }
+    }
 
     fun accepts(values: Array<Any?>): Boolean {
         val arguments = arrayOfNulls<Any?>(slots.size)
@@ -85,8 +91,67 @@ internal class ParameterFilter(
             classes: List<Class<*>>,
             name: String,
             layout: GeneratedParameterLayout
+        ): ParameterFilter = choose(name, find(classes, name), layout).also { it.method.isAccessible = true }
+
+        /**
+         * 4.1.0 used the first overload in the first of [ranks], and within a rank that was whichever
+         * reflection listed first, which changes between builds. An overload that can't filter the test
+         * could only have failed it, so the first rank holding one that can decides. If that rank holds
+         * several, which of them applied was never settled, so the test fails rather than pick one.
+         *
+         * An overload that bound by position, but whose declared names say otherwise and then don't
+         * all match, still counts as one that can: it fails the test, as it would alone, rather than
+         * quietly giving way to another overload.
+         */
+        internal fun choose(
+            name: String,
+            ranks: List<List<StaticFunction>>,
+            layout: GeneratedParameterLayout
         ): ParameterFilter {
-            val (method, receiver) = find(classes, name)
+            ranks.flatten().singleOrNull()?.let { return bind(name, it, layout) }
+            val problems = mutableListOf<String>()
+            for (rank in ranks) {
+                val fitting = mutableListOf<ParameterFilter>()
+                val failingByName = mutableListOf<Pair<Method, InvalidFilterException>>()
+                for (overload in rank) {
+                    try {
+                        fitting += bind(name, overload, layout)
+                    } catch (e: InvalidFilterException) {
+                        if (boundByReflection(name, overload, layout)) {
+                            failingByName += overload.method to e
+                        } else {
+                            problems += "${signatureOf(name, overload.method)} ${e.message!!.removePrefix("Filter [$name] ")}"
+                        }
+                    }
+                }
+                val candidates = fitting.map { it.method } + failingByName.map { it.first }
+                if (candidates.size > 1) {
+                    throw InvalidFilterException(
+                        "Filter [$name] is overloaded, and ${candidates.size} overloads can filter this test: " +
+                            candidates.map { signatureOf(name, it) }.sorted().joinToString(", ") +
+                            ". Give them different names."
+                    )
+                }
+                failingByName.singleOrNull()?.let { throw it.second }
+                fitting.singleOrNull()?.let { return it }
+            }
+            throw InvalidFilterException(
+                "Filter [$name] is overloaded, and no overload can filter this test: " +
+                    problems.sorted().joinToString("; ")
+            )
+        }
+
+        /** Whether 4.1.0's matching binds [overload], with no declared name able to change it. */
+        private fun boundByReflection(name: String, overload: StaticFunction, layout: GeneratedParameterLayout): Boolean =
+            runCatching { bind(name, overload, layout, namesMayDecide = false) }.isSuccess
+
+        private fun bind(
+            name: String,
+            function: StaticFunction,
+            layout: GeneratedParameterLayout,
+            namesMayDecide: Boolean = true
+        ): ParameterFilter {
+            val (method, receiver) = function
             // Boolean::class.java is the primitive type in Kotlin, so a boxed return needs its own check.
             if (method.returnType != Boolean::class.javaPrimitiveType &&
                 method.returnType != Boolean::class.javaObjectType
@@ -95,19 +160,21 @@ internal class ParameterFilter(
                     "Filter [$name] must return Boolean, but returns ${method.returnType.simpleName}"
                 )
             }
-            val binding = FilterBinding(method, layout)
-            if (!binding.byName) {
-                logger.warning(
-                    "Filter [$name] binds to the test's parameters by position, because the class files don't " +
-                        "record their names. Compile with -parameters to bind by name."
-                )
-            }
+            val binding = FilterBinding(method, layout, namesMayDecide)
             val slots = method.parameters.mapIndexed { index, parameter -> slotFor(name, method, index, parameter, binding) }
-            method.isAccessible = true
             return ParameterFilter(
-                name, method, receiver, slots.toIntArray(), layout, refusedNulls(name, method, slots, binding)
+                name,
+                method,
+                receiver,
+                slots.toIntArray(),
+                binding.boundByPositionBecause,
+                layout,
+                refusedNulls(name, method, slots, binding)
             )
         }
+
+        private fun signatureOf(name: String, method: Method): String =
+            method.parameterTypes.joinToString(", ", "$name(", ")") { it.simpleName }
 
         /** A Java type, or a type parameter, takes null as before. */
         private fun refusedNulls(
@@ -192,15 +259,17 @@ internal class ParameterFilter(
             else -> this
         }
 
-        private fun find(classes: List<Class<*>>, name: String): StaticFunction =
-            findStaticFunction(classes, name) ?: throw InvalidFilterException(
-                if (hasInstanceFunction(classes, name)) {
-                    "Filter [$name] must be static or declared in a companion object, because filtering " +
-                        "happens before the test instance exists"
-                } else {
-                    "No filter named [$name] on ${classes.first().name}"
-                }
-            )
+        private fun find(classes: List<Class<*>>, name: String): List<List<StaticFunction>> =
+            findOverloads(classes, name).ifEmpty {
+                throw InvalidFilterException(
+                    if (hasInstanceFunction(classes, name)) {
+                        "Filter [$name] must be static or declared in a companion object, because filtering " +
+                            "happens before the test instance exists"
+                    } else {
+                        "No filter named [$name] on ${classes.first().name}"
+                    }
+                )
+            }
 
         private fun Method.declaresKotlinType(index: Int, type: KClass<*>): Boolean =
             kotlinFunction?.let { it.valueParameters[index].type.classifier == type } == true
@@ -210,19 +279,46 @@ internal class ParameterFilter(
 /**
  * How a filter's parameters find their generated slots: the one decision every caller binds through.
  *
- * Declared names bind when the class files record both the filter's and the test's. Otherwise
- * binding is as it was before names were read: Java reflection's names against the test's display
- * names, which without `-parameters` are `arg0`, `arg1` on both sides, pairing parameters by position.
+ * 4.1.0 matched Java reflection's names against the test's display names. That matching stands
+ * unless a declared name says a parameter belongs to a generated parameter it didn't give it, either
+ * another one or, where reflection's names don't match, any at all. The declared names then decide.
+ * For Java compiled without `-parameters`, reflection's names are `arg0`, `arg1` on both sides, so
+ * that matching pairs parameters by position, and a filter that repeats the test's parameters in
+ * order keeps them whatever it calls them.
+ * With [namesMayDecide] off, that matching is all there is, as in 4.1.0.
+ *
+ * A bridge for a generic override has the overriding method's names in its debug information, but
+ * only the overriding method should bind by them.
  */
-internal class FilterBinding(method: Method, val layout: GeneratedParameterLayout) {
+internal class FilterBinding(method: Method, val layout: GeneratedParameterLayout, namesMayDecide: Boolean = true) {
 
-    private val declared: List<String>? = method.declaredParameterNames()?.takeIf { layout.recordsDeclaredNames }
+    private val compiled: List<String> = method.parameters.map { it.name }
 
-    val byName: Boolean get() = declared != null
+    private val recorded: List<String>? = method.takeUnless { it.isBridge }?.declaredParameterNames()
 
-    /** What each parameter is bound by, and so what messages call it. */
-    val names: List<String> = declared ?: method.parameters.map { it.name }
+    private val declared: List<String>? = recorded?.takeIf { layout.recordsDeclaredNames }
+
+    private val pairedByPosition: Boolean =
+        compiled.isNotEmpty() && compiled.indices.all { compiled[it] == "arg$it" } && layout.namesArePositions
+
+    private val bindingNames: List<String>? = declared?.takeIf { namesMayDecide && contradictsReflection(it) }
+
+    /** What messages call each parameter: its declared name wherever one is recorded, whatever binds it. */
+    val names: List<String> = recorded ?: compiled
 
     fun slotOf(index: Int): Int? =
-        if (byName) layout.slotOfDeclaredName(names[index]) else layout.slotOfName(names[index])
+        if (bindingNames != null) layout.slotOfDeclaredName(bindingNames[index]) else layout.slotOfName(compiled[index])
+
+    /** Why the filter binds by position, when names could have bound it otherwise. */
+    val boundByPositionBecause: String? = when {
+        bindingNames != null || !pairedByPosition -> null
+        declared == null -> "the class files don't record their names. Compile with -parameters to bind by name."
+        else -> declared.filter { layout.slotOfDeclaredName(it) == null }.takeIf { it.isNotEmpty() }?.let {
+            "the test has no parameter named $it. Name the filter's parameters as the test does to bind by name."
+        }
+    }
+
+    private fun contradictsReflection(declared: List<String>): Boolean = declared.indices.any { index ->
+        layout.slotOfDeclaredName(declared[index]).let { it != null && it != layout.slotOfName(compiled[index]) }
+    }
 }

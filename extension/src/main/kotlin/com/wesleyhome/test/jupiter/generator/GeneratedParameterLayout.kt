@@ -26,6 +26,12 @@ internal class GeneratedParameterLayout(
 
     fun slotOfDeclaredName(name: String): Int? = declaredNames.indexOf(name).takeIf { it >= 0 }
 
+    /** Whether [nameOf] gives Java's `arg<position>`, which is all a test compiled without `-parameters` has. */
+    val namesArePositions: Boolean
+        get() = slotByParameterIndex.indices.all { index ->
+            slotByParameterIndex[index] == NO_SLOT || names[slotByParameterIndex[index]] == "arg$index"
+        }
+
     fun slotOf(parameterIndex: Int): Int =
         if (parameterIndex in slotByParameterIndex.indices) slotByParameterIndex[parameterIndex] else NO_SLOT
 

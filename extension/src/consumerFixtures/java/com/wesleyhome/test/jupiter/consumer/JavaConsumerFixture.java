@@ -46,6 +46,58 @@ public class JavaConsumerFixture extends JavaStrippedFilters implements JavaCons
     public void inOrder(@IntRangeSource(min = 1, max = 3) int start, @IntRangeSource(min = 1, max = 3) int end) {
     }
 
+    @GeneratedParametersTest(name = "{arguments}")
+    public void otherNames(@IntRangeSource(min = 1, max = 3) int start, @IntRangeSource(min = 1, max = 3) int end) {
+    }
+
+    static boolean otherNames_filter(int a, int b) {
+        return a <= b;
+    }
+
+    @GeneratedParametersTest(name = "{arguments}", filters = {"loBeforeHi"})
+    public void sharedAsStartEnd(@IntRangeSource(min = 1, max = 3) int start, @IntRangeSource(min = 1, max = 3) int end) {
+    }
+
+    @GeneratedParametersTest(name = "{arguments}", filters = {"loBeforeHi"})
+    public void sharedAsMinMax(@IntRangeSource(min = 1, max = 3) int min, @IntRangeSource(min = 1, max = 3) int max) {
+    }
+
+    static boolean loBeforeHi(int lo, int hi) {
+        return lo <= hi;
+    }
+
+    @GeneratedParametersTest(name = "{arguments}")
+    public void oneNameMatches(@IntRangeSource(min = 1, max = 3) int start, @IntRangeSource(min = 1, max = 3) int end) {
+    }
+
+    static boolean oneNameMatches_filter(int a, int end) {
+        return a <= end;
+    }
+
+    @GeneratedParametersTest(name = "{arguments}")
+    public void middle(@IntRangeSource(min = 1, max = 2) int start, TestInfo testInfo, @IntRangeSource(min = 1, max = 2) int end) {
+    }
+
+    static boolean middle_filter(int a) {
+        return a >= 2;
+    }
+
+    @GeneratedParametersTest(name = "{arguments}")
+    public void contradicted(@IntRangeSource(min = 1, max = 3) int start, @IntRangeSource(min = 1, max = 3) int end) {
+    }
+
+    static boolean contradicted_filter(int end, int other) {
+        return end != other;
+    }
+
+    @GeneratedParametersTest(name = "{arguments}")
+    public void startSecond(@IntRangeSource(min = 1, max = 3) int start, @IntRangeSource(min = 1, max = 3) int end) {
+    }
+
+    static boolean startSecond_filter(int a, int start) {
+        return a <= start;
+    }
+
     static boolean inOrder_filter(int start, int end) {
         return start <= end;
     }

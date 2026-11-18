@@ -264,8 +264,8 @@ A filter declares only the parameters it is about, matched **by name**, so sever
 compose instead of one predicate that has to know about everything. A combination runs only if every
 filter accepts it. The names come from Kotlin's metadata, or for Java from `-parameters` or the
 debug information Gradle and Maven compile with by default, so no compiler flag is needed. See
-[Parameter Names](#parameter-names) for a build that records none. Use a suffix when a test has more
-than one:
+[Parameter Names](#parameter-names) for the Java filters that still bind by position, as they did
+before names were read. Use a suffix when a test has more than one:
 
 ```kotlin
 @JvmStatic fun prices_filter_ordered(start: Int, end: Int): Boolean = start <= end
@@ -287,7 +287,8 @@ fun prices(...)
 - Filters are looked for on the class running the test, then its superclasses, then the interfaces
   it and its superclasses implement. Kotlin doesn't allow a companion object in a `@Nested` class,
   so the classes enclosing it come after that, each with its own superclasses and interfaces. The
-  first function of that name wins, so a subclass's `<test>_filter` applies to a test it inherits.
+  first class with a function of that name wins, so a subclass's `<test>_filter` applies to a test
+  it inherits. If that class has several functions of that name, the overload rule below picks one.
 - An enclosing class's `<test>_filter` applies to a test of that name in its `@Nested` classes,
   unless the enclosing class, or a class between them, has a test of that name of its own, declared
   or inherited. The filter is then taken to be that test's. `filters = [...]` always looks in
@@ -314,6 +315,17 @@ fun prices(...)
 
   With `CARTESIAN`, the invocations before that combination have run. `PAIRWISE` checks every
   combination before choosing, so nothing has. An `OutOfMemoryError` is thrown as it is.
+- A filter's name can be **overloaded**. The overload used is the one that can filter the test:
+  every parameter binds to a generated parameter (see [Parameter Names](#parameter-names)), with
+  a type that can hold it, and it returns `Boolean`. Where several in the nearest class can, a
+  public one comes before an `internal` one, then a static or `@JvmStatic` one before one declared
+  only in a companion object. If that still leaves more than one, the test fails and lists them.
+  Which one applied used to depend on the order reflection listed them in, and that can change
+  between builds. `@JvmOverloads` makes overloads too:
+  `@JvmOverloads fun upTo(start: Int, end: Int = 2)` filters a test that generates only `start`,
+  but is ambiguous for one that generates both. An overload that bound by position before, and
+  whose names now say otherwise but don't all match, fails the test rather than giving way to
+  another overload.
 - If every combination is rejected, the test fails and the message names the filters responsible.
 - Filtering reduces what *runs*, not what is *generated*, so the invocation ceiling still applies to
   the full product and `generated.invocations` still reports it.
@@ -368,14 +380,40 @@ be recorded in the compiled class files.
 - **Java display names** use `-parameters` names only. Without them, `{argumentsWithNames}` and the
   `generated.parameters` report entry show `arg0`, `arg1`.
 
-A Java build that records no names at all, without `-parameters` and with `-g:none`, binds a
-filter's parameters to the test's by position: its first parameter to the test's first, whatever
-either is called. That is only right for a filter that repeats the test's parameters in order, so
-each such filter logs a warning:
+#### When a filter binds by position
 
-```text
-Filter [ordered_filter] binds to the test's parameters by position, because the class files don't record their names. Compile with -parameters to bind by name.
-```
+A Java test compiled without `-parameters` has names only in its debug information, if at all, and
+4.1.0 bound filters to it by position: a filter's first parameter took the test's first, whatever
+either was called. That applies when the filter has no `-parameters` names either, which is the
+case for a Java filter compiled the same way and for a Kotlin filter compiled without
+`javaParameters`. Position still decides those, so a filter that repeats the test's parameters in
+order keeps working, whatever it calls them. That includes a filter shared by tests whose names
+differ.
+
+Names decide instead when one of the filter's names belongs to a generated parameter at another
+position: `endNotOne_filter(int end)` on `test(int start, int end)` filters on `end`, not `start`. The
+filter's names then all have to be the test's, as everywhere else.
+
+When position decides and names could have told it otherwise, the filter logs a warning, once for
+each test that uses it:
+
+- One side doesn't record names, as with `-g:none`:
+
+  ```text
+  Filter [ordered_filter] binds to the parameters of [ordered] by position, because the class files don't record their names. Compile with -parameters to bind by name.
+  ```
+
+- The filter's names aren't all the test's:
+
+  ```text
+  Filter [loBeforeHi] binds to the parameters of [ordered] by position, because the test has no parameter named [lo, hi]. Name the filter's parameters as the test does to bind by name.
+  ```
+
+A filter whose names aren't recorded anywhere, such as one from a jar compiled with `-g:none`,
+binds by its `arg0`, `arg1`. So with a test whose names are recorded (Kotlin, or Java with
+`-parameters`), it fails with `declares [arg0], which is not a generated parameter of the test`, as
+it did in 4.1.0. With a Java test compiled without `-parameters`, it binds by position and logs the
+first warning.
 
 To record the names everywhere, compile Java with `-parameters`:
 
@@ -548,8 +586,8 @@ class DateRangeTest {
 The function takes no arguments and returns a `List`, `Sequence` or array of the parameter's type.
 It is found by name the way a filter is: static, or in an object or companion object, on the test
 class, its superclasses or its interfaces, and for a `@Nested` class on the classes enclosing it.
-`@JvmStatic` is optional, and so is `public`. To share a function between test classes, name its
-class as well:
+`@JvmStatic` is optional, and so is `public`. If the name is overloaded, the overload that takes no
+arguments is used. To share a function between test classes, name its class as well:
 
 ```kotlin
 object Fixtures {

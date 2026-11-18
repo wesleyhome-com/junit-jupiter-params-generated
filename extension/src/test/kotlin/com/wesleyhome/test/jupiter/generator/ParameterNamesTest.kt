@@ -14,7 +14,10 @@ import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource
 import com.wesleyhome.test.jupiter.consumer.JavaConsumerFilters
 import com.wesleyhome.test.jupiter.consumer.JavaConsumerFixture
+import com.wesleyhome.test.jupiter.consumer.JavaKotlinFiltersFixture
+import com.wesleyhome.test.jupiter.consumer.JavaOverloadsFixture
 import com.wesleyhome.test.jupiter.consumer.KotlinConsumerFixture
+import com.wesleyhome.test.jupiter.consumer.KotlinConsumerImplementing
 import com.wesleyhome.test.jupiter.consumer.KotlinConsumerRules
 import com.wesleyhome.test.jupiter.consumer.NamedCompanionConsumerFixture
 import com.wesleyhome.test.jupiter.java.filter.JavaFilterFixture
@@ -25,6 +28,9 @@ import com.wesleyhome.test.jupiter.testkit.invocationNames
 import com.wesleyhome.test.jupiter.testkit.reportEntries
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.Label
+import org.objectweb.asm.Opcodes
 import java.io.InputStream
 import java.util.logging.Handler
 import java.util.logging.Level
@@ -112,8 +118,20 @@ class ParameterNamesTest {
         fun testNothingIsLogged() {
             assertThat(warningsWhile { invocationNames(KotlinConsumerFixture::class.java, "jvmStatic") }).isEmpty()
         }
+
+        /** JUnit hands the extension an interface's default test as a bridge in the implementing class. */
+        @Test
+        fun testAnInterfacesDefaultTestsBindByName() {
+            assertThat(warningsWhile {
+                assertThat(invocationNames(KotlinConsumerImplementing::class.java, "fromInterface"))
+                    .isEqualTo(listOf("2", "3"))
+                assertThat(invocationNames(KotlinConsumerImplementing::class.java, "explicitFromInterface"))
+                    .isEqualTo(listOf("2", "3"))
+            }).isEmpty()
+        }
     }
 
+    /** 4.1.0 bound these by position, so position decides unless a declared name says otherwise. */
     @Nested
     inner class JavaWithoutParametersFlag {
 
@@ -132,17 +150,107 @@ class ParameterNamesTest {
             assertThat(invocationNames(JavaConsumerFixture::class.java, "fromInterface")).isEqualTo(ORDERED)
         }
 
+        /** A Kotlin filter compiled without javaParameters bound by position to a Java test too. */
+        @Test
+        fun testAKotlinFilterDeclaringItsParametersInAnotherOrderBindsByName() {
+            assertThat(invocationNames(JavaKotlinFiltersFixture::class.java, "reversedByKotlin")).isEqualTo(ORDERED)
+        }
+
         /** The filter's class file records no names, so it binds by position, as it always has. */
         @Test
         fun testAFilterWithoutNamesStillBindsByPosition() {
             assertThat(warningsWhile {
                 assertThat(invocationNames(JavaConsumerFixture::class.java, "strippedFilter")).isEqualTo(ORDERED)
-            }).containsExactly(positionalWarning("strippedOrdered"))
+            }).containsExactly(noNamesWarning("strippedOrdered", "strippedFilter"))
         }
 
         @Test
         fun testAFilterRepeatingTheTestsParametersInOrderStillApplies() {
-            assertThat(invocationNames(JavaConsumerFixture::class.java, "inOrder")).isEqualTo(ORDERED)
+            assertThat(warningsWhile {
+                assertThat(invocationNames(JavaConsumerFixture::class.java, "inOrder")).isEqualTo(ORDERED)
+            }).isEmpty()
+        }
+
+        /** None of these names says the filter means another parameter, so position still decides. */
+        @Test
+        fun testAFilterWithOtherNamesInTheTestsOrderStillBindsByPosition() {
+            assertThat(warningsWhile {
+                assertThat(invocationNames(JavaConsumerFixture::class.java, "otherNames")).isEqualTo(ORDERED)
+            }).containsExactly(otherNamesWarning("otherNames_filter", "otherNames", "[a, b]"))
+        }
+
+        /** No one naming could fit both tests, so renaming couldn't have fixed this. */
+        @Test
+        fun testAFilterSharedByTestsWithDifferentNamesStillBindsByPosition() {
+            assertThat(invocationNames(JavaConsumerFixture::class.java, "sharedAsStartEnd")).isEqualTo(ORDERED)
+            assertThat(invocationNames(JavaConsumerFixture::class.java, "sharedAsMinMax")).isEqualTo(ORDERED)
+        }
+
+        /** `end` names the parameter position already gives it, which confirms the binding rather than changing it. */
+        @Test
+        fun testANameMatchingItsOwnPositionKeepsTheBindingByPosition() {
+            assertThat(warningsWhile {
+                assertThat(invocationNames(JavaConsumerFixture::class.java, "oneNameMatches")).isEqualTo(ORDERED)
+            }).containsExactly(otherNamesWarning("oneNameMatches_filter", "oneNameMatches", "[a]"))
+        }
+
+        /** `end` is Java's `arg2`, its position among the method's parameters, though it's the second generated one. */
+        @Test
+        fun testAParameterAnotherExtensionResolvesBetweenGeneratedOnesKeepsThePositions() {
+            assertThat(warningsWhile {
+                assertThat(invocationNames(JavaConsumerFixture::class.java, "middle")).isEqualTo(listOf("2, 1", "2, 2"))
+            }).containsExactly(otherNamesWarning("middle_filter", "middle", "[a]"))
+        }
+
+        /**
+         * The public overload binds by position, as before, so the `internal` one that would filter on
+         * `end` is never chosen.
+         */
+        @Test
+        fun testAnOverloadThatBoundByPositionStillDoes() {
+            assertThat(warningsWhile {
+                assertThat(invocationNames(JavaKotlinFiltersFixture::class.java, "twoRanks"))
+                    .isEqualTo(listOf("2, 1", "2, 2", "2, 3", "3, 1", "3, 2", "3, 3"))
+            }).containsExactly(otherNamesWarning("crossRank", "twoRanks", "[a]"))
+        }
+
+        /**
+         * By position, `rule(String label)` took `start` and couldn't filter the test, so `rule(int start)`
+         * was used. `label` names the second parameter, so now both can, and neither is preferred.
+         */
+        @Test
+        fun testAnOverloadThatNowBindsByNameMakesTheChoiceAmbiguous() {
+            assertThat(executionFailure(JavaOverloadsFixture::class.java, "mixed"))
+                .isInstanceOf(InvalidFilterException::class)
+                .hasMessage(
+                    "Filter [rule] is overloaded, and 2 overloads can filter this test: rule(String), rule(int). " +
+                        "Give them different names."
+                )
+        }
+
+        /**
+         * `rank(end, other)` bound by position and was used. `end` now says it means another parameter,
+         * and `other` isn't the test's, so it fails as it would alone, rather than quietly giving way to
+         * the `internal` overload, which filters on `start`.
+         */
+        @Test
+        fun testAnOverloadThatBoundByPositionFailsByNameRatherThanGivingWay() {
+            assertThat(warningsWhile {
+                assertThat(executionFailure(JavaKotlinFiltersFixture::class.java, "switched"))
+                    .isInstanceOf(InvalidFilterException::class)
+                    .hasMessage("Filter [rank] declares [other], which is not a generated parameter of the test")
+            }).isEmpty()
+        }
+
+        /** Both overloads bound by position, which was ambiguous, and still is. */
+        @Test
+        fun testAnOverloadThatBoundByPositionStillCountsTowardsAnAmbiguity() {
+            assertThat(executionFailure(JavaOverloadsFixture::class.java, "sameRank"))
+                .isInstanceOf(InvalidFilterException::class)
+                .hasMessage(
+                    "Filter [pair] is overloaded, and 2 overloads can filter this test: pair(int), pair(int, int). " +
+                        "Give them different names."
+                )
         }
 
         /** By position, the filter's first parameter used to take the `TestInfo`, and fail. */
@@ -158,12 +266,29 @@ class ParameterNamesTest {
                 .isEqualTo(listOf("1, 0.5, 2", "1, 0.5, 3", "2, 0.5, 3"))
         }
 
-        /** By position, a filter naming a parameter the test doesn't have used to take the first one. */
+        /** Nothing says it means another parameter than the one position gives it, so it keeps that one. */
+        @Test
+        fun testAFilterNamingAParameterTheTestLacksStillBindsByPosition() {
+            assertThat(warningsWhile {
+                assertThat(invocationNames(JavaConsumerFixture::class.java, "unknownParameter"))
+                    .isEqualTo(listOf("[1] arg0=1", "[2] arg0=2"))
+            }).containsExactly(otherNamesWarning("mentionsMissing", "unknownParameter", "[nope]"))
+        }
+
+        /** `end` says position paired it wrongly, so the names decide, and `other` isn't one of the test's. */
+        @Test
+        fun testOnceANameContradictsItsPositionEveryNameHasToMatch() {
+            assertThat(executionFailure(JavaConsumerFixture::class.java, "contradicted"))
+                .isInstanceOf(InvalidFilterException::class)
+                .hasMessage("Filter [contradicted_filter] declares [other], which is not a generated parameter of the test")
+            assertThat(executionFailure(JavaConsumerFixture::class.java, "startSecond"))
+                .isInstanceOf(InvalidFilterException::class)
+                .hasMessage("Filter [startSecond_filter] declares [a], which is not a generated parameter of the test")
+        }
+
+        /** Messages name a parameter as declared even where position binds it. */
         @Test
         fun testMessagesNameTheJavaParameter() {
-            assertThat(executionFailure(JavaConsumerFixture::class.java, "unknownParameter"))
-                .isInstanceOf(InvalidFilterException::class)
-                .hasMessage("Filter [mentionsMissing] declares [nope], which is not a generated parameter of the test")
             assertThat(executionFailure(JavaConsumerFixture::class.java, "wrongType"))
                 .isInstanceOf(InvalidFilterException::class)
                 .hasMessage("Filter [expectsString] declares [start] as String, but the generated parameter is Integer")
@@ -224,20 +349,46 @@ class ParameterNamesTest {
 
         @Test
         fun testABindingByPositionIsWarnedAbout() {
-            assertThat(warningsWhile { invocationNames(JavaStrippedFixture::class.java, "ordered") }).single()
-                .isEqualTo(positionalWarning("ordered_filter"))
-            assertThat(warningsWhile { invocationNames(JavaStrippedFixture::class.java, "namedFilter") }).single()
-                .isEqualTo(positionalWarning("sharedOrdered"))
+            assertThat(warningsWhile { invocationNames(JavaStrippedFixture::class.java, "ordered") })
+                .containsExactly(noNamesWarning("ordered_filter", "ordered"))
+            assertThat(warningsWhile { invocationNames(JavaStrippedFixture::class.java, "namedFilter") })
+                .containsExactly(noNamesWarning("sharedOrdered", "namedFilter"))
         }
 
-        /** The filter's names aren't recorded, so it binds by Java reflection's `arg0`, as it always has. */
+        /** Reached by its conventional name and named in `filters`, it's one filter, so it warns once. */
+        @Test
+        fun testAFilterReachedTwiceIsWarnedAboutOnce() {
+            assertThat(warningsWhile {
+                assertThat(invocationNames(JavaStrippedFixture::class.java, "twice")).isEqualTo(ORDERED)
+            }).containsExactly(noNamesWarning("twice_filter", "twice"))
+        }
+
+        @Test
+        fun testAFilterWithoutParametersIsNotWarnedAbout() {
+            assertThat(warningsWhile {
+                assertThat(invocationNames(JavaStrippedFixture::class.java, "noParameters")).isEqualTo(listOf("1", "2"))
+            }).isEmpty()
+        }
+
+        /**
+         * The filter's names aren't recorded, so it binds by Java reflection's `arg0`, as it always has.
+         * It fails rather than binding by position, so there is no binding to warn about.
+         */
         @Test
         fun testAFilterWithoutNamesFailsAgainstATestWithNamesAsBefore() {
-            assertThat(executionFailure(StrippedFilterFixture::class.java, "ordered"))
+            assertThat(warningsWhile {
+                assertThat(executionFailure(StrippedFilterFixture::class.java, "ordered"))
+                    .isInstanceOf(InvalidFilterException::class)
+                    .hasMessage("Filter [strippedOrdered] declares [arg0], which is not a generated parameter of the test")
+            }).isEmpty()
+        }
+
+        /** The test has no names to bind by, but the filter's own name still says which parameter is wrong. */
+        @Test
+        fun testMessagesNameTheFiltersParameterAsItIsDeclared() {
+            assertThat(executionFailure(JavaStrippedFixture::class.java, "wrongTypeForANamedFilter"))
                 .isInstanceOf(InvalidFilterException::class)
-                .hasMessage("Filter [strippedOrdered] declares [arg0], which is not a generated parameter of the test")
-            assertThat(warningsWhile { executionFailure(StrippedFilterFixture::class.java, "ordered") })
-                .containsExactly(positionalWarning("strippedOrdered"))
+                .hasMessage("Filter [expectsText] declares [start] as String, but the generated parameter is Integer")
         }
 
         @Test
@@ -310,14 +461,6 @@ class ParameterNamesTest {
                 .isEqualTo(listOf("start", "end"))
         }
 
-        /** Kotlin writes `value` into the bridge's debug information too, which would let both bind. */
-        @Test
-        fun testABridgeForAGenericOverrideHasNoNames() {
-            val methods = GenericOverride::class.java.declaredMethods.filter { it.name == "check" }
-            assertThat(methods.single { it.isBridge }.declaredParameterNames()).isNull()
-            assertThat(methods.single { !it.isBridge }.declaredParameterNames()).isEqualTo(listOf("value"))
-        }
-
         /** `@JvmOverloads` forms have no Kotlin declaration of their own, but their class file has their names. */
         @Test
         fun testAJvmOverloadsFormHasTheNamesOfTheParametersItTakes() {
@@ -334,6 +477,51 @@ class ParameterNamesTest {
             assertThat(filters.getMethod("overloaded", Long::class.java, Int::class.java).declaredParameterNames())
                 .isEqualTo(listOf("big", "small"))
         }
+
+        /**
+         * javac never reuses a parameter's slot, but the class file format allows it, so this method is
+         * generated: its slot 0 holds `start` from the first instruction and `later` after it.
+         */
+        @Test
+        fun testALocalReusingAParametersSlotDoesNotRenameIt() {
+            for (parameterFirst in listOf(true, false)) {
+                val name = "com.wesleyhome.test.jupiter.generator.ReusedSlot$parameterFirst"
+                val bytes = classWithReusedSlot(name.replace('.', '/'), parameterFirst)
+                val loader = object : ClassLoader(javaClass.classLoader) {
+                    val type: Class<*> = defineClass(name, bytes, 0, bytes.size)
+
+                    override fun getResourceAsStream(resource: String): InputStream? =
+                        if (resource == name.replace('.', '/') + ".class") bytes.inputStream() else null
+                }
+                assertThat(loader.type.getMethod("reassigned", Int::class.java).declaredParameterNames())
+                    .isEqualTo(listOf("start"))
+            }
+        }
+    }
+
+    /** The order of a table's entries means nothing, so the parameter's comes first or last. */
+    private fun classWithReusedSlot(internalName: String, parameterFirst: Boolean): ByteArray {
+        val writer = ClassWriter(ClassWriter.COMPUTE_MAXS)
+        writer.visit(Opcodes.V17, Opcodes.ACC_PUBLIC, internalName, null, "java/lang/Object", null)
+        val method = writer.visitMethod(Opcodes.ACC_PUBLIC or Opcodes.ACC_STATIC, "reassigned", "(I)Z", null, null)
+        val start = Label()
+        val later = Label()
+        val end = Label()
+        method.visitCode()
+        method.visitLabel(start)
+        method.visitInsn(Opcodes.ICONST_0)
+        method.visitVarInsn(Opcodes.ISTORE, 0)
+        method.visitLabel(later)
+        method.visitVarInsn(Opcodes.ILOAD, 0)
+        method.visitInsn(Opcodes.IRETURN)
+        method.visitLabel(end)
+        if (parameterFirst) method.visitLocalVariable("start", "I", null, start, later, 0)
+        method.visitLocalVariable("later", "I", null, later, end, 0)
+        if (!parameterFirst) method.visitLocalVariable("start", "I", null, start, later, 0)
+        method.visitMaxs(0, 0)
+        method.visitEnd()
+        writer.visitEnd()
+        return writer.toByteArray()
     }
 
     private fun sharedOrdered(filters: Class<*>) = filters.getMethod("sharedOrdered", Int::class.java, Int::class.java)
@@ -361,14 +549,6 @@ class ParameterNamesTest {
         fun rule(start: Int): Boolean = start > 1
     }
 
-    interface Check<T> {
-        fun check(value: T): Boolean
-    }
-
-    object GenericOverride : Check<Int> {
-        override fun check(value: Int): Boolean = value > 1
-    }
-
     object CapturingRules {
         fun capturing(start: Int): () -> Boolean = { start > 1 }
     }
@@ -379,9 +559,22 @@ class ParameterNamesTest {
         }
     }
 
-    private fun positionalWarning(filter: String): String =
-        "Filter [$filter] binds to the test's parameters by position, because the class files don't " +
+    /** This repository compiles with javaParameters, where these tests always bound by name. */
+    @Test
+    fun testTheRepositorysInterfaceDefaultTestsLogNothing() {
+        assertThat(warningsWhile {
+            invocationNames(ParameterFilterTest.ImplementingFixture::class.java, "fromInterface")
+            invocationNames(ParameterFilterTest.ImplementingFixture::class.java, "explicitFromInterface")
+        }).isEmpty()
+    }
+
+    private fun noNamesWarning(filter: String, test: String): String =
+        "Filter [$filter] binds to the parameters of [$test] by position, because the class files don't " +
             "record their names. Compile with -parameters to bind by name."
+
+    private fun otherNamesWarning(filter: String, test: String, names: String): String =
+        "Filter [$filter] binds to the parameters of [$test] by position, because the test has no parameter " +
+            "named $names. Name the filter's parameters as the test does to bind by name."
 
     private fun warningsWhile(run: () -> Unit): List<String> {
         val logger = Logger.getLogger(ParameterFilter::class.java.name)
