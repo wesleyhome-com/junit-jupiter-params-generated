@@ -34,11 +34,12 @@ internal class ParameterFilter(
 
     companion object {
 
+        /** An `internal` filter can be named by both its declared and its compiled name; it applies once. */
         fun resolve(
             testClass: Class<*>,
             names: Collection<String>,
             layout: GeneratedParameterLayout
-        ): List<ParameterFilter> = names.map { name -> resolve(testClass, name, layout) }
+        ): List<ParameterFilter> = names.map { name -> resolve(testClass, name, layout) }.distinctBy { it.method }
 
         private fun resolve(
             testClass: Class<*>,

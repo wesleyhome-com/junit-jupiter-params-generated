@@ -23,18 +23,25 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   - in a named companion object (`companion object Rules`) without `@JvmStatic`;
   - when it's `internal` and named plain `<test>_filter` (suffixed ones already applied);
   - in a subclass, for a test inherited from a base class;
-  - in an interface, for the interface's default test;
-  - in an enclosing class, for a test in a `@Nested` class. That includes a filter written for the
-    enclosing class's own test of the same name, which now applies to the nested test as well.
-    Rename one of the tests, or list the filters each one needs in `filters = [...]`.
+  - in an interface that the test class or one of its superclasses implements, for any test of that
+    name in the class, not only the interface's own default tests;
+  - in an enclosing class, for a test in a `@Nested` class, unless the enclosing class or a class
+    between them has a test of that name of its own. The filter then stays that test's, as before.
 - **A function the lookup used to skip can now take precedence** (#121). A filter or `@ValuesFrom`
   function in a named companion object, or an `internal` one, was invisible, so a function of the
   same name in a superclass was used instead. The nearer class's own function is used now. If the
-  superclass's was the one you meant, rename one of them.
+  superclass's was the one you meant, rename one of them. Within one class, a public function still
+  wins over an `internal` overload of the same name.
+- **A subclass's `internal` conventional filter now replaces a base class's filter of the same
+  name** (#121). With a public `prices_filter_small` in the base class and an `internal` one in the
+  subclass, both used to apply, because the subclass's was only known by its compiled name. Now they
+  share one name and only the subclass's applies, so the base class's rule silently stops filtering.
+  Give them different names to keep both.
 - **`internal` filters are reported by their declared name** (#121). The `generated.filters` report
   entry and the "rejected by" failure message used to show the compiled name, such as
   `prices_filter_small$my_module`, and now show `prices_filter_small`. Update anything that matches
-  on the old name.
+  on the old name. Naming an `internal` function by its compiled name in `filters = [...]` or
+  `@ValuesFrom` still works.
 
 ### Fixed
 
@@ -45,9 +52,9 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   a filter of `<test>`.
   That failed the test with errors such as `Filter [price_filter_applies] must be static…` or
   `Filter [prices_filter_small$lambda$0] declares [$start]…`.
-- **Filters and `@ValuesFrom` functions are found in named companions, `internal` functions,
-  interfaces and enclosing classes** (#121): in a named companion object, as `internal` functions,
-  in an interface the test class implements, and for a `@Nested` class in the classes enclosing it. Naming one in `filters = [...]` or
+- **More places for filters and `@ValuesFrom` functions** (#121): a named companion object, an
+  `internal` function, an interface the test class implements directly or through a superclass,
+  and for a `@Nested` class the classes enclosing it. Naming one in `filters = [...]` or
   `@ValuesFrom` used to fail with `No filter named […]` or `no function named […]`. Conventional
   filters are now looked for on the class running the test rather than the one declaring it, so
   they also apply to inherited tests and to an interface's default tests.

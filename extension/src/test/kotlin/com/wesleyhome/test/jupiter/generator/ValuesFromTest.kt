@@ -88,6 +88,13 @@ class ValuesFromTest {
     fun testInternalFunction() {
         assertThat(invocationNames(InternalFixture::class.java, "fromInternal")).isEqualTo(listOf("3", "4"))
         assertThat(invocationNames(InternalFixture::class.java, "fromInternalJvmStatic")).isEqualTo(listOf("5", "6"))
+        assertThat(invocationNames(InternalFixture::class.java, "byCompiledName")).isEqualTo(listOf("3", "4"))
+    }
+
+    /** The `internal` overload was never a candidate before, so the public one is still chosen. */
+    @Test
+    fun testAPublicOverloadIsChosenOverAnInternalOne() {
+        assertThat(invocationNames(InternalFixture::class.java, "overloaded")).isEqualTo(listOf("1", "2"))
     }
 
     @Test
@@ -511,11 +518,24 @@ class ValuesFromTest {
         fun fromInternalJvmStatic(@ValuesFrom("internalJvmStaticInts") value: Int) {
         }
 
+        @GeneratedParametersTest(name = "{arguments}")
+        fun byCompiledName(@ValuesFrom("internalInts\$$TEST_MODULE") value: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun overloaded(@ValuesFrom("vals") value: Int) {
+        }
+
         companion object {
             internal fun internalInts(): List<Int> = listOf(3, 4)
 
             @JvmStatic
             internal fun internalJvmStaticInts(): List<Int> = listOf(5, 6)
+
+            fun vals(): List<Int> = listOf(1, 2)
+
+            @JvmStatic
+            internal fun vals(count: Int): List<Int> = List(count) { it }
         }
     }
 

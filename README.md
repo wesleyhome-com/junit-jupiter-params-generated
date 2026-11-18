@@ -282,12 +282,16 @@ fun prices(...)
 - A filter must be **static**, or declared in a **companion object**, named or not. Filtering
   happens before the test instance exists, which is the same constraint `@MethodSource` has.
 - Filters are looked for on the class running the test, then its superclasses, then the interfaces
-  it implements. Kotlin doesn't allow a companion object in a `@Nested` class, so the classes
-  enclosing it come after that, each with its own superclasses and interfaces. The first function
-  of that name wins. So a subclass's `<test>_filter` applies to a test it inherits, and an enclosing
-  class's `<test>_filter` applies to every test of that name in its `@Nested` classes.
+  it and its superclasses implement. Kotlin doesn't allow a companion object in a `@Nested` class,
+  so the classes enclosing it come after that, each with its own superclasses and interfaces. The
+  first function of that name wins, so a subclass's `<test>_filter` applies to a test it inherits.
+- An enclosing class's `<test>_filter` applies to a test of that name in its `@Nested` classes,
+  unless the enclosing class, or a class between them, has a test of that name of its own, declared
+  or inherited. The filter is then taken to be that test's. `filters = [...]` always looks in
+  enclosing classes.
 - An `internal` filter is found by the name it's declared with, although its compiled name has the
-  module name appended.
+  module name appended. The compiled name works too. If one class has a public function and an
+  `internal` one of the same name, the public one is used.
 - Parameter types must match the generated parameter. A supertype is fine - `Number` accepts a
   generated `Int` - but a filter declaring `Long` against a generated `Int` is rejected rather than
   silently widened by reflection.
@@ -298,8 +302,9 @@ fun prices(...)
 
 The annotation processor warns about any `*_filter` method that matches no test in its class, so
 renaming a test cannot silently leave its rule unused. It only compares a class's filters with the
-tests that class declares, so for now it also warns about a filter written for an inherited test or
-for a test in a `@Nested` class.
+tests that class declares. So for now, a class that declares generated tests of its own also gets
+this warning for a filter written for a test it doesn't declare: one it inherits, or one in a
+`@Nested` class.
 
 ## Invocation Display Names
 

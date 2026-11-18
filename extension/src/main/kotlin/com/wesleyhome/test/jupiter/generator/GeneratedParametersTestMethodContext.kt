@@ -52,15 +52,23 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
      * They are looked for from the class running the test, where explicit filters are resolved,
      * rather than the one declaring it: an inherited test takes its subclass's filters, and an
      * interface's default test reaches the extension as a bridge in the implementing class.
+     *
+     * A `@Nested` test also takes them from enclosing classes, but only out to the first that has a
+     * test of the same name, declared or inherited. A filter there was written for that test.
      */
     private fun conventionalFilterNames(testName: String, testClass: Class<*>): Set<String> {
         val prefix = "$testName$FILTER_SUFFIX"
-        return declaredFunctionsOf(testClass)
+        val enclosing = enclosingClassesOf(testClass).drop(1).takeWhile { !it.hasTestNamed(testName) }
+        return (sequenceOf(testClass) + enclosing)
+            .flatMap { declaredFunctionsOf(it) }
             .filter { it.name.startsWith(prefix) && it.couldBeAFilter() }
             .map { it.kotlinName() }
             .filter { it == prefix || it.startsWith("${prefix}_") }
             .toSet()
     }
+
+    private fun Class<*>.hasTestNamed(testName: String): Boolean =
+        declaredFunctionsOf(this).any { it.name.startsWith(testName) && it.isTest() && it.kotlinName() == testName }
 
     /**
      * The compiler names what it generates for a function after that function:
@@ -71,9 +79,9 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
      * it is better than ignoring it. `@Testable` is on every JUnit test annotation,
      * `@GeneratedParametersTest` included.
      */
-    private fun Method.couldBeAFilter(): Boolean =
-        ('$' !in name || kotlinFunction != null) &&
-            !AnnotationSupport.isAnnotated(this, Testable::class.java)
+    private fun Method.couldBeAFilter(): Boolean = ('$' !in name || kotlinFunction != null) && !isTest()
+
+    private fun Method.isTest(): Boolean = AnnotationSupport.isAnnotated(this, Testable::class.java)
 
     /**
      * A Kotlin nullable type still implies a null case, so tests written before [WithNull] keep
