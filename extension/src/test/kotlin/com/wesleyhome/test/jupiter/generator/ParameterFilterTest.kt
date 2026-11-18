@@ -4,14 +4,19 @@ import assertk.assertThat
 import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
+import assertk.assertions.messageContains
 import com.wesleyhome.test.jupiter.InvalidFilterException
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.WithNull
 import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource
 import com.wesleyhome.test.jupiter.annotations.number.IntSource
+import com.wesleyhome.test.jupiter.java.filter.JavaFilterFixture
 import com.wesleyhome.test.jupiter.testkit.executionFailure
 import com.wesleyhome.test.jupiter.testkit.invocationNames
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.util.concurrent.atomic.AtomicInteger
 
 /** Counts calls to `duplicated_filter`, to prove naming a filter twice does not apply it twice. */
@@ -189,6 +194,58 @@ class ParameterFilterTest {
             .hasMessage("Filter [returnsNull] returned null")
     }
 
+    /** The lambda compiles to `capturingLambda_filter_small$lambda$0`, taking the captured `$start`. */
+    @Test
+    fun testALambdaInsideAConventionalFilterIsNotAFilter() {
+        assertThat(invocationNames(Fixture::class.java, "capturingLambda")).isEqualTo(listOf("1", "2"))
+    }
+
+    /**
+     * A lambda or local function whose own parameters happen to bind used to be applied as an extra
+     * filter, which changed what ran rather than failing.
+     */
+    @Test
+    fun testALambdaOrLocalFunctionWhoseParametersBindIsNotAppliedAsAFilter() {
+        assertThat(invocationNames(Fixture::class.java, "bindingLambda")).isEqualTo(listOf("1", "3"))
+        assertThat(invocationNames(Fixture::class.java, "bindingLocalFunction")).isEqualTo(listOf("1", "3"))
+    }
+
+    /** The default argument compiles to `withDefault_filter_ordered$default`, which is not a filter. */
+    @Test
+    fun testAConventionalFilterWithADefaultArgumentApplies() {
+        assertThat(invocationNames(Fixture::class.java, "withDefault")).isEqualTo(
+            listOf("1, 1", "1, 2", "2, 2")
+        )
+    }
+
+    /** Tests named `price_filter_*` - `@Test`, `@ParameterizedTest` and the rest - are not filters of `price`. */
+    @Test
+    fun testATestNamedLikeAConventionalFilterIsNotAFilter() {
+        assertThat(invocationNames(Fixture::class.java, "price")).isEqualTo(listOf("1", "3"))
+        assertThat(invocationNames(JavaFilterFixture::class.java, "price")).isEqualTo(listOf("1", "3"))
+    }
+
+    /**
+     * A `@JvmSynthetic` filter is the user's own, so it must not be skipped as compiler-generated. It
+     * fails at the moment, because a synthetic method records no parameter names, but it fails loudly.
+     */
+    @Test
+    fun testAJvmSyntheticConventionalFilterIsReportedRatherThanIgnored() {
+        assertThat(executionFailure(Fixture::class.java, "jvmSynthetic"))
+            .isInstanceOf(InvalidFilterException::class)
+            .messageContains("Filter [jvmSynthetic_filter_small]")
+    }
+
+    /**
+     * Skipping names with a `$` must not skip a declared function: an `internal` one, mangled to
+     * `internalSuffixed_filter_small$<module>`, or a Java method named with one.
+     */
+    @Test
+    fun testAConventionalFilterWhoseJvmNameContainsADollarApplies() {
+        assertThat(invocationNames(Fixture::class.java, "internalSuffixed")).isEqualTo(listOf("1", "2"))
+        assertThat(invocationNames(JavaFilterFixture::class.java, "ordered")).isEqualTo(listOf("1", "2"))
+    }
+
     open class BaseFixture {
         companion object {
             @JvmStatic
@@ -338,6 +395,54 @@ class ParameterFilterTest {
         fun nullReturn(@IntRangeSource(min = 1, max = 2) start: Int) {
         }
 
+        @GeneratedParametersTest(name = "{arguments}")
+        fun capturingLambda(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun bindingLambda(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun bindingLocalFunction(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun withDefault(
+            @IntRangeSource(min = 1, max = 2) start: Int,
+            @IntRangeSource(min = 1, max = 2) end: Int
+        ) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun price(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @Test
+        fun price_filter_applies() {
+        }
+
+        @GeneratedParametersTest
+        fun price_filter_generated(@IntRangeSource(min = 1, max = 2) start: Int) {
+        }
+
+        @ParameterizedTest
+        @ValueSource(ints = [1])
+        fun price_filter_parameterized(start: Int) {
+        }
+
+        @RepeatedTest(1)
+        fun price_filter_repeated() {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun internalSuffixed(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun jvmSynthetic(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
         fun instanceRule(start: Int): Boolean = true
 
         companion object {
@@ -410,6 +515,37 @@ class ParameterFilterTest {
 
             @JvmStatic
             fun returnsNull(start: Int): Boolean? = null
+
+            @JvmStatic
+            fun capturingLambda_filter_small(start: Int): Boolean {
+                val isSmall = { start <= 2 }
+                return isSmall()
+            }
+
+            @JvmStatic
+            fun bindingLambda_filter_oneOrThree(start: Int): Boolean {
+                val isOne: (Int) -> Boolean = { start -> start == 1 }
+                return isOne(start) || start == 3
+            }
+
+            @JvmStatic
+            fun bindingLocalFunction_filter_oneOrThree(start: Int): Boolean {
+                fun isOne(start: Int) = start == 1
+                return isOne(start) || start == 3
+            }
+
+            @JvmStatic
+            fun withDefault_filter_ordered(start: Int, end: Int = 2): Boolean = start <= end
+
+            @JvmStatic
+            fun price_filter_odd(start: Int): Boolean = start % 2 == 1
+
+            @JvmStatic
+            internal fun internalSuffixed_filter_small(start: Int): Boolean = start <= 2
+
+            @JvmStatic
+            @JvmSynthetic
+            fun jvmSynthetic_filter_small(start: Int): Boolean = start <= 2
         }
     }
 }
