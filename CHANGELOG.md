@@ -105,6 +105,20 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   of these classes unboxed, as the test gets it. Display names, report entries, filters and
   invocation counts don't change.
 
+### Added
+
+- **Kotlin 2.2 projects, such as Spring Boot 4.0's, can use the library** (#170). It's still
+  compiled by Kotlin 2.4, but its classes are built for Kotlin 2.2, so a 2.2 compiler reads them.
+  With 4.1.0 it failed: `The actual metadata version is 2.4.0, but the compiler version 2.2.0 can
+  read versions up to 2.3.0`. Kotlin 2.3 projects, such as Spring Boot 4.1's, already compiled
+  against 4.1.0, since a 2.3 compiler reads 2.4 metadata. They're now inside the supported range.
+  The POMs still ask for `kotlin-stdlib` and `kotlin-reflect` 2.4.21 at run time, as before. A
+  Maven project on Kotlin 2.2 without Spring Boot's dependency management declares its own
+  `kotlin-reflect`, as the README describes. The annotation processor needs KSP2, from
+  2.2.21-2.0.4. In the class files, only what the compiler records for Kotlin changes: the Kotlin
+  metadata, which is 2.2's and so no longer repeats the classes' annotations as 2.4's does, and one
+  coroutine's debug metadata.
+
 ### Fixed
 
 - **Conventional filters no longer pick up methods that aren't filters** (#124). A test of its own
@@ -218,6 +232,16 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
 - JaCoCo 0.8.16 measures the coverage gate.
 - `./gradlew test -PjunitVersion=6.0.3` runs every project's tests on another JUnit version, such
   as 6.0.3, the oldest this library supports (#168). Only the tests' runtime classpath changes.
+- `./gradlew test -PkotlinRuntime=2.2.21` runs every project's tests on another `kotlin-stdlib` and
+  `kotlin-reflect`, such as 2.2.21, the oldest this library supports (#170). Tests of context
+  parameters, which kotlin-reflect reads from 2.4 on, are skipped on an older one.
+- Pull request and `main` builds also build and test Kotlin 2.2.21 projects against the library
+  (#170): in Gradle, with and without Spring Boot 4.0.9's dependency management and with the
+  annotation processor under KSP 2.2.21-2.0.4, and in Maven. They also check that every published
+  class carries Kotlin 2.2 metadata. `bash .github/scripts/consumer-smoke-test.sh` runs them
+  locally.
+- A `floor-versions` check runs every test on `kotlin-stdlib` and `kotlin-reflect` 2.2.21 and JUnit
+  6.0.3, beside the `build` check (#170).
 
 ## [4.1.0] - 2026-11-14
 

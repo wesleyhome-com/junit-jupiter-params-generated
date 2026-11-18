@@ -27,6 +27,10 @@ Maven:
 </dependency>
 ```
 
+On Kotlin 2.2 or 2.3 with Maven, and without Spring Boot's dependency management, also declare
+`kotlin-reflect` at your Kotlin version, as described under
+[Compatibility Matrix](#compatibility-matrix).
+
 ### Annotation Processor (Optional, recommended)
 
 Gradle (KSP):
@@ -57,14 +61,25 @@ Maven:
 | Component | Supported | Verified against |
 | --- | --- | --- |
 | Java | 17+ | 17 (class file major version 61) |
-| Kotlin/JVM | 2.4+ | 2.4.20 |
+| Kotlin/JVM | 2.2+ | 2.4.21, with the full suite re-run on `kotlin-stdlib` and `kotlin-reflect` 2.2.21, and Kotlin 2.2.21 projects built against it: Gradle with and without Spring Boot 4.0.9's dependency management, and Maven |
+| KSP, for the annotation processor | KSP2, 2.2.21-2.0.4+ | 2.2.21-2.0.4 in that Kotlin 2.2.21 Gradle project, and 2.3.14 in the processor's tests |
 | JUnit Jupiter | 6.0.3+ | 6.1.3, with the full suite re-run against 6.0.3 |
 | Gradle | any version supporting the above | 9.7.1 |
-| Maven | `test` scope for the extension | - |
+| Maven | `test` scope for the extension | 3.9.11, and the CI runner's |
 
-Kotlin 2.4 is a floor rather than a preference: the published classes carry Kotlin metadata v2.4,
-and earlier compilers refuse to read it. Consuming this library from a Kotlin 2.3 build fails with
-"compiled with an incompatible version of Kotlin".
+The library is compiled by Kotlin 2.4 for Kotlin 2.2, Spring Boot 4.0's: its classes carry Kotlin
+2.2 metadata, which compilers from 2.2 on read. The extension asks for the `kotlin-stdlib` and
+`kotlin-reflect` of the Kotlin it's compiled with, 2.4.21, at run time:
+
+- In a Spring Boot 4.0 or 4.1 project, Boot's dependency management sets them to its own Kotlin
+  version, 2.2.21 or 2.3.21, and the library runs on it.
+- In a Gradle project on Kotlin 2.2 or 2.3 without it, they stay off the compile classpath: your
+  code compiles against your own `kotlin-stdlib`, and your tests run on 2.4.21's. A newer standard
+  library runs code compiled for an older one.
+- In a Maven project on Kotlin 2.2 or 2.3 without it, declare `kotlin-stdlib` and `kotlin-reflect`
+  at your own Kotlin version, `kotlin-reflect` with `test` scope. Maven puts a test dependency's
+  runtime dependencies on the test compile classpath, where a Kotlin 2.2 compiler fails on
+  `kotlin-reflect` 2.4.21's metadata. Your declarations are nearer, so they win.
 
 The optional annotation processor runs under KSP, so compile-time validation applies to Kotlin
 sources only. Java sources get the full runtime behaviour, but misconfigured annotations surface

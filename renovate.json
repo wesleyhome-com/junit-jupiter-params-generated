@@ -26,6 +26,13 @@
       "matchPackageNames": [
         "org.jacoco:org.jacoco.agent"
       ]
+    },
+    {
+      "description": "consumer-tests pins the oldest versions the library supports, such as Spring Boot 4.0's Kotlin, so bumping them would stop testing those",
+      "matchFileNames": [
+        "consumer-tests/**"
+      ],
+      "enabled": false
     }
   ]
 }
