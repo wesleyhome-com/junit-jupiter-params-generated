@@ -15,6 +15,7 @@ import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource
 import com.wesleyhome.test.jupiter.consumer.JavaConsumerFilters
 import com.wesleyhome.test.jupiter.consumer.JavaConsumerFixture
 import com.wesleyhome.test.jupiter.consumer.JavaKotlinFiltersFixture
+import com.wesleyhome.test.jupiter.consumer.JavaOverloadsFixture
 import com.wesleyhome.test.jupiter.consumer.KotlinConsumerFixture
 import com.wesleyhome.test.jupiter.consumer.KotlinConsumerImplementing
 import com.wesleyhome.test.jupiter.consumer.KotlinConsumerRules
@@ -203,6 +204,20 @@ class ParameterNamesTest {
                 assertThat(invocationNames(JavaKotlinFiltersFixture::class.java, "twoRanks"))
                     .isEqualTo(listOf("2, 1", "2, 2", "2, 3", "3, 1", "3, 2", "3, 3"))
             }).containsExactly(otherNamesWarning("crossRank", "twoRanks", "[a]"))
+        }
+
+        /**
+         * By position, `rule(String label)` took `start` and couldn't filter the test, so `rule(int start)`
+         * was used. `label` names the second parameter, so now both can, and neither is preferred.
+         */
+        @Test
+        fun testAnOverloadThatNowBindsByNameMakesTheChoiceAmbiguous() {
+            assertThat(executionFailure(JavaOverloadsFixture::class.java, "mixed"))
+                .isInstanceOf(InvalidFilterException::class)
+                .hasMessage(
+                    "Filter [rule] is overloaded, and 2 overloads can filter this test: rule(String), rule(int). " +
+                        "Give them different names."
+                )
         }
 
         /** By position, the filter's first parameter used to take the `TestInfo`, and fail. */

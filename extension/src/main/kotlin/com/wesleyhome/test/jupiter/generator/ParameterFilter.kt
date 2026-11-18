@@ -186,11 +186,12 @@ internal class ParameterFilter(
 /**
  * How a filter's parameters find their generated slots: the one decision every caller binds through.
  *
- * 4.1.0 matched Java reflection's names against the test's display names. For Java compiled without
- * `-parameters`, both are `arg0`, `arg1`, so parameters paired up by position. Where they did,
- * position still decides, unless a declared name matches a generated parameter at another position:
- * that pairing was wrong, so the declared names decide. Elsewhere, declared names bind when the class
- * files record both sides' names, and otherwise 4.1.0's matching does.
+ * 4.1.0 matched Java reflection's names against the test's display names. That matching stands
+ * unless a declared name says a parameter belongs to a generated parameter it didn't give it, either
+ * another one or, where reflection's names don't match, any at all. The declared names then decide.
+ * For Java compiled without `-parameters`, reflection's names are `arg0`, `arg1` on both sides, so
+ * that matching pairs parameters by position, and a filter that repeats the test's parameters in
+ * order keeps them whatever it calls them.
  *
  * A bridge for a generic override has the overriding method's names in its debug information, but
  * only the overriding method should bind by them.
@@ -206,7 +207,7 @@ internal class FilterBinding(method: Method, val layout: GeneratedParameterLayou
     private val pairedByPosition: Boolean =
         compiled.isNotEmpty() && compiled.indices.all { compiled[it] == "arg$it" } && layout.namesArePositions
 
-    private val bindingNames: List<String>? = declared?.takeIf { !pairedByPosition || contradictsPositions(it) }
+    private val bindingNames: List<String>? = declared?.takeIf { contradictsReflection(it) }
 
     /** What messages call each parameter: its declared name wherever one is recorded, whatever binds it. */
     val names: List<String> = recorded ?: compiled
@@ -216,14 +217,14 @@ internal class FilterBinding(method: Method, val layout: GeneratedParameterLayou
 
     /** Why the filter binds by position, when names could have bound it otherwise. */
     val boundByPositionBecause: String? = when {
-        !pairedByPosition || bindingNames != null -> null
+        bindingNames != null || !pairedByPosition -> null
         declared == null -> "the class files don't record their names. Compile with -parameters to bind by name."
         else -> declared.filter { layout.slotOfDeclaredName(it) == null }.takeIf { it.isNotEmpty() }?.let {
             "the test has no parameter named $it. Name the filter's parameters as the test does to bind by name."
         }
     }
 
-    private fun contradictsPositions(declared: List<String>): Boolean = declared.indices.any { index ->
+    private fun contradictsReflection(declared: List<String>): Boolean = declared.indices.any { index ->
         layout.slotOfDeclaredName(declared[index]).let { it != null && it != layout.slotOfName(compiled[index]) }
     }
 }

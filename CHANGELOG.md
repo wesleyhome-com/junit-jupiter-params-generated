@@ -67,6 +67,10 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   the test`: rename the parameter. A filter whose names agree with their positions, or that names
   none of the test's parameters, such as `(int a, int b)`, binds as before, with a warning. For
   Kotlin tests and tests compiled with `-parameters`, only filters that used to fail are affected.
+  An overload that now binds by name can leave two that filter the test: for
+  `mixed(int start, String label)`, `rule(String label)` used to take `start` and couldn't, so
+  `rule(int start)` was used. Now both can, and the test fails with
+  `Filter [rule] is overloaded, and 2 overloads can filter this test`. Give them different names.
 
 ### Fixed
 

@@ -2,6 +2,8 @@ package com.wesleyhome.test.jupiter.generator
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
+import com.wesleyhome.test.jupiter.consumer.JavaConsumerFilters
 import com.wesleyhome.test.jupiter.java.filter.JavaParametersFilters
 import org.junit.jupiter.api.Test
 
@@ -16,6 +18,20 @@ class FilterBindingTest {
     fun testAFilterWithCompiledNamesBindsByNameToATestWithout() {
         val filter = JavaParametersFilters::class.java.getMethod("otherThenEnd", Int::class.java, Int::class.java)
         assertThat(slotsOf(filter, positionsNamed("start", "end"))).isEqualTo(listOf(null, 1))
+    }
+
+    /** Neither filter was paired by position before, so neither is said to be now: both just fail to bind. */
+    @Test
+    fun testOnlyAPairingByPositionIsWarnedAbout() {
+        val compiledNames = JavaParametersFilters::class.java.getMethod("otherThenEnd", Int::class.java, Int::class.java)
+        assertThat(FilterBinding(compiledNames, positionsNamed("low", "high")).boundByPositionBecause).isNull()
+        val debugNames = JavaConsumerFilters::class.java.getMethod("sharedOrdered", Int::class.java, Int::class.java)
+        assertThat(FilterBinding(debugNames, namesNamed("low", "high")).boundByPositionBecause).isNull()
+        assertThat(FilterBinding(debugNames, positionsNamed("low", "high")).boundByPositionBecause)
+            .isEqualTo(
+                "the test has no parameter named [start, end]. Name the filter's parameters as the test does to " +
+                    "bind by name."
+            )
     }
 
     /** Kotlin writes `value` into the bridge's debug information too, which would let both bind. */
