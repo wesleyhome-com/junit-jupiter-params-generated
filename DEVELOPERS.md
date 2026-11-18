@@ -57,12 +57,24 @@ those modules sets a minimum line and branch coverage for the module as a whole,
 `build.gradle.kts`. A change that takes a module below either minimum fails the build:
 
 ```
-Rule violated for bundle annotation-processor: branches covered ratio is 0.67, but expected minimum is 0.68
+Rule violated for bundle annotation-processor: branches covered ratio is 0.66, but expected minimum is 0.67
 ```
 
-The minimums started as each module's coverage when the gate was added, rounded down to the
-percent, so coverage can stay where it is or rise. There is little slack: in `validation` and
-`annotation-processor`, one more uncovered line or branch fails.
+The minimums started at the coverage when the gate was added, rounded down to the percent (a
+percent lower in the two small modules), so coverage can stay where it is or rise:
+
+| Module                 | Lines | Branches | Headroom                                      |
+|------------------------|-------|----------|-----------------------------------------------|
+| `extension`            | 0.98  | 0.92     | only the rounding                             |
+| `validation`           | 0.93  | 0.83     | a percent lower: about 2 lines and 1 branch   |
+| `annotation-processor` | 0.86  | 0.67     | a percent lower: about 2 lines and 2 branches |
+
+`validation` and `annotation-processor` are small enough that a single uncovered line or branch
+moves their coverage by half a percent or more, so they keep a percent of headroom.
+
+The JaCoCo version is pinned as `jacoco` in `gradle/libs.versions.toml`, because a different
+JaCoCo can measure unchanged code differently. Renovate proposes its bumps in a pull request of
+their own, and the gate judges that pull request like any other.
 
 - **Run it:** `./gradlew jacocoTestCoverageVerification`, or one module with, for example,
   `./gradlew :annotation-processor:jacocoTestCoverageVerification`. It runs the tests it needs.
@@ -70,9 +82,10 @@ percent, so coverage can stay where it is or rise. There is little slack: in `va
   which marks missed lines and branches in the source.
 - **When it fails,** add tests for the code the change added or left uncovered. Lowering a minimum
   is a decision for the pull request to explain, not a fix.
-- **Raise a minimum** when a module's coverage passes the next whole percent: read its Total row in
-  the HTML report and change the `minimum` values in that module's `build.gradle.kts` in the same
-  pull request, so the gain is kept.
+- **Raise a minimum** when coverage rises, keeping the same headroom: read the module's Total row
+  in the HTML report, round down to the percent (and take a percent off for `validation` and
+  `annotation-processor`), and change the `minimum` values in that module's `build.gradle.kts` in
+  the same pull request, so the gain is kept.
 
 `validation` has no tests of its own. Its report and gate read the JaCoCo data from the
 `extension` and `annotation-processor` tests, so checking it runs those tests. `examples` has no

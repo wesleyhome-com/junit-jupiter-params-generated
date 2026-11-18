@@ -3,6 +3,10 @@ plugins {
     jacoco
 }
 
+jacoco {
+    toolVersion = the<VersionCatalogsExtension>().named("libs").findVersion("jacoco").get().requiredVersion
+}
+
 tasks.test {
     finalizedBy(tasks.jacocoTestReport)
     extensions.configure<JacocoTaskExtension> {
@@ -12,11 +16,18 @@ tasks.test {
     }
 }
 
+// The jacoco plugin only orders these after test, so on their own they would skip, or read stale
+// execution data, rather than run the tests.
 tasks.jacocoTestReport {
+    dependsOn(tasks.test)
     reports {
         xml.required = true
         html.required = true
     }
+}
+
+tasks.jacocoTestCoverageVerification {
+    dependsOn(tasks.test)
 }
 
 tasks.check {

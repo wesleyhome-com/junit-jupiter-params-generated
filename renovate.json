@@ -18,6 +18,14 @@
       "matchPackageNames": [
         "*"
       ]
+    },
+    {
+      "description": "JaCoCo bumps get a pull request of their own: a new JaCoCo can measure unchanged code differently, which the coverage gate should judge alone",
+      "groupName": "jacoco",
+      "groupSlug": "jacoco",
+      "matchPackageNames": [
+        "org.jacoco:org.jacoco.agent"
+      ]
     }
   ]
 }

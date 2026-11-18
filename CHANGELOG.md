@@ -33,8 +33,8 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
 
 - Builds enforce minimum line and branch test coverage for `extension`, `validation` and
   `annotation-processor` (#145). `./gradlew check` now runs `jacocoTestCoverageVerification`, which
-  failed before checking anything. Each module's minimums are its coverage today, rounded down to
-  the percent, so a pull request that lowers coverage below them fails its `build` check.
+  failed before checking anything. Each module's minimums sit just below the coverage when the
+  gate was added, so a pull request that lowers coverage past them fails its `build` check.
 - The release workflow creates the GitHub release. Its notes are this changelog's section for the
   version, followed by the release's pull requests grouped by label.
 - `CHANGELOG.md` records each release's changes, starting from 4.0.0.

@@ -23,18 +23,20 @@ dependencies {
 
 tasks.jacocoTestCoverageVerification {
     violationRules {
-        // Coverage when the gate was added, rounded down to the percent. Raising it: DEVELOPERS.md.
+        // A percent below the coverage when the gate was added, rounded down, because in a module
+        // this small one uncovered line or branch moves coverage by half a percent or more.
+        // Raising it: DEVELOPERS.md.
         rule {
             element = "BUNDLE"
             limit {
                 counter = "LINE"
                 value = "COVEREDRATIO"
-                minimum = "0.87".toBigDecimal()
+                minimum = "0.86".toBigDecimal()
             }
             limit {
                 counter = "BRANCH"
                 value = "COVEREDRATIO"
-                minimum = "0.68".toBigDecimal()
+                minimum = "0.67".toBigDecimal()
             }
         }
     }
