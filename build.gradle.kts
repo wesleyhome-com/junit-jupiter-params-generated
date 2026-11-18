@@ -1,4 +1,5 @@
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
+import java.util.concurrent.Callable
 
 plugins {
     id("net.researchgate.release") version "3.2.0"
@@ -26,6 +27,11 @@ release {
 val checkReleasePush = tasks.register<Exec>("checkReleasePush") {
     description = "Fails the release if its commits and tag could not be pushed."
     commandLine("bash", ".github/scripts/check-release-push.sh", "v$version")
+    // After every project's build tasks too, not only the publish: Kotlin and Dokka work
+    // asynchronously, which lets a task with no dependencies start before those ahead of it finish.
+    mustRunAfter(Callable {
+        allprojects.flatMap { project -> release.buildTasks.get().mapNotNull(project.tasks::findByName) }
+    })
     mustRunAfter("publishProjectToMavenCentral")
 }
 

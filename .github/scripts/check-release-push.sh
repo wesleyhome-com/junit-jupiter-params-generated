@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Fails when the release could not push its commits and tag. The release publishes to Maven Central,
 # which can't be undone, before it pushes, so this runs before the build and again just before the
-# upload.
+# upload. Any git error fails it too: a lookup that can't be made doesn't count as a pass.
 #
-# The dry-run push proves the credentials (the deploy key in the release workflow) may push to the
-# repository. It sends no ref updates, so GitHub never evaluates main's ruleset: a deploy key that
-# has lost its bypass still passes.
+# The dry-run push proves the credentials (the deploy key in the release workflow) authenticate and
+# reach GitHub's push endpoint. It sends no ref updates, so GitHub never evaluates main's ruleset: a
+# deploy key that has lost its bypass still passes.
 #
 # Usage: check-release-push.sh <tag>   (run in the release checkout of main)
 set -euo pipefail
@@ -19,10 +19,19 @@ if [[ "${remote_main}" != "${checked_out}" ]]; then
   exit 1
 fi
 
-if [[ -n "$(git ls-remote --tags origin "refs/tags/${TAG}")" ]]; then
-  echo "::error::Tag ${TAG} already exists on GitHub. Nothing was published."
-  exit 1
-fi
+tag_lookup=0
+git ls-remote --exit-code --tags origin "refs/tags/${TAG}" > /dev/null || tag_lookup=$?
+case "${tag_lookup}" in
+  0)
+    echo "::error::Tag ${TAG} already exists on GitHub. Nothing was published."
+    exit 1
+    ;;
+  2) ;;
+  *)
+    echo "::error::Couldn't look up tag ${TAG} on GitHub (git exited ${tag_lookup}). Nothing was published."
+    exit 1
+    ;;
+esac
 
 if ! git push --dry-run origin HEAD:refs/heads/main; then
   echo "::error::The release can't push to main with these credentials. Nothing was published."

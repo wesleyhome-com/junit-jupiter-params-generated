@@ -156,7 +156,8 @@ The release publishes to Maven Central before the release plugin pushes its comm
 Central never replaces or removes a published version. So `.github/scripts/check-release-push.sh`
 runs twice before anything is published: right after checkout, and as `checkReleasePush`, the last
 task before the upload. It stops the release if `main` on GitHub is no longer the commit being
-released, the tag already exists, or a dry-run push with the deploy key fails.
+released, the tag already exists, or a dry-run push with the deploy key fails, and also if git
+can't make one of those checks.
 
 A dry-run push sends no ref update, so it never reaches `main`'s ruleset. It proves the deploy key
 authenticates, not that the ruleset still lets it push. If the push fails after publishing (the
@@ -170,6 +171,7 @@ run didn't push. The log shows which release plugin task failed:
   git switch -c release-<version> <headSha>
   # set version=<version> in gradle.properties
   ./gradlew releaseChangelog
+  # releaseChangelog dates the section today: change it in CHANGELOG.md to the day it was published
   git commit -am "[Gradle Release Plugin] - pre tag commit: 'v<version>'."
   git tag -a v<version> -m "[Gradle Release Plugin] - creating tag: 'v<version>'."
   # set version=<next version> in gradle.properties
@@ -177,7 +179,10 @@ run didn't push. The log shows which release plugin task failed:
   git push origin v<version> release-<version>
   ```
   Open a pull request from `release-<version>`, label it `skip-changelog`, and merge it with a merge
-  commit, so the tagged commit stays in `main`'s history.
+  commit, so the tagged commit stays in `main`'s history. If `main` has moved since `<headSha>`,
+  which is the likely reason the push failed, the pull request can conflict on `CHANGELOG.md`: merge
+  `main` into the branch rather than rebasing it, which would leave the tag off `main`, and keep the
+  newer entries under `[Unreleased]`, above the `[<version>]` section.
 - **`createReleaseTag`: `main` has the pre-tag commit but there's no tag.** Tag that commit with
   `git tag -a v<version>`, push the tag, then set the next version in a pull request.
 - **`commitNewVersion`: the tag is pushed.** Set the next version in a pull request.

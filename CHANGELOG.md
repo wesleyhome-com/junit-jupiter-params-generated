@@ -38,8 +38,9 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   and an Upgrade note for anything labeled `breaking`.
 - `CLAUDE.md` gives Claude Code sessions the project's contribution rules.
 - Releases build on JDK 17, as pull requests and `main` do, and run every project's build and tests
-  before publishing. Before building, and again before publishing, they check that the release
-  commits and tag can be pushed. The release plugin's tasks are listed by `./gradlew tasks`.
+  before publishing. Before building, and again before publishing, they check that `main` hasn't
+  moved, that the release tag doesn't exist yet, and that the deploy key can still reach the
+  repository for pushing. The release plugin's tasks are listed by `./gradlew tasks`.
 
 ## [4.1.0] - 2026-11-14
 
