@@ -29,9 +29,6 @@ tasks.register<Jar>("javadocJar") {
 
 kotlin {
     jvmToolchain(17)
-    // Spring Boot 4.0's Kotlin, the oldest supported. kotlin-stdlib and kotlin-reflect declared
-    // without a version get this one, so the published POM and Gradle module metadata ask for it.
-    coreLibrariesVersion = "2.2.21"
     compilerOptions {
         // Emit Java parameter names alongside Kotlin metadata, so tools reading the class files
         // through plain Java reflection see the declared names rather than arg0, arg1.
@@ -40,7 +37,9 @@ kotlin {
 }
 
 // A compiler reads class metadata at most one minor version newer than its own, so the published
-// classes are built for Kotlin 2.2. Test sources keep the compiler's language and API versions.
+// classes are built for Kotlin 2.2, Spring Boot 4.0's. Test sources keep the compiler's language and
+// API versions. The POM still asks for the compiler's kotlin-stdlib and kotlin-reflect, as it did
+// before, so upgrading changes no project's Kotlin libraries.
 tasks.named<KotlinJvmCompile>("compileKotlin") {
     compilerOptions {
         apiVersion = KotlinVersion.KOTLIN_2_2
@@ -73,19 +72,20 @@ providers.gradleProperty("junitVersion").orNull?.let { junitVersion ->
     }
 }
 
-// The tests run on the compiler's own kotlin-stdlib and kotlin-reflect, rather than the older ones
-// coreLibrariesVersion asks for. `-PkotlinRuntime=2.2.21` runs them on another, as -PjunitVersion
-// does for JUnit, and KotlinRuntimeTest checks that they ran on the version given here.
-val testKotlinRuntime = providers.gradleProperty("kotlinRuntime").getOrElse(getKotlinPluginVersion())
-configurations.named("testRuntimeClasspath") {
-    resolutionStrategy.eachDependency {
-        if (requested.group == "org.jetbrains.kotlin" && requested.name in setOf("kotlin-stdlib", "kotlin-reflect")) {
-            useVersion(testKotlinRuntime)
+// `-PkotlinRuntime=2.2.21` runs the tests on another kotlin-stdlib and kotlin-reflect, such as Spring
+// Boot 4.0's, as -PjunitVersion does for JUnit. KotlinRuntimeTest checks the version they ran on.
+val kotlinRuntime = providers.gradleProperty("kotlinRuntime").orNull
+kotlinRuntime?.let { version ->
+    configurations.named("testRuntimeClasspath") {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "org.jetbrains.kotlin" && requested.name in setOf("kotlin-stdlib", "kotlin-reflect")) {
+                useVersion(version)
+            }
         }
     }
 }
 tasks.named<Test>("test") {
-    systemProperty("kotlinRuntime", testKotlinRuntime)
+    systemProperty("kotlinRuntime", kotlinRuntime ?: getKotlinPluginVersion())
 }
 
 mavenPublishing {

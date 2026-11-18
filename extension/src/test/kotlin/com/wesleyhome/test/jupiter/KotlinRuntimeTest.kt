@@ -5,10 +5,7 @@ import assertk.assertions.isEqualTo
 import org.junit.jupiter.api.Test
 import kotlin.reflect.full.IllegalCallableAccessException
 
-/**
- * The build pins the Kotlin runtime the tests run on: the compiler's own, or the one
- * `-PkotlinRuntime` names. The published code asks for an older one, which would otherwise win.
- */
+/** The tests run on the compiler's own kotlin-stdlib and kotlin-reflect, or on the ones `-PkotlinRuntime` names. */
 class KotlinRuntimeTest {
 
     private val pinned = requireNotNull(System.getProperty("kotlinRuntime")) {
