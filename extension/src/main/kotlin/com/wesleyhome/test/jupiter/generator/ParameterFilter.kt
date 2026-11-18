@@ -7,8 +7,6 @@ import java.lang.reflect.Parameter
 import java.util.logging.Logger
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
-import kotlin.reflect.full.valueParameters
-import kotlin.reflect.jvm.kotlinFunction
 
 /**
  * One filter bound to the generated slots its parameters name, so a rule declares only the
@@ -22,10 +20,10 @@ internal class ParameterFilter(
     private val boundByPositionBecause: String?,
     private val layout: GeneratedParameterLayout,
     /** The message for each slot generating a null that the filter's Kotlin parameter type can't hold. */
-    private val refusedNulls: Map<Int, String>
+    private val refusedNulls: Map<Int, String>,
+    /** The value classes each argument is unboxed from, as its Kotlin parameter type says. */
+    private val unboxing: Array<Array<ValueClassShape>>
 ) {
-
-    private val parameterTypes: Array<Class<*>> = method.parameterTypes
 
     /** What reports call it: the declared name, whichever name found it. */
     val declaredName: String get() = method.kotlinName()
@@ -41,7 +39,7 @@ internal class ParameterFilter(
             val value = values[slots[i]]
             // Filtering this combination out would hide the rejection; letting it run reports it.
             if (value is RejectedValue) return true
-            arguments[i] = value.adaptedTo(parameterTypes[i])
+            arguments[i] = value.unboxedFrom(unboxing[i])
         }
         val accepted = try {
             method.invoke(receiver, *arguments)
@@ -161,7 +159,10 @@ internal class ParameterFilter(
                 )
             }
             val binding = FilterBinding(method, layout, namesMayDecide)
-            val slots = method.parameters.mapIndexed { index, parameter -> slotFor(name, method, index, parameter, binding) }
+            val kotlinTypes = method.kotlinValueParameters()?.map { it.type }
+            val slots = method.parameters.mapIndexed { index, parameter ->
+                slotFor(name, kotlinTypes?.get(index), index, parameter, binding)
+            }
             return ParameterFilter(
                 name,
                 method,
@@ -169,9 +170,16 @@ internal class ParameterFilter(
                 slots.toIntArray(),
                 binding.boundByPositionBecause,
                 layout,
-                refusedNulls(name, method, slots, binding)
+                refusedNulls(name, method, slots, binding),
+                unboxing(method, kotlinTypes)
             )
         }
+
+        /** Without Kotlin types, as for a Java filter, the boxes go as they are: a value class is a class to Java. */
+        private fun unboxing(method: Method, kotlinTypes: List<KType>?): Array<Array<ValueClassShape>> =
+            Array(method.parameterCount) { index ->
+                kotlinTypes?.let { unboxedLayers(it[index], method.parameterTypes[index]) } ?: emptyArray()
+            }
 
         private fun signatureOf(name: String, method: Method): String =
             method.parameterTypes.joinToString(", ", "$name(", ")") { it.simpleName }
@@ -217,7 +225,7 @@ internal class ParameterFilter(
          */
         private fun slotFor(
             name: String,
-            method: Method,
+            kotlinType: KType?,
             index: Int,
             parameter: Parameter,
             binding: FilterBinding
@@ -232,7 +240,7 @@ internal class ParameterFilter(
             val generated = generatedType.javaObjectType
             val declared = parameter.type
             if (!declared.boxed().isAssignableFrom(generated) &&
-                !(generatedType.isValue && method.declaresKotlinType(index, generatedType))
+                !(generatedType.isValue && kotlinType?.classifier == generatedType)
             ) {
                 throw InvalidFilterException(
                     "Filter [$name] declares [$declaredAs] as ${declared.simpleName}, " +
@@ -270,9 +278,6 @@ internal class ParameterFilter(
                     }
                 )
             }
-
-        private fun Method.declaresKotlinType(index: Int, type: KClass<*>): Boolean =
-            kotlinFunction?.let { it.valueParameters[index].type.classifier == type } == true
     }
 }
 

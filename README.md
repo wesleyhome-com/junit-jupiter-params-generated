@@ -508,7 +508,8 @@ fun formatsAmounts(@LongSource([0, 1, 250]) amount: Money, @IntSource([1, 2]) qu
 }
 ```
 
-This works for value classes over primitives, `String` and object types. A custom provider can also
+This works for value classes over primitives, `String` and object types, and over other value
+classes: `@LongSource` generates a `Wallet(val money: Money)` too. A custom provider can also
 produce the value class directly, for a type no built-in source covers:
 
 ```kotlin
@@ -547,6 +548,10 @@ Filters can declare the value-class parameter as itself (`fun formatsAmounts_fil
 Declaring the underlying type (`amount: Long`) is an error: both compile to `long`, so the Kotlin
 declaration is the only thing that tells them apart. For a parameter that generates null, declare
 it nullable in the filter too (`amount: Money?`), unless the value class wraps a nullable type.
+A filter gets the value the test does, whatever the value class wraps: `Any`, a type parameter as
+in `Box<T>`, an interface it implements, or another value class. A generated null is the exception
+for a value class over a nullable type, such as `Nickname(val value: String?)`: whatever the test
+declares, a filter's `Nickname` takes it as `Nickname(null)`, and a filter's `Nickname?` as null.
 
 A value class with no source annotation is left to other parameter resolvers, even when it wraps a
 type such as `Boolean` that would otherwise be generated.

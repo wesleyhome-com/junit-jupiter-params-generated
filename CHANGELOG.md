@@ -80,6 +80,15 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   parameter declared not to hold one. Such a filter now fails before anything runs. Declare its
   parameter nullable (`label: String?`). A filter after one that takes the same parameter is still
   accepted, because that one can turn the null away.
+- **A filter over a value class whose box fits its compiled type now gets the value inside**
+  (#115). `AnyBox(val value: Any)` and `Box<T>(val value: T)` compile to `Object`, and
+  `Label(val text: CharSequence) : CharSequence by text` to `CharSequence`, so the filter used to
+  be given the box where its code expected the value: `box.value` was the box itself. A rule that
+  only compared it, such as `box.value != "y"`, quietly let through or turned away the wrong
+  combinations, and the test passed running them. With `box: AnyBox?`,
+  `box == null || box.value == "x"` ran the null alone. The filter now sees what the test sees, so
+  such a test runs the combinations its filter was written for. That can mean different
+  invocations, or a failure the old value hid. Display names and generated values don't change.
 
 ### Fixed
 
@@ -132,6 +141,21 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   is rejected and `name: Name?` accepted. One over a nullable type, such as
   `Nickname(val value: String?)`, still takes the null as `Nickname(null)`. Java filters are
   unchanged.
+- **A filter over a value class wrapping `Any`, a type parameter or an interface gets the value
+  the test gets** (#115). A filter declaring `box: Box<Int>` failed the test with `Filter
+  [box_filter] on [box=Box(value=1)] threw ClassCastException`, because it was given the box, and
+  one declaring `box: AnyBox` rejected everything: `All 2 generated combinations were rejected by
+  [anyBox_filter]`. Values are now unboxed as far as the filter's Kotlin parameter type says.
+  Java filters are unchanged, and a filter declaring `amount: Money` still takes a generated
+  `Long`, both being a `long` in the signature.
+- **A source for the innermost type generates a value class over another value class** (#115).
+  `@LongSource` on `wallet: Wallet`, for `Wallet(val money: Money)`, failed with `Unable to find a
+  suitable data provider for parameter [wallet]`, though `@ValuesFrom` worked. A value that an
+  inner value class's `init` rejects fails only its own invocation, naming that class.
+- **A filter with a context parameter and a value-class parameter fails with a message** (#115),
+  rather than `IndexOutOfBoundsException: Index 1 out of bounds for length 1`. Its Kotlin
+  parameters don't line up with its compiled ones, so it's judged by its compiled signature alone:
+  `Filter [rule] declares [amount] as long, but the generated parameter is Money`.
 
 ### Build and docs
 

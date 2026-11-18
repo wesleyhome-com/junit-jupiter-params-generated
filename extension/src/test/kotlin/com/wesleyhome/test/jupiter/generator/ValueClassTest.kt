@@ -10,6 +10,7 @@ import com.wesleyhome.test.jupiter.InvalidParameterException
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.GenerationStrategy
 import com.wesleyhome.test.jupiter.annotations.StringSource
+import com.wesleyhome.test.jupiter.annotations.ValuesFrom
 import com.wesleyhome.test.jupiter.annotations.WithNull
 import com.wesleyhome.test.jupiter.annotations.ext.SourceProvider
 import com.wesleyhome.test.jupiter.annotations.number.IntSource
@@ -143,6 +144,14 @@ class ValueClassTest {
             )
     }
 
+    /** A context parameter is a JVM parameter but not a value parameter, so the Kotlin types don't line up and can't be used. */
+    @Test
+    fun testFilterWhoseKotlinParametersDoNotLineUpIsJudgedByItsSignature() {
+        assertThat(executionFailure(Fixture::class.java, "contextParameter"))
+            .isInstanceOf(InvalidFilterException::class)
+            .hasMessage("Filter [contextRule] declares [amount] as long, but the generated parameter is Money")
+    }
+
     @Test
     fun testPairwiseCoversValueClassParameters() {
         assertThat(invocationCounts(Fixture::class.java, "pairwise")).isEqualTo(4L to 4L)
@@ -201,7 +210,214 @@ class ValueClassTest {
             .hasMessage("No filter named [onlyTw] on ${Fixture::class.java.name}")
     }
 
+    @Test
+    fun testSourceForTheInnermostTypeGeneratesAValueClassOverAValueClass() {
+        assertThat(invocationNames(Fixture::class.java, "overValueClass"))
+            .isEqualTo(listOf("Wallet(money=Money(cents=1))", "Wallet(money=Money(cents=2))"))
+        assertThat(invocationNames(Fixture::class.java, "nullableOverValueClass"))
+            .isEqualTo(listOf("Handle(name=Name(value=a))", "null"))
+    }
+
+    @Test
+    fun testValueRejectedByAnInnerValueClassFailsOnlyItsOwnInvocation() {
+        assertThat(invocationCounts(Fixture::class.java, "rejectedInside")).isEqualTo(2L to 1L)
+        assertThat(executionFailure(Fixture::class.java, "rejectedInside"))
+            .isInstanceOf(ParameterResolutionException::class)
+            .hasMessage(
+                "Generated value [-1] for parameter [wallet] was rejected by Money: " +
+                    "IllegalArgumentException: cents must be >= 0"
+            )
+    }
+
+    /**
+     * Each of these value classes compiles to `Object`, or to an interface it implements, so the
+     * box is itself a value of the compiled type. The filter has to be given what's inside.
+     */
+    @Test
+    fun testFilterOverAValueClassWhoseBoxFitsTheCompiledTypeGetsTheWrappedValue() {
+        assertThat(invocationNames(FilterFixture::class.java, "anyBox")).isEqualTo(listOf("AnyBox(value=x)"))
+        assertThat(invocationNames(FilterFixture::class.java, "anyBoxByName")).isEqualTo(listOf("AnyBox(value=x)"))
+        assertThat(invocationNames(FilterFixture::class.java, "label")).isEqualTo(listOf("Label(text=a)"))
+        assertThat(invocationNames(FilterFixture::class.java, "nested")).isEqualTo(listOf("Tagged(box=AnyBox(value=x))"))
+    }
+
+    @Test
+    fun testFilterOverAGenericValueClassGetsTheWrappedValue() {
+        assertThat(invocationNames(FilterFixture::class.java, "box")).isEqualTo(listOf("Box(value=2)", "Box(value=3)"))
+        assertThat(invocationNames(FilterFixture::class.java, "boxByName")).isEqualTo(listOf("Box(value=2)", "Box(value=3)"))
+        assertThat(invocationNames(FilterFixture::class.java, "twoBoxes"))
+            .isEqualTo(listOf("Box(value=2), Box(value=b)", "Box(value=3), Box(value=b)"))
+        assertThat(invocationNames(FilterFixture::class.java, "boxOfValueClass"))
+            .isEqualTo(listOf("Box(value=Money(cents=2))"))
+    }
+
+    /** The filter used to see the box where it expected the value, so its rule turned away every value but null. */
+    @Test
+    fun testNullableFilterParameterOverAValueClassOfAnyGetsTheWrappedValue() {
+        assertThat(invocationNames(FilterFixture::class.java, "nullableAnyBox")).isEqualTo(listOf("AnyBox(value=x)", "null"))
+    }
+
+    @Test
+    fun testFilterOverAValueClassOverAValueClassGetsTheInnermostValue() {
+        assertThat(invocationNames(FilterFixture::class.java, "wallet")).isEqualTo(listOf("Wallet(money=Money(cents=2))"))
+        assertThat(invocationNames(FilterFixture::class.java, "nullableHandle"))
+            .isEqualTo(listOf("Handle(name=Name(value=a))", "null"))
+    }
+
+    /**
+     * A generated null reaches the test and the filter as each one's declared type reads it, as it
+     * always has: `Nickname?` reads null, and `Nickname`, over `String?`, reads `Nickname(null)`.
+     * Making the filter agree with the test would change which combinations such a test runs.
+     */
+    @Test
+    fun testAGeneratedNullReachesAFilterAsItsOwnDeclaredTypeReadsIt() {
+        assertThat(invocationNames(FilterFixture::class.java, "nullableNickname")).isEqualTo(listOf("null"))
+        assertThat(invocationNames(FilterFixture::class.java, "nonNullNickname")).isEqualTo(listOf("null"))
+    }
+
+    /** `cents: Long` and `amount: Money` both compile to `long`, so a generated Long has always reached a Money filter. */
+    @Test
+    fun testFilterDeclaringAValueClassStillTakesAGeneratedValueOfItsUnderlyingType() {
+        assertThat(invocationNames(FilterFixture::class.java, "underlyingValue")).isEqualTo(listOf("2"))
+    }
+
+    class FilterFixture {
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun anyBox(@ValuesFrom("anyBoxes") box: AnyBox) {
+            check(box.value is String)
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["onlyX"])
+        fun anyBoxByName(@ValuesFrom("anyBoxes") box: AnyBox) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun label(@ValuesFrom("labels") label: Label) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun nested(@ValuesFrom("taggedBoxes") tagged: Tagged) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun box(@ValuesFrom("intBoxes") box: Box<Int>) {
+            check(box.value > 0)
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["moreThanOne"])
+        fun boxByName(@ValuesFrom("intBoxes") box: Box<Int>) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["countAndLabel"])
+        fun twoBoxes(@ValuesFrom("intBoxes") count: Box<Int>, @ValuesFrom("stringBoxes") label: Box<String>) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun boxOfValueClass(@ValuesFrom("moneyBoxes") box: Box<Money>) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun nullableAnyBox(@ValuesFrom("anyBoxes") @WithNull box: AnyBox?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun wallet(@LongSource([1, 2]) wallet: Wallet) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun nullableHandle(@StringSource(["a", "b"]) @WithNull handle: Handle?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun nullableNickname(@StringSource(["a"]) @WithNull nickname: Nickname?) {
+            check(nickname == null)
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun nonNullNickname(@StringSource(["a"]) @WithNull nickname: Nickname) {
+            check(nickname.value == null)
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["moreThanOneCent"])
+        fun underlyingValue(@LongSource([1, 2]) cents: Long) {
+        }
+
+        companion object {
+            @JvmStatic
+            fun anyBoxes(): List<AnyBox> = listOf(AnyBox("x"), AnyBox("y"))
+
+            @JvmStatic
+            fun anyBox_filter(box: AnyBox): Boolean = box.value == "x"
+
+            fun onlyX(box: AnyBox): Boolean = box.value == "x"
+
+            @JvmStatic
+            fun labels(): List<Label> = listOf(Label("a"), Label("b"))
+
+            @JvmStatic
+            fun label_filter(label: Label): Boolean = label.text == "a"
+
+            @JvmStatic
+            fun taggedBoxes(): List<Tagged> = listOf(Tagged(AnyBox("x")), Tagged(AnyBox("y")))
+
+            fun nested_filter(tagged: Tagged): Boolean = tagged.box.value == "x"
+
+            @JvmStatic
+            fun intBoxes(): List<Box<Int>> = listOf(Box(1), Box(2), Box(3))
+
+            @JvmStatic
+            fun stringBoxes(): List<Box<String>> = listOf(Box("a"), Box("b"))
+
+            @JvmStatic
+            fun moneyBoxes(): List<Box<Money>> = listOf(Box(Money(1)), Box(Money(2)))
+
+            @JvmStatic
+            fun box_filter(box: Box<Int>): Boolean = box.value > 1
+
+            fun moreThanOne(box: Box<Int>): Boolean = box.value > 1
+
+            @JvmStatic
+            fun countAndLabel(count: Box<Int>, label: Box<String>): Boolean = count.value > 1 && label.value.startsWith("b")
+
+            @JvmStatic
+            fun boxOfValueClass_filter(box: Box<Money>): Boolean = box.value.cents > 1
+
+            @JvmStatic
+            fun nullableAnyBox_filter(box: AnyBox?): Boolean = box == null || box.value == "x"
+
+            @JvmStatic
+            fun wallet_filter(wallet: Wallet): Boolean = wallet.money.cents > 1
+
+            @JvmStatic
+            fun nullableHandle_filter(handle: Handle?): Boolean = handle == null || handle.name.value == "a"
+
+            @JvmStatic
+            fun nullableNickname_filter(nickname: Nickname): Boolean = nickname.value == null
+
+            @JvmStatic
+            fun nonNullNickname_filter(nickname: Nickname?): Boolean = nickname == null
+
+            @JvmStatic
+            fun moreThanOneCent(cents: Money): Boolean = cents.cents > 1
+        }
+    }
+
     class Fixture {
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun overValueClass(@LongSource([1, 2]) wallet: Wallet) {
+            check(wallet.money.cents in 1L..2L)
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun nullableOverValueClass(@StringSource(["a"]) @WithNull handle: Handle?) {
+            check(handle == null || handle.name.value == "a")
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun rejectedInside(@LongSource([1, -1]) wallet: Wallet) {
+        }
 
         @GeneratedParametersTest
         fun generic(@LongSource([1]) box: Box<Long>) {
@@ -282,6 +498,10 @@ class ValueClassTest {
         fun underlyingTypeFilter(@LongSource([1]) amount: Money) {
         }
 
+        @GeneratedParametersTest(filters = ["contextRule"])
+        fun contextParameter(@IntSource([1]) n: Int, @LongSource([1]) amount: Money) {
+        }
+
         @GeneratedParametersTest(name = "{arguments}", strategy = GenerationStrategy.PAIRWISE)
         fun pairwise(@LongSource([0, 1]) amount: Money, @IntSource([1, 2]) count: Count, flag: Boolean) {
         }
@@ -314,6 +534,10 @@ class ValueClassTest {
             @JvmStatic
             fun underlyingTypeFilter_filter(amount: Long): Boolean = amount > 0
 
+            context(n: Int)
+            @JvmStatic
+            fun contextRule(amount: Money): Boolean = amount.cents < n
+
             /** Shares the `lookalike_filter` prefix without being a filter for it; applied, it would reject everything. */
             @JvmStatic
             fun lookalike_filtering(amount: Money): Boolean = false
@@ -345,6 +569,21 @@ value class Flag(val value: Boolean)
 
 @JvmInline
 value class Box<T>(val value: T)
+
+@JvmInline
+value class AnyBox(val value: Any)
+
+@JvmInline
+value class Label(val text: CharSequence) : CharSequence by text
+
+@JvmInline
+value class Tagged(val box: AnyBox)
+
+@JvmInline
+value class Wallet(val money: Money)
+
+@JvmInline
+value class Handle(val name: Name)
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
