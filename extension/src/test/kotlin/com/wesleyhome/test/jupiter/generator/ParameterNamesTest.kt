@@ -189,6 +189,14 @@ class ParameterNamesTest {
         fun testNothingIsLogged() {
             assertThat(warningsWhile { invocationNames(JavaConsumerFixture::class.java, "ordered") }).isEmpty()
         }
+
+        /** The combination is named as display names name it, so it says `arg0` where they do. */
+        @Test
+        fun testAThrowingFilterNamesTheCombinationAsDisplayNamesDo() {
+            assertThat(executionFailure(JavaConsumerFixture::class.java, "throwing"))
+                .isInstanceOf(InvalidFilterException::class)
+                .hasMessage("Filter [throwsAtTwo] on [arg0=2, arg1=1] threw IllegalStateException: boom")
+        }
     }
 
     @Nested

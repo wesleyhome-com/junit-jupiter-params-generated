@@ -48,6 +48,10 @@ internal class InvocationDisplayNameFormatter private constructor(
             return InvocationDisplayNameFormatter(segments)
         }
 
+        /** [values] as `{argumentsWithNames}` shows them. */
+        fun argumentsWithNames(values: Array<Any?>, layout: GeneratedParameterLayout): String =
+            StringBuilder().also { appendValues(it, values, layout, true) }.toString()
+
         private fun literal(text: String) = Segment { target, _, _ -> target.append(text) }
 
         private fun segmentFor(

@@ -298,7 +298,21 @@ fun prices(...)
 - Parameter types must match the generated parameter. A supertype is fine - `Number` accepts a
   generated `Int` - but a filter declaring `Long` against a generated `Int` is rejected rather than
   silently widened by reflection.
+- A filter parameter must hold the null its parameter generates, from `@WithNull` or a nullable
+  type. A primitive is rejected before anything runs, and so is a Kotlin type that isn't nullable,
+  such as `String` or a value class like `Name`, unless an earlier filter takes the same parameter
+  and can turn the null away. Conventional filters run before the ones in `filters = [...]`, which
+  run in the order listed. Java filters' object types take the null as before.
 - A filter must return `Boolean` and must not return null.
+- A filter that throws fails the test. The message names the filter and the combination it threw
+  on, as `{argumentsWithNames}` shows it, and the exception is the cause:
+
+  ```text
+  Filter [ordered_filter] on [start=2, end=1] threw IllegalStateException: boom
+  ```
+
+  With `CARTESIAN`, the invocations before that combination have run. `PAIRWISE` checks every
+  combination before choosing, so nothing has. An `OutOfMemoryError` is thrown as it is.
 - If every combination is rejected, the test fails and the message names the filters responsible.
 - Filtering reduces what *runs*, not what is *generated*, so the invocation ceiling still applies to
   the full product and `generated.invocations` still reports it.
@@ -492,7 +506,8 @@ primitive it is an error, because the compiled method takes a `long` there.
 
 Filters can declare the value-class parameter as itself (`fun formatsAmounts_filter(amount: Money)`).
 Declaring the underlying type (`amount: Long`) is an error: both compile to `long`, so the Kotlin
-declaration is the only thing that tells them apart.
+declaration is the only thing that tells them apart. For a parameter that generates null, declare
+it nullable in the filter too (`amount: Money?`).
 
 A value class with no source annotation is left to other parameter resolvers, even when it wraps a
 type such as `Boolean` that would otherwise be generated.

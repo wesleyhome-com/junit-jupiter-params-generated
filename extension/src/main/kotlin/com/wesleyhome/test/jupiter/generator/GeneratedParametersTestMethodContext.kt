@@ -63,6 +63,7 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
         (ParameterFilter.resolve(conventionalFilterClasses, conventionalFilterNames, layout) +
             ParameterFilter.resolve(enclosingClassesOf(testClass).toList(), explicitFilterNames, layout))
             .distinctBy { it.method }
+            .also(ParameterFilter::requireNullsHeld)
 
     /**
      * Conventional filters are looked for from the class running the test, where explicit filters

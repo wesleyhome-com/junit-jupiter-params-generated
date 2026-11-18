@@ -1,11 +1,15 @@
 package com.wesleyhome.test.jupiter.generator
 
+import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
+import assertk.assertions.isNotNull
 import com.wesleyhome.test.jupiter.InvalidFilterException
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
+import com.wesleyhome.test.jupiter.annotations.GenerationStrategy
+import com.wesleyhome.test.jupiter.annotations.StringSource
 import com.wesleyhome.test.jupiter.annotations.WithNull
 import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource
 import com.wesleyhome.test.jupiter.annotations.number.IntSource
@@ -13,7 +17,10 @@ import com.wesleyhome.test.jupiter.annotations.number.LongSource
 import com.wesleyhome.test.jupiter.java.filter.JavaCompanionFieldFixture
 import com.wesleyhome.test.jupiter.java.filter.JavaFilterFixture
 import com.wesleyhome.test.jupiter.java.filter.JavaFilterScopesFixture
+import com.wesleyhome.test.jupiter.java.filter.JavaNullableFilters
+import com.wesleyhome.test.jupiter.testkit.executeFixture
 import com.wesleyhome.test.jupiter.testkit.executionFailure
+import com.wesleyhome.test.jupiter.testkit.invocationCounts
 import com.wesleyhome.test.jupiter.testkit.invocationNames
 import com.wesleyhome.test.jupiter.testkit.reportEntries
 import org.junit.jupiter.api.Nested
@@ -475,6 +482,143 @@ class ParameterFilterTest {
     fun testAJavaStaticFieldNamedCompanionIsSearched() {
         assertThat(invocationNames(JavaCompanionFieldFixture::class.java, "ordered")).isEqualTo(ORDERED)
         assertThat(invocationNames(JavaCompanionFieldFixture::class.java, "explicit")).isEqualTo(ORDERED)
+    }
+
+    /** It used to escape as a bare `InvocationTargetException: null`, naming neither the filter nor the values. */
+    @Test
+    fun testAThrowingFilterIsNamedWithTheCombinationItThrewOn() {
+        for (method in listOf("cartesian", "pairwise")) {
+            val failure = executionFailure(ThrowingFixture::class.java, method)
+            assertThat(failure).isInstanceOf(InvalidFilterException::class)
+                .hasMessage("Filter [throwsAtTwo] on [start=2, end=1] threw IllegalStateException: boom at start=2")
+            assertThat(failure.cause).isNotNull().isInstanceOf(IllegalStateException::class).hasMessage("boom at start=2")
+        }
+    }
+
+    /**
+     * Either way the test's container fails, not an invocation. CARTESIAN filters as it runs, so the
+     * invocations before the throwing combination have passed. PAIRWISE has to see every combination
+     * before it chooses any, so nothing has run.
+     */
+    @Test
+    fun testAThrowingFilterFailsTheContainerWhenTheStrategyReachesTheCombination() {
+        val cartesian = executeFixture(ThrowingFixture::class.java, "cartesian")
+        assertThat(cartesian.testEvents().succeeded().list().map { it.testDescriptor.displayName })
+            .isEqualTo(listOf("1, 1", "1, 2"))
+        assertThat(cartesian.testEvents().failed().count()).isEqualTo(0L)
+        assertThat(cartesian.containerEvents().failed().count()).isEqualTo(1L)
+        val pairwise = executeFixture(ThrowingFixture::class.java, "pairwise")
+        assertThat(pairwise.testEvents().started().count()).isEqualTo(0L)
+        assertThat(pairwise.containerEvents().failed().count()).isEqualTo(1L)
+    }
+
+    @Test
+    fun testTheCombinationShowsAGeneratedNullAsDisplayNamesDo() {
+        assertThat(executionFailure(ThrowingFixture::class.java, "onNull"))
+            .hasMessage("Filter [throwsOnNull] on [start=1, label=null] threw IllegalStateException: no label")
+    }
+
+    /** An assertion failing inside a filter is the filter failing, so it is named like any other. */
+    @Test
+    fun testAnAssertionErrorThrownByAFilterIsWrapped() {
+        val failure = executionFailure(ThrowingFixture::class.java, "asserting")
+        assertThat(failure).isInstanceOf(InvalidFilterException::class)
+            .hasMessage("Filter [assertsSmall] on [start=3] threw AssertionError: start is 3")
+        assertThat(failure.cause).isNotNull().isInstanceOf(AssertionError::class).hasMessage("start is 3")
+    }
+
+    /** JUnit stops the whole run on an OutOfMemoryError, which wrapping would turn into one failed test. */
+    @Test
+    fun testAnOutOfMemoryErrorThrownByAFilterIsRethrownAsItIs() {
+        val layout = GeneratedParameterLayout(arrayOf("start"), arrayOf(Int::class), booleanArrayOf(false), intArrayOf(0))
+        val filter = ParameterFilter.resolve(listOf(ThrowingFixture::class.java), listOf("outOfMemory"), layout).single()
+        assertFailure { filter.accepts(arrayOf(1)) }.isInstanceOf(OutOfMemoryError::class).hasMessage("simulated")
+    }
+
+    /** It used to run until the null reached the filter, then fail with a NullPointerException from inside it. */
+    @Test
+    fun testANonNullKotlinFilterParameterCannotTakeAGeneratedNull() {
+        for ((method, filter) in listOf(
+            "nullIntoNonNull" to "nullIntoNonNull_filter",
+            "nullIntoNonNullPairwise" to "nullIntoNonNullPairwise_filter",
+            "nullableType" to "notB"
+        )) {
+            assertThat(executionFailure(NullFixture::class.java, method))
+                .isInstanceOf(InvalidFilterException::class)
+                .hasMessage(
+                    "Filter [$filter] declares [label] as String, which cannot hold the null this parameter generates"
+                )
+            assertThat(invocationCounts(NullFixture::class.java, method)).isEqualTo(0L to 0L)
+        }
+    }
+
+    /** A filter that turns the nulls away runs first, so the one behind it never sees a null, and passes as before. */
+    @Test
+    fun testANonNullFilterParameterBehindAFilterOfTheSameParameterIsAccepted() {
+        assertThat(invocationNames(NullFixture::class.java, "guarded")).isEqualTo(listOf("a"))
+        assertThat(invocationNames(NullFixture::class.java, "guardedPairwise")).isEqualTo(listOf("1, a", "2, a"))
+    }
+
+    /** Named filters run in the order they are listed, and a guard listed after the filter is too late. */
+    @Test
+    fun testAGuardProtectsOnlyTheFiltersAfterIt() {
+        assertThat(invocationNames(NullFixture::class.java, "guardFirst")).isEqualTo(listOf("a"))
+        assertThat(executionFailure(NullFixture::class.java, "guardSecond")).hasMessage(
+            "Filter [startsWithA] declares [label] as String, which cannot hold the null this parameter generates"
+        )
+    }
+
+    /** Only a filter that takes the parameter can keep its null away. */
+    @Test
+    fun testAFilterOfAnotherParameterDoesNotGuardTheNull() {
+        assertThat(executionFailure(NullFixture::class.java, "guardedElsewhere")).hasMessage(
+            "Filter [startsWithA] declares [label] as String, which cannot hold the null this parameter generates"
+        )
+        assertThat(executionFailure(NullFixture::class.java, "oneOfTwoGuarded")).hasMessage(
+            "Filter [bothNonNull] declares [second] as String, which cannot hold the null this parameter generates"
+        )
+    }
+
+    @Test
+    fun testANullAGuardLetsThroughIsReportedAsTheFilterThrowing() {
+        assertThat(executionFailure(NullFixture::class.java, "leakyGuard"))
+            .isInstanceOf(InvalidFilterException::class)
+            .hasMessage(
+                "Filter [startsWithA] on [label=null] threw NullPointerException: Parameter specified as non-null " +
+                    "is null: method ${NullFixture::class.java.name}\$Companion.startsWithA, parameter label"
+            )
+    }
+
+    /** Kotlin reflection gives a Java parameter a platform type, which isn't marked nullable but takes null. */
+    @Test
+    fun testFilterParametersThatCanHoldNullStillTakeIt() {
+        assertThat(invocationNames(NullFixture::class.java, "nullable")).isEqualTo(listOf("a", "null"))
+        assertThat(invocationNames(NullFixture::class.java, "generic")).isEqualTo(listOf("a", "null"))
+        assertThat(invocationNames(KotlinTestJavaFilterFixture::class.java, "label")).isEqualTo(listOf("a", "null"))
+        assertThat(invocationNames(JavaFilterFixture::class.java, "nullable")).isEqualTo(listOf("a", "null"))
+    }
+
+    /**
+     * A value class's nullability is its Kotlin type's, whatever it compiles to. `Name` over `String`
+     * compiles to a `String` but rejects a null, and `Nickname` over `String?` took the null as
+     * `Nickname(null)`, where the test receives null.
+     */
+    @Test
+    fun testANonNullValueClassFilterParameterCannotTakeAGeneratedNull() {
+        assertThat(executionFailure(ValueClassNullFixture::class.java, "name")).hasMessage(
+            "Filter [nonNullName] declares [name] as Name, which cannot hold the null this parameter generates"
+        )
+        assertThat(executionFailure(ValueClassNullFixture::class.java, "nickname")).hasMessage(
+            "Filter [nonNullNickname] declares [nickname] as Nickname, which cannot hold the null this parameter generates"
+        )
+    }
+
+    /** Each filter accepts only null, so a box around null would leave nothing to run. */
+    @Test
+    fun testANullableValueClassFilterParameterTakesTheNull() {
+        assertThat(invocationNames(ValueClassNullFixture::class.java, "nullableName")).isEqualTo(listOf("null"))
+        assertThat(invocationNames(ValueClassNullFixture::class.java, "nullableMoney")).isEqualTo(listOf("null"))
+        assertThat(invocationNames(ValueClassNullFixture::class.java, "nullableNickname")).isEqualTo(listOf("null"))
     }
 
     class SameNameOuterFixture {
@@ -1305,4 +1449,188 @@ class ParameterFilterTest {
             fun alpha(start: Int): Boolean = true
         }
     }
+
+    class ThrowingFixture {
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["throwsAtTwo"])
+        fun cartesian(@IntRangeSource(min = 1, max = 3) start: Int, @IntRangeSource(min = 1, max = 2) end: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["throwsAtTwo"], strategy = GenerationStrategy.PAIRWISE)
+        fun pairwise(@IntRangeSource(min = 1, max = 3) start: Int, @IntRangeSource(min = 1, max = 2) end: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["throwsOnNull"])
+        fun onNull(@IntSource([1]) start: Int, @StringSource(["a"]) @WithNull label: String?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["assertsSmall"])
+        fun asserting(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        companion object {
+            @JvmStatic
+            fun throwsAtTwo(start: Int): Boolean {
+                check(start != 2) { "boom at start=$start" }
+                return true
+            }
+
+            @JvmStatic
+            fun throwsOnNull(label: String?): Boolean = checkNotNull(label) { "no label" }.isNotEmpty()
+
+            @JvmStatic
+            fun assertsSmall(start: Int): Boolean {
+                if (start == 3) throw AssertionError("start is 3")
+                return true
+            }
+
+            @JvmStatic
+            fun outOfMemory(start: Int): Boolean = throw OutOfMemoryError("simulated")
+        }
+    }
+
+    class NullFixture {
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun nullIntoNonNull(@StringSource(["a", "b"]) @WithNull label: String?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", strategy = GenerationStrategy.PAIRWISE)
+        fun nullIntoNonNullPairwise(@IntSource([1, 2]) n: Int, @StringSource(["a", "b"]) @WithNull label: String?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["notB"])
+        fun nullableType(@StringSource(["a", "b"]) label: String?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["startsWithA"])
+        fun guarded(@StringSource(["a", "b"]) @WithNull label: String?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["startsWithA"], strategy = GenerationStrategy.PAIRWISE)
+        fun guardedPairwise(@IntSource([1, 2]) n: Int, @StringSource(["a", "b"]) @WithNull label: String?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["labelPresent", "startsWithA"])
+        fun guardFirst(@StringSource(["a", "b"]) @WithNull label: String?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["startsWithA", "labelPresent"])
+        fun guardSecond(@StringSource(["a", "b"]) @WithNull label: String?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["startsWithA"])
+        fun guardedElsewhere(@IntSource([1, 2]) n: Int, @StringSource(["a", "b"]) @WithNull label: String?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["bothNonNull"])
+        fun oneOfTwoGuarded(
+            @StringSource(["a"]) @WithNull first: String?,
+            @StringSource(["b"]) @WithNull second: String?
+        ) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["startsWithA"])
+        fun leakyGuard(@StringSource(["a", "b"]) @WithNull label: String?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["nullableNotB"])
+        fun nullable(@StringSource(["a", "b"]) @WithNull label: String?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["genericNotB"])
+        fun generic(@StringSource(["a", "b"]) @WithNull label: String?) {
+        }
+
+        companion object {
+            @JvmStatic
+            fun nullIntoNonNull_filter(label: String): Boolean = label != "b"
+
+            @JvmStatic
+            fun nullIntoNonNullPairwise_filter(label: String): Boolean = label != "b"
+
+            @JvmStatic
+            fun notB(label: String): Boolean = label != "b"
+
+            @JvmStatic
+            fun startsWithA(label: String): Boolean = label.startsWith("a")
+
+            @JvmStatic
+            fun guarded_filter(label: String?): Boolean = label != null
+
+            @JvmStatic
+            fun guardedPairwise_filter(label: String?): Boolean = label != null
+
+            @JvmStatic
+            fun labelPresent(label: String?): Boolean = label != null
+
+            @JvmStatic
+            fun guardedElsewhere_filter(n: Int): Boolean = n == 1
+
+            @JvmStatic
+            fun oneOfTwoGuarded_filter(first: String?): Boolean = first != null
+
+            @JvmStatic
+            fun bothNonNull(first: String, second: String): Boolean = first != second
+
+            @JvmStatic
+            fun leakyGuard_filter(label: String?): Boolean = label != "b"
+
+            @JvmStatic
+            fun nullableNotB(label: String?): Boolean = label != "b"
+
+            @JvmStatic
+            fun <T> genericNotB(label: T): Boolean = label != "b"
+        }
+    }
+
+    class KotlinTestJavaFilterFixture : JavaNullableFilters() {
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["javaNotB"])
+        fun label(@StringSource(["a", "b"]) @WithNull label: String?) {
+        }
+    }
+
+    class ValueClassNullFixture {
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["nonNullName"])
+        fun name(@StringSource(["a"]) @WithNull name: Name?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["nonNullNickname"])
+        fun nickname(@StringSource(["a"]) @WithNull nickname: Nickname?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["takesNullableName"])
+        fun nullableName(@StringSource(["a"]) @WithNull name: Name?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["takesNullableMoney"])
+        fun nullableMoney(@LongSource([5]) @WithNull amount: Money?) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["takesNullableNickname"])
+        fun nullableNickname(@StringSource(["a"]) @WithNull nickname: Nickname?) {
+        }
+
+        companion object {
+            @JvmStatic
+            fun nonNullName(name: Name): Boolean = true
+
+            @JvmStatic
+            fun nonNullNickname(nickname: Nickname): Boolean = true
+
+            @JvmStatic
+            fun takesNullableName(name: Name?): Boolean = name == null
+
+            @JvmStatic
+            fun takesNullableMoney(amount: Money?): Boolean = amount == null
+
+            @JvmStatic
+            fun takesNullableNickname(nickname: Nickname?): Boolean = nickname == null
+        }
+    }
 }
+
+@JvmInline
+value class Nickname(val value: String?)
