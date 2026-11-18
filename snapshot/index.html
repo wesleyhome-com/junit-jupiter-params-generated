@@ -96,6 +96,7 @@
 <span class="copy-tooltip">
           <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
 <span class="copy-icon"></span></span></div>
+      <p class="paragraph">On Kotlin 2.2 or 2.3 with Maven, and without Spring Boot's dependency management, also declare <code class="lang-kotlin">kotlin-reflect</code> at your Kotlin version, as described under #compatibility-matrix.</p>
       <h3 class="">Annotation Processor (Optional, recommended)</h3>
       <p class="paragraph">Gradle (KSP):</p>
       <div class="sample-container">
@@ -127,8 +128,13 @@
             </tr>
             <tr>
               <td>Kotlin/JVM</td>
-              <td>2.4+</td>
-              <td>2.4.20</td>
+              <td>2.2+</td>
+              <td>2.4.21, with the full suite re-run on <code class="org.jetbrains.dokka.pages.commenttable@65f6b075 lang-kotlin">kotlin-stdlib</code> and <code class="org.jetbrains.dokka.pages.commenttable@65f6b075 lang-kotlin">kotlin-reflect</code> 2.2.21, and Kotlin 2.2.21 projects built against it: Gradle with and without Spring Boot 4.0.9's dependency management, and Maven</td>
+            </tr>
+            <tr>
+              <td>KSP, for the annotation processor</td>
+              <td>KSP2, 2.2.21-2.0.4+</td>
+              <td>2.2.21-2.0.4 in that Kotlin 2.2.21 Gradle project, and 2.3.14 in the processor's tests</td>
             </tr>
             <tr>
               <td>JUnit Jupiter</td>
@@ -142,13 +148,24 @@
             </tr>
             <tr>
               <td>Maven</td>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@676efdfe lang-kotlin">test</code> scope for the extension</td>
-              <td>-</td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@65f6b075 lang-kotlin">test</code> scope for the extension</td>
+              <td>3.9.11, and the CI runner's</td>
             </tr>
           </tbody>
         </table>
       </div>
-      <p class="paragraph">Kotlin 2.4 is a floor rather than a preference: the published classes carry Kotlin metadata v2.4, and earlier compilers refuse to read it. Consuming this library from a Kotlin 2.3 build fails with &quot;compiled with an incompatible version of Kotlin&quot;.</p>
+      <p class="paragraph">The library is compiled by Kotlin 2.4 for Kotlin 2.2, Spring Boot 4.0's: its classes carry Kotlin 2.2 metadata, which compilers from 2.2 on read. The extension asks for the <code class="lang-kotlin">kotlin-stdlib</code> and <code class="lang-kotlin">kotlin-reflect</code> of the Kotlin it's compiled with, 2.4.21, at run time:</p>
+      <ul>
+        <li>
+          <p class="paragraph">In a Spring Boot 4.0 or 4.1 project, Boot's dependency management sets them to its own Kotlin   version, 2.2.21 or 2.3.21, and the library runs on it.</p>
+        </li>
+        <li>
+          <p class="paragraph">In a Gradle project on Kotlin 2.2 or 2.3 without it, they stay off the compile classpath: your   code compiles against your own <code class="lang-kotlin">kotlin-stdlib</code>, and your tests run on 2.4.21's. A newer standard   library runs code compiled for an older one.</p>
+        </li>
+        <li>
+          <p class="paragraph">In a Maven project on Kotlin 2.2 or 2.3 without it, declare <code class="lang-kotlin">kotlin-stdlib</code> and <code class="lang-kotlin">kotlin-reflect</code>   at your own Kotlin version, <code class="lang-kotlin">kotlin-reflect</code> with <code class="lang-kotlin">test</code> scope. Maven puts a test dependency's   runtime dependencies on the test compile classpath, where a Kotlin 2.2 compiler fails on   <code class="lang-kotlin">kotlin-reflect</code> 2.4.21's metadata. Your declarations are nearer, so they win.</p>
+        </li>
+      </ul>
       <p class="paragraph">The optional annotation processor runs under KSP, so compile-time validation applies to Kotlin sources only. Java sources get the full runtime behaviour, but misconfigured annotations surface when the test runs rather than when it compiles.</p>
       <h2 class="">Getting Started</h2>
       <div class="sample-container">
@@ -392,23 +409,23 @@
           </thead>
           <tbody>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@676efdfe lang-kotlin">{index}</code></td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@65f6b075 lang-kotlin">{index}</code></td>
               <td>the 1-based invocation number</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@676efdfe lang-kotlin">{arguments}</code></td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@65f6b075 lang-kotlin">{arguments}</code></td>
               <td>the generated values, comma separated</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@676efdfe lang-kotlin">{argumentsWithNames}</code></td>
-              <td>the generated values as <code class="org.jetbrains.dokka.pages.commenttable@676efdfe lang-kotlin">name=value</code>, comma separated</td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@65f6b075 lang-kotlin">{argumentsWithNames}</code></td>
+              <td>the generated values as <code class="org.jetbrains.dokka.pages.commenttable@65f6b075 lang-kotlin">name=value</code>, comma separated</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@676efdfe lang-kotlin">{displayName}</code></td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@65f6b075 lang-kotlin">{displayName}</code></td>
               <td>the test method's own display name</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@676efdfe lang-kotlin">{0}</code>, <code class="org.jetbrains.dokka.pages.commenttable@676efdfe lang-kotlin">{1}</code>, ...</td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@65f6b075 lang-kotlin">{0}</code>, <code class="org.jetbrains.dokka.pages.commenttable@65f6b075 lang-kotlin">{1}</code>, ...</td>
               <td>a single generated value, by position</td>
             </tr>
           </tbody>
@@ -623,7 +640,7 @@
           <thead>
             <tr>
               <th>Concern</th>
-              <th><code class="org.jetbrains.dokka.pages.commenttable@676efdfe lang-kotlin">@MethodSource</code></th>
+              <th><code class="org.jetbrains.dokka.pages.commenttable@65f6b075 lang-kotlin">@MethodSource</code></th>
               <th>Generated Sources</th>
             </tr>
           </thead>
