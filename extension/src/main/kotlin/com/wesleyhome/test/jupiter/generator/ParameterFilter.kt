@@ -51,10 +51,10 @@ internal class ParameterFilter(
         ): ParameterFilter = choose(name, find(classes, name), layout).also { it.method.isAccessible = true }
 
         /**
-         * 4.1.0 used the first overload of the first of [ranks], in whatever order reflection listed
-         * them, so with several in one rank the overload used changed between builds. One that can't
-         * filter the test could only fail it. The first rank with one that can decides, and if several
-         * there can, which of them applied was never settled, so the test fails.
+         * 4.1.0 used the first overload in the first of [ranks], and within a rank that was whichever
+         * reflection listed first, which changes between builds. An overload that can't filter the test
+         * could only have failed it, so the first rank holding one that can decides. If that rank holds
+         * several, which of them applied was never settled, so the test fails rather than pick one.
          */
         internal fun choose(
             name: String,

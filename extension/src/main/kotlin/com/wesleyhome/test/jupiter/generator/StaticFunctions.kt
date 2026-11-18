@@ -35,7 +35,6 @@ internal fun findOverloads(classes: List<Class<*>>, name: String): List<List<Sta
     return (groups.map { group -> group.filter { it.method.wasNamed(name) } } +
         groups.map { group -> group.filterNot { it.method.wasNamed(name) } })
         .map { rank -> rank.filter { signatures.add(it.method.name to it.method.parameterTypes.asList()) } }
-        .filter { it.isNotEmpty() }
 }
 
 /** Whether [name] exists only as an instance method, which nothing can call before the test instance exists. */

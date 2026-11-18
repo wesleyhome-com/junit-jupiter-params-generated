@@ -296,6 +296,14 @@ fun prices(...)
   generated `Int` - but a filter declaring `Long` against a generated `Int` is rejected rather than
   silently widened by reflection.
 - A filter must return `Boolean` and must not return null.
+- A filter's name can be **overloaded**. The overload used is the one that can filter the test:
+  every parameter names a generated parameter, with a type that can hold it, and it returns
+  `Boolean`. Where several in the nearest class can, a static or `@JvmStatic` one comes before one
+  declared only in a companion object, and a public one before an `internal` one. If that still
+  leaves more than one, the test fails and lists them. Which one applied used to depend on the order
+  reflection listed them in, and that can change between builds. `@JvmOverloads` makes overloads
+  too: `@JvmOverloads fun upTo(start: Int, end: Int = 2)` filters a test that generates only
+  `start`, but is ambiguous for one that generates both.
 - If every combination is rejected, the test fails and the message names the filters responsible.
 - Filtering reduces what *runs*, not what is *generated*, so the invocation ceiling still applies to
   the full product and `generated.invocations` still reports it.
@@ -512,8 +520,8 @@ class DateRangeTest {
 The function takes no arguments and returns a `List`, `Sequence` or array of the parameter's type.
 It is found by name the way a filter is: static, or in an object or companion object, on the test
 class, its superclasses or its interfaces, and for a `@Nested` class on the classes enclosing it.
-`@JvmStatic` is optional, and so is `public`. To share a function between test classes, name its
-class as well:
+`@JvmStatic` is optional, and so is `public`. If the name is overloaded, the overload that takes no
+arguments is used. To share a function between test classes, name its class as well:
 
 ```kotlin
 object Fixtures {
@@ -557,7 +565,9 @@ when the test does, and each failure names the parameter and the function:
 
 The processor doesn't yet look in the test class's interfaces or enclosing classes, and reports a
 function there as missing. Name its class, as in `@ValuesFrom("com.example.OuterTest#ranges")`, and
-both find it.
+both find it. It also checks only the first function of that name in the source, so it reports an
+overloaded name as taking arguments when an overload that takes them is declared first. Declare the
+overload without arguments first.
 
 A compiled version of these, checked by the annotation processor, is `examples.ValuesFrom` in the
 `examples` module.

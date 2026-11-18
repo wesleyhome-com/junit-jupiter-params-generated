@@ -44,6 +44,15 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   `prices_filter_small$my_module`, and now show `prices_filter_small`. Update anything that matches
   on the old name. Naming an `internal` function by its compiled name in `filters = [...]` or
   `@ValuesFrom` still works, and a filter reached by both names is listed once.
+- **A filter with several overloads that could each filter the test now fails it** (#122). With
+  `startRule(start: Int)` and `startRule(start: Int, end: Int)` in one companion object, or a single
+  `@JvmOverloads` filter, a test generating both `start` and `end` used whichever overload reflection
+  listed first. The JVM doesn't specify that order, and it changed between builds, so the same test
+  could run a different set of combinations after an unrelated change. The test now fails with
+  `Filter [startRule] is overloaded, and 2 overloads can filter this test: startRule(int),
+  startRule(int, int)`. Give the overloads different names, or drop `@JvmOverloads`. Where the
+  choice never depended on that order, the same overload is still used: a static or `@JvmStatic`
+  one before one declared only in a companion object, and a public one before an `internal` one.
 
 ### Fixed
 
@@ -60,6 +69,14 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   `@ValuesFrom` used to fail with `No filter named […]` or `no function named […]`. Conventional
   filters are now looked for on the class running the test rather than the one declaring it, so
   they also apply to inherited tests and to an interface's default tests.
+- **Overloaded filters and `@ValuesFrom` functions are chosen the same way in every build** (#122).
+  Which overload was used depended on the order reflection listed methods in, so a test could pass
+  in one build and fail in another with `Filter [...] declares [label], which is not a generated
+  parameter of the test` or `[pts] must take no arguments, but takes 1`. A filter now uses the
+  overload whose parameters all match generated parameters, also where the overload ranked first,
+  a `@JvmStatic` or public one, never could. `@ValuesFrom` uses the overload that takes no
+  arguments. If no overload of a filter can filter the test, the failure lists what's wrong with
+  each one.
 
 ### Build and docs
 
