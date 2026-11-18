@@ -142,7 +142,7 @@
             </tr>
             <tr>
               <td>Maven</td>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@3a8bcf80 lang-kotlin">test</code> scope for the extension</td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@64582f0a lang-kotlin">test</code> scope for the extension</td>
               <td>-</td>
             </tr>
           </tbody>
@@ -392,23 +392,23 @@
           </thead>
           <tbody>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@3a8bcf80 lang-kotlin">{index}</code></td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@64582f0a lang-kotlin">{index}</code></td>
               <td>the 1-based invocation number</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@3a8bcf80 lang-kotlin">{arguments}</code></td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@64582f0a lang-kotlin">{arguments}</code></td>
               <td>the generated values, comma separated</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@3a8bcf80 lang-kotlin">{argumentsWithNames}</code></td>
-              <td>the generated values as <code class="org.jetbrains.dokka.pages.commenttable@3a8bcf80 lang-kotlin">name=value</code>, comma separated</td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@64582f0a lang-kotlin">{argumentsWithNames}</code></td>
+              <td>the generated values as <code class="org.jetbrains.dokka.pages.commenttable@64582f0a lang-kotlin">name=value</code>, comma separated</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@3a8bcf80 lang-kotlin">{displayName}</code></td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@64582f0a lang-kotlin">{displayName}</code></td>
               <td>the test method's own display name</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@3a8bcf80 lang-kotlin">{0}</code>, <code class="org.jetbrains.dokka.pages.commenttable@3a8bcf80 lang-kotlin">{1}</code>, ...</td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@64582f0a lang-kotlin">{0}</code>, <code class="org.jetbrains.dokka.pages.commenttable@64582f0a lang-kotlin">{1}</code>, ...</td>
               <td>a single generated value, by position</td>
             </tr>
           </tbody>
@@ -503,7 +503,7 @@
 <span class="copy-tooltip">
           <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
 <span class="copy-icon"></span></span></div>
-      <p class="paragraph">This works for value classes over primitives, <code class="lang-kotlin">String</code> and object types. A custom provider can also produce the value class directly, for a type no built-in source covers:</p>
+      <p class="paragraph">This works for value classes over primitives, <code class="lang-kotlin">String</code> and object types, and over other value classes: <code class="lang-kotlin">@LongSource</code> generates a <code class="lang-kotlin">Wallet(val money: Money)</code> too. A custom provider can also produce the value class directly, for a type no built-in source covers:</p>
       <div class="sample-container">
         <pre><code class="block lang-kotlin" theme="idea">@JvmInline<br>value class HouseholdId(val value: UUID)<br><br>@Target(AnnotationTarget.VALUE_PARAMETER)<br>@Retention(AnnotationRetention.RUNTIME)<br>@SourceProvider(HouseholdIdSourceDataProvider::class)<br>annotation class HouseholdIdSource<br><br>class HouseholdIdSourceDataProvider : AbstractAnnotatedParameterDataProvider&lt;HouseholdId, HouseholdIdSource&gt;() {<br>    override fun createParameterOptionsData(testParameter: TestParameter): List&lt;HouseholdId&gt; =<br>        listOf(HouseholdId(UUID.fromString(&quot;00000000-0000-0000-0000-000000000001&quot;)))<br>}<br><br>@GeneratedParametersTest<br>fun loadsHousehold(@HouseholdIdSource id: HouseholdId) {<br>}</code></pre>
 <span class="copy-tooltip">
@@ -517,7 +517,7 @@
 <span class="copy-icon"></span></span></div>
       <p class="paragraph">A filter can't skip a rejected value either; the invocation runs and fails.</p>
       <p class="paragraph">Display names and report entries show the value class's <code class="lang-kotlin">toString</code>, such as <code class="lang-kotlin">Money(cents=250)</code>. <code class="lang-kotlin">@WithNull</code> works on a nullable value class (<code class="lang-kotlin">amount: Money?</code>). On a non-null value class over a primitive it is an error, because the compiled method takes a <code class="lang-kotlin">long</code> there.</p>
-      <p class="paragraph">Filters can declare the value-class parameter as itself (<code class="lang-kotlin">fun formatsAmounts_filter(amount: Money)</code>). Declaring the underlying type (<code class="lang-kotlin">amount: Long</code>) is an error: both compile to <code class="lang-kotlin">long</code>, so the Kotlin declaration is the only thing that tells them apart. For a parameter that generates null, declare it nullable in the filter too (<code class="lang-kotlin">amount: Money?</code>), unless the value class wraps a nullable type.</p>
+      <p class="paragraph">Filters can declare the value-class parameter as itself (<code class="lang-kotlin">fun formatsAmounts_filter(amount: Money)</code>). Declaring the underlying type (<code class="lang-kotlin">amount: Long</code>) is an error: both compile to <code class="lang-kotlin">long</code>, so the Kotlin declaration is the only thing that tells them apart. For a parameter that generates null, declare it nullable in the filter too (<code class="lang-kotlin">amount: Money?</code>), unless the value class wraps a nullable type. A filter gets the value its Kotlin declaration says, whatever the value class wraps: <code class="lang-kotlin">Any</code>, a type parameter as in <code class="lang-kotlin">Box&lt;T&gt;</code>, an interface it implements, or another value class. That's the value the test method gets on JUnit 6.1 and later. On JUnit 6.0, the test method itself is given the box of a value class that compiles to <code class="lang-kotlin">Object</code> or to an interface it implements, such as <code class="lang-kotlin">Box&lt;T&gt;</code> or <code class="lang-kotlin">Result&lt;T&gt;</code>. A filter with a context parameter is given the box too, as a Java filter is: its Kotlin parameters don't line up with its compiled ones. A generated null is read by each declared type its own way for a value class over a nullable type, such as <code class="lang-kotlin">Nickname(val value: String?)</code>: whatever the test declares, a filter's <code class="lang-kotlin">Nickname</code> takes it as <code class="lang-kotlin">Nickname(null)</code>, and a filter's <code class="lang-kotlin">Nickname?</code> as null.</p>
       <p class="paragraph">A value class with no source annotation is left to other parameter resolvers, even when it wraps a type such as <code class="lang-kotlin">Boolean</code> that would otherwise be generated.</p>
       <p class="paragraph">A compiled version of these, checked by the annotation processor, is <code class="lang-kotlin">examples.ValueClasses</code> in the <code class="lang-kotlin">examples</code> module.</p>
       <h2 class="">Values From a Function</h2>
@@ -623,7 +623,7 @@
           <thead>
             <tr>
               <th>Concern</th>
-              <th><code class="org.jetbrains.dokka.pages.commenttable@3a8bcf80 lang-kotlin">@MethodSource</code></th>
+              <th><code class="org.jetbrains.dokka.pages.commenttable@64582f0a lang-kotlin">@MethodSource</code></th>
               <th>Generated Sources</th>
             </tr>
           </thead>
