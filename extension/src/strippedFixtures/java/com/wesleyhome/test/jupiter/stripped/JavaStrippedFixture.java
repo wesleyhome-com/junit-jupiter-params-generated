@@ -39,6 +39,10 @@ public class JavaStrippedFixture extends KotlinNamedFilters {
         return value != 2;
     }
 
+    @GeneratedParametersTest(filters = {"expectsText"})
+    public void wrongTypeForANamedFilter(@IntRangeSource(min = 1, max = 2) int start) {
+    }
+
     @GeneratedParametersTest
     public void displayed(@IntRangeSource(min = 1, max = 2) int start, @IntRangeSource(min = 1, max = 2) int end) {
     }

@@ -28,9 +28,9 @@ import com.wesleyhome.test.jupiter.testkit.invocationNames
 import com.wesleyhome.test.jupiter.testkit.reportEntries
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import net.bytebuddy.jar.asm.ClassWriter
-import net.bytebuddy.jar.asm.Label
-import net.bytebuddy.jar.asm.Opcodes
+import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.Label
+import org.objectweb.asm.Opcodes
 import java.io.InputStream
 import java.util.logging.Handler
 import java.util.logging.Level
@@ -194,6 +194,14 @@ class ParameterNamesTest {
             }).containsExactly(otherNamesWarning("oneNameMatches_filter", "oneNameMatches", "[a]"))
         }
 
+        /** `end` is Java's `arg2`, its position among the method's parameters, though it's the second generated one. */
+        @Test
+        fun testAParameterAnotherExtensionResolvesBetweenGeneratedOnesKeepsThePositions() {
+            assertThat(warningsWhile {
+                assertThat(invocationNames(JavaConsumerFixture::class.java, "middle")).isEqualTo(listOf("2, 1", "2, 2"))
+            }).containsExactly(otherNamesWarning("middle_filter", "middle", "[a]"))
+        }
+
         /**
          * The public overload binds by position, as before, so the `internal` one that would filter on
          * `end` is never chosen.
@@ -216,6 +224,31 @@ class ParameterNamesTest {
                 .isInstanceOf(InvalidFilterException::class)
                 .hasMessage(
                     "Filter [rule] is overloaded, and 2 overloads can filter this test: rule(String), rule(int). " +
+                        "Give them different names."
+                )
+        }
+
+        /**
+         * `rank(end, other)` bound by position and was used. `end` now says it means another parameter,
+         * and `other` isn't the test's, so it fails as it would alone, rather than quietly giving way to
+         * the `internal` overload, which filters on `start`.
+         */
+        @Test
+        fun testAnOverloadThatBoundByPositionFailsByNameRatherThanGivingWay() {
+            assertThat(warningsWhile {
+                assertThat(executionFailure(JavaKotlinFiltersFixture::class.java, "switched"))
+                    .isInstanceOf(InvalidFilterException::class)
+                    .hasMessage("Filter [rank] declares [other], which is not a generated parameter of the test")
+            }).isEmpty()
+        }
+
+        /** Both overloads bound by position, which was ambiguous, and still is. */
+        @Test
+        fun testAnOverloadThatBoundByPositionStillCountsTowardsAnAmbiguity() {
+            assertThat(executionFailure(JavaOverloadsFixture::class.java, "sameRank"))
+                .isInstanceOf(InvalidFilterException::class)
+                .hasMessage(
+                    "Filter [pair] is overloaded, and 2 overloads can filter this test: pair(int), pair(int, int). " +
                         "Give them different names."
                 )
         }
@@ -248,6 +281,9 @@ class ParameterNamesTest {
             assertThat(executionFailure(JavaConsumerFixture::class.java, "contradicted"))
                 .isInstanceOf(InvalidFilterException::class)
                 .hasMessage("Filter [contradicted_filter] declares [other], which is not a generated parameter of the test")
+            assertThat(executionFailure(JavaConsumerFixture::class.java, "startSecond"))
+                .isInstanceOf(InvalidFilterException::class)
+                .hasMessage("Filter [startSecond_filter] declares [a], which is not a generated parameter of the test")
         }
 
         /** Messages name a parameter as declared even where position binds it. */
@@ -337,6 +373,14 @@ class ParameterNamesTest {
                     .isInstanceOf(InvalidFilterException::class)
                     .hasMessage("Filter [strippedOrdered] declares [arg0], which is not a generated parameter of the test")
             }).isEmpty()
+        }
+
+        /** The test has no names to bind by, but the filter's own name still says which parameter is wrong. */
+        @Test
+        fun testMessagesNameTheFiltersParameterAsItIsDeclared() {
+            assertThat(executionFailure(JavaStrippedFixture::class.java, "wrongTypeForANamedFilter"))
+                .isInstanceOf(InvalidFilterException::class)
+                .hasMessage("Filter [expectsText] declares [start] as String, but the generated parameter is Integer")
         }
 
         @Test
@@ -432,20 +476,23 @@ class ParameterNamesTest {
          */
         @Test
         fun testALocalReusingAParametersSlotDoesNotRenameIt() {
-            val name = "com.wesleyhome.test.jupiter.generator.ReusedSlot"
-            val bytes = classWithReusedSlot(name.replace('.', '/'))
-            val loader = object : ClassLoader(javaClass.classLoader) {
-                val type: Class<*> = defineClass(name, bytes, 0, bytes.size)
+            for (parameterFirst in listOf(true, false)) {
+                val name = "com.wesleyhome.test.jupiter.generator.ReusedSlot$parameterFirst"
+                val bytes = classWithReusedSlot(name.replace('.', '/'), parameterFirst)
+                val loader = object : ClassLoader(javaClass.classLoader) {
+                    val type: Class<*> = defineClass(name, bytes, 0, bytes.size)
 
-                override fun getResourceAsStream(resource: String): InputStream? =
-                    if (resource == name.replace('.', '/') + ".class") bytes.inputStream() else null
+                    override fun getResourceAsStream(resource: String): InputStream? =
+                        if (resource == name.replace('.', '/') + ".class") bytes.inputStream() else null
+                }
+                assertThat(loader.type.getMethod("reassigned", Int::class.java).declaredParameterNames())
+                    .isEqualTo(listOf("start"))
             }
-            assertThat(loader.type.getMethod("reassigned", Int::class.java).declaredParameterNames())
-                .isEqualTo(listOf("start"))
         }
     }
 
-    private fun classWithReusedSlot(internalName: String): ByteArray {
+    /** The order of a table's entries means nothing, so the parameter's comes first or last. */
+    private fun classWithReusedSlot(internalName: String, parameterFirst: Boolean): ByteArray {
         val writer = ClassWriter(ClassWriter.COMPUTE_MAXS)
         writer.visit(Opcodes.V17, Opcodes.ACC_PUBLIC, internalName, null, "java/lang/Object", null)
         val method = writer.visitMethod(Opcodes.ACC_PUBLIC or Opcodes.ACC_STATIC, "reassigned", "(I)Z", null, null)
@@ -460,8 +507,9 @@ class ParameterNamesTest {
         method.visitVarInsn(Opcodes.ILOAD, 0)
         method.visitInsn(Opcodes.IRETURN)
         method.visitLabel(end)
-        method.visitLocalVariable("start", "I", null, start, later, 0)
+        if (parameterFirst) method.visitLocalVariable("start", "I", null, start, later, 0)
         method.visitLocalVariable("later", "I", null, later, end, 0)
+        if (!parameterFirst) method.visitLocalVariable("start", "I", null, start, later, 0)
         method.visitMaxs(0, 0)
         method.visitEnd()
         writer.visitEnd()

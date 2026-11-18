@@ -125,6 +125,13 @@ open class KotlinConsumerFilters {
         /** Never chosen while the public overload can be: it would filter on `end` instead of `start`. */
         @JvmStatic
         internal fun crossRank(end: Number): Boolean = end.toInt() >= 2
+
+        @JvmStatic
+        fun rank(end: Int, other: Int): Boolean = end <= other
+
+        /** Never chosen while the public overload binds; it would filter on `start`. */
+        @JvmStatic
+        internal fun rank(start: Number): Boolean = start.toInt() >= 2
     }
 }
 

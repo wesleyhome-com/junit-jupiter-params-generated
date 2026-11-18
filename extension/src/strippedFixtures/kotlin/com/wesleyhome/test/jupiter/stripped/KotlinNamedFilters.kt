@@ -5,5 +5,8 @@ open class KotlinNamedFilters {
     companion object {
         @JvmStatic
         fun sharedOrdered(start: Int, end: Int): Boolean = start <= end
+
+        @JvmStatic
+        fun expectsText(start: String): Boolean = start.isNotEmpty()
     }
 }

@@ -46,6 +46,7 @@ dependencies {
     testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.junit.platform.testkit)
+    testImplementation(libs.asm)
     testImplementation("org.mockito:mockito-core:5.24.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.24.0")
     testImplementation("io.mockk:mockk:1.14.12")

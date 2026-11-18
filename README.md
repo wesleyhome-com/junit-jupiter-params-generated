@@ -301,13 +301,16 @@ fun prices(...)
   silently widened by reflection.
 - A filter must return `Boolean` and must not return null.
 - A filter's name can be **overloaded**. The overload used is the one that can filter the test:
-  every parameter binds to a generated parameter (see [Parameter Names](#parameter-names)), with a
-  type that can hold it, and it returns `Boolean`. Where several in the nearest class can, a public one comes before an `internal` one,
-  then a static or `@JvmStatic` one before one declared only in a companion object. If that still
-  leaves more than one, the test fails and lists them. Which one applied used to depend on the order
-  reflection listed them in, and that can change between builds. `@JvmOverloads` makes overloads
-  too: `@JvmOverloads fun upTo(start: Int, end: Int = 2)` filters a test that generates only
-  `start`, but is ambiguous for one that generates both.
+  every parameter binds to a generated parameter (see [Parameter Names](#parameter-names)), with
+  a type that can hold it, and it returns `Boolean`. Where several in the nearest class can, a
+  public one comes before an `internal` one, then a static or `@JvmStatic` one before one declared
+  only in a companion object. If that still leaves more than one, the test fails and lists them.
+  Which one applied used to depend on the order reflection listed them in, and that can change
+  between builds. `@JvmOverloads` makes overloads too:
+  `@JvmOverloads fun upTo(start: Int, end: Int = 2)` filters a test that generates only `start`,
+  but is ambiguous for one that generates both. An overload that bound by position before, and
+  whose names now say otherwise but don't all match, fails the test rather than giving way to
+  another overload.
 - If every combination is rejected, the test fails and the message names the filters responsible.
 - Filtering reduces what *runs*, not what is *generated*, so the invocation ceiling still applies to
   the full product and `generated.invocations` still reports it.
@@ -379,7 +382,7 @@ filter's names then all have to be the test's, as everywhere else.
 When position decides and names could have told it otherwise, the filter logs a warning, once for
 each test that uses it:
 
-- Neither side records names, as with `-g:none`:
+- One side doesn't record names, as with `-g:none`:
 
   ```text
   Filter [ordered_filter] binds to the parameters of [ordered] by position, because the class files don't record their names. Compile with -parameters to bind by name.

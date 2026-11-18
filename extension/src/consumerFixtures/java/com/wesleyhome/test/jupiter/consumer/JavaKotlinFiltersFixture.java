@@ -13,4 +13,8 @@ public class JavaKotlinFiltersFixture extends KotlinConsumerFilters {
     @GeneratedParametersTest(name = "{arguments}", filters = {"crossRank"})
     public void twoRanks(@IntRangeSource(min = 1, max = 3) int start, @IntRangeSource(min = 1, max = 3) int end) {
     }
+
+    @GeneratedParametersTest(name = "{arguments}", filters = {"rank"})
+    public void switched(@IntRangeSource(min = 1, max = 3) int start, @IntRangeSource(min = 1, max = 3) int end) {
+    }
 }
