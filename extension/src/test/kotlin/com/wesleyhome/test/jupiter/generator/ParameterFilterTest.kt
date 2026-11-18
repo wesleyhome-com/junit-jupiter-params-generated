@@ -738,6 +738,11 @@ class ParameterFilterTest {
 
     class OuterFixture : BaseFixture() {
 
+        /** Only starts with `ordered`, so it doesn't claim `ordered_filter` from [Inner.ordered]. */
+        @GeneratedParametersTest
+        fun orderedPairs(@IntRangeSource(min = 1, max = 2) start: Int) {
+        }
+
         @Nested
         inner class Inner {
 
