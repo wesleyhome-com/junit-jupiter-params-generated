@@ -25,7 +25,7 @@ jobs:
           distribution: 'corretto'
       - name: Run build with Gradle Wrapper
         run: ./gradlew build dokkaGenerate --no-daemon
-      - name: Test a Kotlin 2.2 consumer
+      - name: Test Kotlin 2.2 consumers
         run: bash .github/scripts/consumer-smoke-test.sh --no-daemon
       - name: Detect snapshot version
         id: version
@@ -47,6 +47,19 @@ jobs:
           name: snapshot-docs
           path: docs
           retention-days: 1
+
+  floor-versions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project sources
+        uses: actions/checkout@v7
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+      - name: Run the tests on the oldest Kotlin runtime and JUnit supported
+        run: ./gradlew check -PkotlinRuntime=2.2.21 -PjunitVersion=6.0.3 --no-daemon
 
   publish-snapshot-docs:
     needs: build-snapshot-gradle-project
