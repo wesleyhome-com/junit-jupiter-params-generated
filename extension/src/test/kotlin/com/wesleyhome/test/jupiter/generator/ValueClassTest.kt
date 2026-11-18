@@ -251,6 +251,29 @@ class ValueClassTest {
             .isEqualTo(listOf("Box(value=Money(cents=2))"))
     }
 
+    /**
+     * `AnyBoxBox<T : AnyBox>` compiles to `Object`, holding its `T` as an `AnyBox` holds its value. The
+     * filter is given what the box holds, the inner `AnyBox("y")`, not that unwrapped again.
+     */
+    @Test
+    fun testFilterOverAValueClassOverABoundedTypeParameterGetsWhatTheBoxHolds() {
+        assertThat(invocationNames(FilterFixture::class.java, "boundedBox"))
+            .isEqualTo(listOf("AnyBoxBox(value=AnyBox(value=y))"))
+    }
+
+    /** `Result` is a value class over `Any?`: given the box, every `Result` was a success. */
+    @Test
+    fun testFilterOverAResultGetsTheResult() {
+        assertThat(invocationNames(FilterFixture::class.java, "result")).isEqualTo(listOf("Success(1)"))
+    }
+
+    /** A context parameter is a JVM parameter but not a value parameter, so, as for a Java filter, the box goes as it is. */
+    @Test
+    fun testFilterWithAContextParameterIsGivenTheBox() {
+        assertThat(invocationNames(FilterFixture::class.java, "contextAnyBox"))
+            .isEqualTo(listOf("1, AnyBox(value=x)", "1, AnyBox(value=y)"))
+    }
+
     /** The filter used to see the box where it expected the value, so its rule turned away every value but null. */
     @Test
     fun testNullableFilterParameterOverAValueClassOfAnyGetsTheWrappedValue() {
@@ -285,7 +308,6 @@ class ValueClassTest {
 
         @GeneratedParametersTest(name = "{arguments}")
         fun anyBox(@ValuesFrom("anyBoxes") box: AnyBox) {
-            check(box.value is String)
         }
 
         @GeneratedParametersTest(name = "{arguments}", filters = ["onlyX"])
@@ -301,8 +323,19 @@ class ValueClassTest {
         }
 
         @GeneratedParametersTest(name = "{arguments}")
+        fun boundedBox(@ValuesFrom("boundedBoxes") box: AnyBoxBox<AnyBox>) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun result(@ValuesFrom("results") result: Result<Int>) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["boxedInContext"])
+        fun contextAnyBox(@IntSource([1]) n: Int, @ValuesFrom("anyBoxes") box: AnyBox) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
         fun box(@ValuesFrom("intBoxes") box: Box<Int>) {
-            check(box.value > 0)
         }
 
         @GeneratedParametersTest(name = "{arguments}", filters = ["moreThanOne"])
@@ -362,6 +395,23 @@ class ValueClassTest {
             fun taggedBoxes(): List<Tagged> = listOf(Tagged(AnyBox("x")), Tagged(AnyBox("y")))
 
             fun nested_filter(tagged: Tagged): Boolean = tagged.box.value == "x"
+
+            @JvmStatic
+            fun boundedBoxes(): List<AnyBoxBox<AnyBox>> =
+                listOf(AnyBoxBox(AnyBox(AnyBox("y"))), AnyBoxBox(AnyBox(AnyBox("z"))))
+
+            @JvmStatic
+            fun boundedBox_filter(box: AnyBoxBox<AnyBox>): Boolean = box.value.value == AnyBox("y")
+
+            @JvmStatic
+            fun results(): List<Result<Int>> = listOf(Result.success(1), Result.failure(IllegalStateException("none")))
+
+            @JvmStatic
+            fun result_filter(result: Result<Int>): Boolean = result.isSuccess
+
+            context(n: Int)
+            @JvmStatic
+            fun boxedInContext(box: AnyBox): Boolean = box.value is AnyBox
 
             @JvmStatic
             fun intBoxes(): List<Box<Int>> = listOf(Box(1), Box(2), Box(3))
@@ -572,6 +622,9 @@ value class Box<T>(val value: T)
 
 @JvmInline
 value class AnyBox(val value: Any)
+
+@JvmInline
+value class AnyBoxBox<T : AnyBox>(val value: T)
 
 @JvmInline
 value class Label(val text: CharSequence) : CharSequence by text

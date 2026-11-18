@@ -82,14 +82,16 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   This doesn't affect a `private` filter, which has no check, or a filter whose parameter another
   of the test's filters takes and can hold the null: those run as before.
 - **A filter over a value class whose box fits its compiled type now gets the value inside**
-  (#115). `AnyBox(val value: Any)` and `Box<T>(val value: T)` compile to `Object`, and
-  `Label(val text: CharSequence) : CharSequence by text` to `CharSequence`, so the filter used to
-  be given the box where its code expected the value: `box.value` was the box itself. A rule that
-  only compared it, such as `box.value != "y"`, quietly let through or turned away the wrong
-  combinations, and the test passed running them. With `box: AnyBox?`,
-  `box == null || box.value == "x"` ran the null alone. The filter now sees what the test sees, so
-  such a test runs the combinations its filter was written for. That can mean different
-  invocations, or a failure the old value hid. Display names and generated values don't change.
+  (#115). `AnyBox(val value: Any)`, `Box<T>(val value: T)` and the standard library's
+  `Result<T>`, a value class over `Any?`, compile to `Object`, and
+  `Label(val text: CharSequence) : CharSequence by text` to `CharSequence`. So the filter used to
+  be given the box where its code expected the value: `box.value` was the box itself, and
+  `result.isSuccess` was true for a failure too. A rule like that, or one that only compared the
+  value, such as `box.value != "y"`, quietly let through or turned away the wrong combinations,
+  and the test passed running them. With `box: AnyBox?`, `box == null || box.value == "x"` ran the
+  null alone. The filter now gets the value its Kotlin declaration says, so such a test runs the
+  combinations its filter was written for. That can mean different invocations, or a failure the
+  old value hid. Display names and generated values don't change.
 
 ### Fixed
 
@@ -144,13 +146,15 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   accepted. One over a nullable type, such as `Nickname(val value: String?)`, still takes the null
   as `Nickname(null)`. A `private` filter and a Java filter take the null as before. Any filter
   that then throws on the null is reported as a throwing filter.
-- **A filter over a value class wrapping `Any`, a type parameter or an interface gets the value
-  the test gets** (#115). A filter declaring `box: Box<Int>` failed the test with `Filter
-  [box_filter] on [box=Box(value=1)] threw ClassCastException`, because it was given the box, and
-  one declaring `box: AnyBox` rejected everything: `All 2 generated combinations were rejected by
-  [anyBox_filter]`. Values are now unboxed as far as the filter's Kotlin parameter type says.
-  Java filters are unchanged, and a filter declaring `amount: Money` still takes a generated
-  `Long`, both being a `long` in the signature.
+- **A filter over a value class wrapping `Any` or a type parameter, or implementing the interface
+  it wraps, gets the value its Kotlin declaration says** (#115). That's the value the test method
+  gets on JUnit 6.1 and later; on JUnit 6.0 the test method itself is still given the box. Given
+  the box, a filter declaring `box: Box<Int>` failed the test with `InvocationTargetException:
+  null`, caused by a `ClassCastException`, and one declaring `box: AnyBox` rejected everything:
+  `All 2 generated combinations were rejected by [anyBox_filter]`. Values are now unboxed as far
+  as the filter's Kotlin parameter types say. A filter with a context parameter is still given the
+  box, as a Java filter is: its Kotlin parameters don't line up with its compiled ones. A filter
+  declaring `amount: Money` still takes a generated `Long`, both being a `long` in the signature.
 - **A source for the innermost type generates a value class over another value class** (#115).
   `@LongSource` on `wallet: Wallet`, for `Wallet(val money: Money)`, failed with `Unable to find a
   suitable data provider for parameter [wallet]`, though `@ValuesFrom` worked. A value that an

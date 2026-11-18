@@ -176,7 +176,11 @@ internal class ParameterFilter(
             )
         }
 
-        /** Without Kotlin types, as for a Java filter, the boxes go as they are: a value class is a class to Java. */
+        /**
+         * Without Kotlin types that line up with the signature, the boxes go as they are. For a Java
+         * filter that is right, a value class being a class to Java, but a Kotlin filter with a
+         * context parameter is given the box where its code expects what is inside.
+         */
         private fun unboxing(method: Method, kotlinTypes: List<KType>?): Array<Array<ValueClassShape>> =
             Array(method.parameterCount) { index ->
                 kotlinTypes?.let { unboxedLayers(it[index], method.parameterTypes[index]) } ?: emptyArray()
