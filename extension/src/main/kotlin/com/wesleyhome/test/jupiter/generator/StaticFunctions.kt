@@ -8,23 +8,33 @@ import kotlin.reflect.full.companionObject
 internal data class StaticFunction(val method: Method, val receiver: Any?)
 
 /**
- * Finds [name] as a static method, a member of an object, or a member of a companion object, in the
- * nearest of [scopesOf] that has it, so a function shared by several test classes can live in a
- * base class, an interface, or the class enclosing a `@Nested` one.
+ * Finds [name] as a static method, a member of an object, or a member of a companion object, in
+ * [type] and its supertypes, then in the classes enclosing it if it's `@Nested`. A function shared
+ * by several test classes can live in a base class, an interface, or the class enclosing a
+ * `@Nested` one.
+ */
+internal fun findStaticFunction(type: Class<*>, name: String): StaticFunction? =
+    findStaticFunction(enclosingClassesOf(type).toList(), name)
+
+/**
+ * Looks in [classes] only, each with its supertypes, and takes the nearest that has [name].
  *
  * An `internal` function compiles to `name$module`, and only that compiled name used to find it.
  * Within one class, a function the old matching finds still wins over one found by its Kotlin name
  * alone, so an `internal` overload doesn't displace the function chosen before.
  */
-internal fun findStaticFunction(type: Class<*>, name: String): StaticFunction? =
-    scopesOf(type).firstNotNullOfOrNull { scope ->
+internal fun findStaticFunction(classes: List<Class<*>>, name: String): StaticFunction? =
+    scopesOf(classes).firstNotNullOfOrNull { scope ->
         val named = callableIn(scope).filter { it.method.isNamed(name) }.toList()
-        named.firstOrNull { it.method.name == name || '$' !in it.method.name } ?: named.firstOrNull()
+        named.firstOrNull { it.method.wasNamed(name) } ?: named.firstOrNull()
     }
 
 /** Whether [name] exists only as an instance method, which nothing can call before the test instance exists. */
 internal fun hasInstanceFunction(type: Class<*>, name: String): Boolean =
-    scopesOf(type).flatMap { it.declaredMethods.asSequence() }.any { it.isNamed(name) }
+    hasInstanceFunction(enclosingClassesOf(type).toList(), name)
+
+internal fun hasInstanceFunction(classes: List<Class<*>>, name: String): Boolean =
+    scopesOf(classes).flatMap { it.declaredMethods.asSequence() }.any { it.isNamed(name) }
 
 /**
  * The class, then the class enclosing it for as long as it is an inner class, as `@Nested` requires.
@@ -43,6 +53,12 @@ internal fun declaredFunctionsOf(type: Class<*>): Sequence<Method> =
 private fun Method.isNamed(name: String): Boolean =
     this.name == name || (this.name.startsWith(name) && kotlinName() == name)
 
+/**
+ * Of the methods [isNamed] matches, the ones matched before `internal` names were understood: only a
+ * value class's mangling, `name-<hash>`, was resolved then, so a `$` meant the compiled name.
+ */
+private fun Method.wasNamed(name: String): Boolean = this.name == name || '$' !in this.name || '-' in this.name
+
 /** Static methods, then an object's members, then its companion object's: the order a name is looked for. */
 private fun callableIn(scope: Class<*>): Sequence<StaticFunction> =
     scope.declaredMethods.asSequence().filter { Modifier.isStatic(it.modifiers) }.map { StaticFunction(it, null) } +
@@ -57,11 +73,11 @@ private fun membersOf(instance: Any?): Sequence<StaticFunction> =
     }
 
 /**
- * Each of [enclosingClassesOf] with its superclasses, then its interfaces. Enclosing classes come
- * after the test class's own supertypes, so they never displace a function found there.
+ * Each of [classes] with its superclasses, then its interfaces. Enclosing classes come after the
+ * test class's own supertypes, so they never displace a function found there.
  */
-private fun scopesOf(type: Class<*>): Sequence<Class<*>> =
-    enclosingClassesOf(type).flatMap { supertypesOf(it) }.distinct()
+private fun scopesOf(classes: List<Class<*>>): Sequence<Class<*>> =
+    classes.asSequence().flatMap { supertypesOf(it) }.distinct()
 
 private fun supertypesOf(type: Class<*>): Sequence<Class<*>> {
     val classes = generateSequence(type) { it.superclass }.takeWhile { it != Any::class.java }

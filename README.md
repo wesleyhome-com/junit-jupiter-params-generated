@@ -290,8 +290,8 @@ fun prices(...)
   or inherited. The filter is then taken to be that test's. `filters = [...]` always looks in
   enclosing classes.
 - An `internal` filter is found by the name it's declared with, although its compiled name has the
-  module name appended. The compiled name works too. If one class has a public function and an
-  `internal` one of the same name, the public one is used.
+  module name appended. The compiled name works too. Where one class has several functions of that
+  name, an `internal` one doesn't displace the function 4.1.0 chose.
 - Parameter types must match the generated parameter. A supertype is fine - `Number` accepts a
   generated `Int` - but a filter declaring `Long` against a generated `Int` is rejected rather than
   silently widened by reflection.

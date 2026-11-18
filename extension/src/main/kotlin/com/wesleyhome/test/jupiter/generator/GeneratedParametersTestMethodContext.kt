@@ -18,15 +18,19 @@ import kotlin.reflect.jvm.kotlinFunction
 internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
     val testModel: TestModel
     val namePattern: String
-    val filterNames: Set<String>
     val strategy: GenerationStrategy
+    private val testClass: Class<*> = context.requiredTestClass
+    private val explicitFilterNames: Set<String>
+    private val conventionalFilterClasses: List<Class<*>>
+    private val conventionalFilterNames: Set<String>
 
     init {
         val requiredTestMethod = context.requiredTestMethod.kotlinFunction!!
         val generated = requiredTestMethod.findAnnotation<GeneratedParametersTest>()
         namePattern = generated?.name ?: DEFAULT_DISPLAY_NAME
-        filterNames = conventionalFilterNames(requiredTestMethod.name, context.requiredTestClass) +
-            (generated?.filters?.toSet() ?: emptySet())
+        explicitFilterNames = generated?.filters?.toSet() ?: emptySet()
+        conventionalFilterClasses = conventionalFilterClasses(requiredTestMethod.name)
+        conventionalFilterNames = conventionalFilterNames(requiredTestMethod.name, conventionalFilterClasses)
         strategy = generated?.strategy ?: GenerationStrategy.CARTESIAN
         val parameters = requiredTestMethod.parameters.filter { it.kind == KParameter.Kind.VALUE }
         val jvmTypes = context.requiredTestMethod.parameterTypes
@@ -49,17 +53,29 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
      * being listed, so the common case needs no attribute. They are unioned with any named
      * explicitly rather than overridden by them, so adding one can never silently do nothing.
      *
-     * They are looked for from the class running the test, where explicit filters are resolved,
-     * rather than the one declaring it: an inherited test takes its subclass's filters, and an
-     * interface's default test reaches the extension as a bridge in the implementing class.
-     *
-     * A `@Nested` test also takes them from enclosing classes, but only out to the first that has a
-     * test of the same name, declared or inherited. A filter there was written for that test.
+     * A conventional name is resolved only in the classes it was looked for in, so a misplaced
+     * instance filter fails rather than falling through to an enclosing test's filter of that name.
+     * An explicit name is looked for in every enclosing class. A filter reached by two names, such
+     * as an `internal` one's declared and compiled names, applies once.
      */
-    private fun conventionalFilterNames(testName: String, testClass: Class<*>): Set<String> {
+    fun filters(layout: GeneratedParameterLayout): List<ParameterFilter> =
+        (ParameterFilter.resolve(conventionalFilterClasses, conventionalFilterNames, layout) +
+            ParameterFilter.resolve(enclosingClassesOf(testClass).toList(), explicitFilterNames, layout))
+            .distinctBy { it.method }
+
+    /**
+     * Conventional filters are looked for from the class running the test, where explicit filters
+     * are resolved, rather than the one declaring it: an inherited test takes its subclass's
+     * filters, and an interface's default test reaches the extension as a bridge in the
+     * implementing class. A `@Nested` test also takes them from enclosing classes, out to the first
+     * that has a test of the same name, declared or inherited; a filter there was written for it.
+     */
+    private fun conventionalFilterClasses(testName: String): List<Class<*>> =
+        listOf(testClass) + enclosingClassesOf(testClass).drop(1).takeWhile { !it.hasTestNamed(testName) }
+
+    private fun conventionalFilterNames(testName: String, classes: List<Class<*>>): Set<String> {
         val prefix = "$testName$FILTER_SUFFIX"
-        val enclosing = enclosingClassesOf(testClass).drop(1).takeWhile { !it.hasTestNamed(testName) }
-        return (sequenceOf(testClass) + enclosing)
+        return classes.asSequence()
             .flatMap { declaredFunctionsOf(it) }
             .filter { it.name.startsWith(prefix) && it.couldBeAFilter() }
             .map { it.kotlinName() }

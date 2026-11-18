@@ -10,6 +10,7 @@ import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.WithNull
 import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource
 import com.wesleyhome.test.jupiter.annotations.number.IntSource
+import com.wesleyhome.test.jupiter.annotations.number.LongSource
 import com.wesleyhome.test.jupiter.java.filter.JavaCompanionFieldFixture
 import com.wesleyhome.test.jupiter.java.filter.JavaFilterFixture
 import com.wesleyhome.test.jupiter.java.filter.JavaFilterScopesFixture
@@ -391,9 +392,19 @@ class ParameterFilterTest {
         assertThat(invocationNames(OverloadFixture::class.java, "explicit")).isEqualTo(listOf("2", "3"))
     }
 
+    /** A value class mangles the name too, as `vc_filter-<hash>$<module>`, and that form was always found. */
+    @Test
+    fun testAnInternalFilterTakingAValueClassIsChosenAsBefore() {
+        val oneAndThree = listOf("Money(cents=1)", "Money(cents=3)")
+        assertThat(invocationNames(OverloadFixture::class.java, "valueClassAndPublic")).isEqualTo(oneAndThree)
+        assertThat(invocationNames(OverloadFixture::class.java, "valueClassAndInternal")).isEqualTo(oneAndThree)
+    }
+
     @Test
     fun testAnInternalFilterCanBeNamedByItsCompiledName() {
         assertThat(invocationNames(InternalFixture::class.java, "compiledName")).isEqualTo(listOf("2", "3"))
+        assertThat(reportEntries(InternalFixture::class.java, "compiledName").single()["generated.filters"])
+            .isEqualTo("compiledRule")
     }
 
     @Test
@@ -401,6 +412,26 @@ class ParameterFilterTest {
         compiledNameCalls.set(0)
         assertThat(invocationNames(InternalFixture::class.java, "bothNames")).isEqualTo(listOf("1", "2"))
         assertThat(compiledNameCalls.get()).isEqualTo(3)
+    }
+
+    @Test
+    fun testAnInternalFilterNamedBothWaysIsReportedOnce() {
+        assertThat(reportEntries(InternalFixture::class.java, "bothNames").single()["generated.filters"])
+            .isEqualTo("bothNames_filter_small")
+        assertThat(reportEntries(InternalFixture::class.java, "explicitBothNames").single()["generated.filters"])
+            .isEqualTo("bothNamesRule")
+    }
+
+    /**
+     * An inner class can't have a companion object, so an instance `<test>_filter` there is an easy
+     * mistake. It fails as it always has, rather than falling through to an enclosing test's filter.
+     */
+    @Test
+    fun testAnInstanceFilterInANestedClassIsReportedRatherThanReplaced() {
+        val mustBeStatic = "Filter [t_filter] must be static or declared in a companion object, because " +
+            "filtering happens before the test instance exists"
+        assertThat(executionFailure(MisplacedFilterFixture.Inner::class.java, "t")).hasMessage(mustBeStatic)
+        assertThat(executionFailure(MisplacedFilterFixture.Middle.Deep::class.java, "t")).hasMessage(mustBeStatic)
     }
 
     /** The subclass's `internal` filter is the nearer of two with one name, so it replaces the base class's. */
@@ -507,6 +538,39 @@ class ParameterFilterTest {
         }
     }
 
+    class MisplacedFilterFixture {
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun t(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @Nested
+        inner class Inner {
+            @GeneratedParametersTest(name = "{arguments}")
+            fun t(@IntRangeSource(min = 1, max = 3) start: Int) {
+            }
+
+            fun t_filter(start: Int): Boolean = start != 1
+        }
+
+        @Nested
+        inner class Middle {
+            fun t_filter(start: Int): Boolean = start != 1
+
+            @Nested
+            inner class Deep {
+                @GeneratedParametersTest(name = "{arguments}")
+                fun t(@IntRangeSource(min = 1, max = 3) start: Int) {
+                }
+            }
+        }
+
+        companion object {
+            @JvmStatic
+            fun t_filter(start: Int): Boolean = start != 1
+        }
+    }
+
     class StaticOuterFixture {
 
         class StaticNested {
@@ -585,7 +649,24 @@ class ParameterFilterTest {
         fun explicit(@IntRangeSource(min = 1, max = 3) start: Int) {
         }
 
+        @GeneratedParametersTest(name = "{arguments}")
+        fun valueClassAndPublic(@LongSource([1, 2, 3]) amount: Money) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun valueClassAndInternal(@LongSource([1, 2, 3]) amount: Money) {
+        }
+
         companion object {
+            @JvmStatic
+            internal fun valueClassAndPublic_filter(amount: Money): Boolean = amount.cents != 2L
+
+            fun valueClassAndPublic_filter(other: Int): Boolean = true
+
+            internal fun valueClassAndInternal_filter(amount: Money): Boolean = amount.cents != 2L
+
+            internal fun valueClassAndInternal_filter(cents: Long): Boolean = true
+
             fun conventional_filter(start: Int): Boolean = start >= 2
 
             internal fun conventional_filter(start: Int, end: Int): Boolean = true
@@ -715,8 +796,14 @@ class ParameterFilterTest {
         fun bothNames(@IntRangeSource(min = 1, max = 3) start: Int) {
         }
 
+        @GeneratedParametersTest(name = "{arguments}", filters = ["bothNamesRule", "bothNamesRule\$$TEST_MODULE"])
+        fun explicitBothNames(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
         companion object {
             internal fun compiledRule(start: Int): Boolean = start >= 2
+
+            internal fun bothNamesRule(start: Int): Boolean = start >= 2
 
             @JvmStatic
             internal fun bothNames_filter_small(start: Int): Boolean {

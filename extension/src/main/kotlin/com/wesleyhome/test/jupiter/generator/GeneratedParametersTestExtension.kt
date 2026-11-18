@@ -52,12 +52,10 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
             GeneratedParametersReport.valuesEnabled(extensionContext)
         )
         val arguments = generator.arguments()
-        val filters = ParameterFilter.resolve(
-            extensionContext.requiredTestClass, methodContext.filterNames, layout
-        )
+        val filters = methodContext.filters(layout)
         if (GeneratedParametersReport.summaryEnabled(extensionContext)) {
             extensionContext.publishReportEntry(
-                summary(generator, arguments, methodContext.filterNames, methodContext.strategy)
+                summary(generator, arguments, namesOf(filters), methodContext.strategy)
             )
         }
         return valuesOf(arguments, filters, methodContext)
@@ -75,12 +73,11 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
         filters: List<ParameterFilter>,
         methodContext: GeneratedParametersTestMethodContext
     ): Stream<Array<Any?>> {
-        val filterNames = methodContext.filterNames
         val accepts = { values: Array<Any?> -> filters.all { it.accepts(values) } }
         if (methodContext.strategy == GenerationStrategy.PAIRWISE) {
             val rows = PairwiseCovering.rowsFor(arguments, accepts)
             if (rows.isEmpty()) {
-                throw rejectedEverything(arguments, filterNames)
+                throw rejectedEverything(arguments, filters)
             }
             return rows.stream()
         }
@@ -97,18 +94,20 @@ internal class GeneratedParametersTestExtension : TestTemplateInvocationContextP
                 }
             }
             if (!emitted) {
-                throw rejectedEverything(arguments, filterNames)
+                throw rejectedEverything(arguments, filters)
             }
         }
         return StreamSupport.stream(accepted.asIterable().spliterator(), false)
     }
 
-    private fun rejectedEverything(arguments: ArgumentParameters, filterNames: Set<String>) =
+    private fun rejectedEverything(arguments: ArgumentParameters, filters: List<ParameterFilter>) =
         InvalidFilterException(
             "All ${arguments.totalPermutations} generated combinations were rejected by " +
-                filterNames.sorted().joinToString(", ", "[", "]") +
+                namesOf(filters).sorted().joinToString(", ", "[", "]") +
                 ". Relax a filter, or widen the values the parameters generate."
         )
+
+    private fun namesOf(filters: List<ParameterFilter>): Set<String> = filters.map { it.declaredName }.toSet()
 
     /**
      * `generated.invocations` counts what was generated, not what ran - filters remove combinations

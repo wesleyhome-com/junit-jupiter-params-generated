@@ -27,11 +27,13 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
     name in the class, not only the interface's own default tests;
   - in an enclosing class, for a test in a `@Nested` class, unless the enclosing class or a class
     between them has a test of that name of its own. The filter then stays that test's, as before.
+    An instance `<test>_filter` in an enclosing class can't be called, so it now fails the test,
+    as one in the test class always has.
 - **A function the lookup used to skip can now take precedence** (#121). A filter or `@ValuesFrom`
   function in a named companion object, or an `internal` one, was invisible, so a function of the
   same name in a superclass was used instead. The nearer class's own function is used now. If the
-  superclass's was the one you meant, rename one of them. Within one class, a public function still
-  wins over an `internal` overload of the same name.
+  superclass's was the one you meant, rename one of them. Within one class, the function chosen
+  before is still chosen: an `internal` overload doesn't displace it.
 - **A subclass's `internal` conventional filter now replaces a base class's filter of the same
   name** (#121). With a public `prices_filter_small` in the base class and an `internal` one in the
   subclass, both used to apply, because the subclass's was only known by its compiled name. Now they
@@ -41,7 +43,7 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   entry and the "rejected by" failure message used to show the compiled name, such as
   `prices_filter_small$my_module`, and now show `prices_filter_small`. Update anything that matches
   on the old name. Naming an `internal` function by its compiled name in `filters = [...]` or
-  `@ValuesFrom` still works.
+  `@ValuesFrom` still works, and a filter reached by both names is listed once.
 
 ### Fixed
 

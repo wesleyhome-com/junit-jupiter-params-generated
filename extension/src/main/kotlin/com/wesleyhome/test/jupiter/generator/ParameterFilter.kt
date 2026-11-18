@@ -13,12 +13,15 @@ import kotlin.reflect.jvm.kotlinFunction
  */
 internal class ParameterFilter(
     private val name: String,
-    private val method: Method,
+    val method: Method,
     private val receiver: Any?,
     private val slots: IntArray
 ) {
 
     private val parameterTypes: Array<Class<*>> = method.parameterTypes
+
+    /** What reports call it: the declared name, whichever name found it. */
+    val declaredName: String get() = method.kotlinName()
 
     fun accepts(values: Array<Any?>): Boolean {
         val arguments = arrayOfNulls<Any?>(slots.size)
@@ -34,19 +37,19 @@ internal class ParameterFilter(
 
     companion object {
 
-        /** An `internal` filter can be named by both its declared and its compiled name; it applies once. */
+        /** Looks for each of [names] in [classes] only, the first of which is the test class. */
         fun resolve(
-            testClass: Class<*>,
+            classes: List<Class<*>>,
             names: Collection<String>,
             layout: GeneratedParameterLayout
-        ): List<ParameterFilter> = names.map { name -> resolve(testClass, name, layout) }.distinctBy { it.method }
+        ): List<ParameterFilter> = names.map { name -> resolve(classes, name, layout) }
 
         private fun resolve(
-            testClass: Class<*>,
+            classes: List<Class<*>>,
             name: String,
             layout: GeneratedParameterLayout
         ): ParameterFilter {
-            val (method, receiver) = find(testClass, name)
+            val (method, receiver) = find(classes, name)
             // Boolean::class.java is the primitive type in Kotlin, so a boxed return needs its own check.
             if (method.returnType != Boolean::class.javaPrimitiveType &&
                 method.returnType != Boolean::class.javaObjectType
@@ -110,13 +113,13 @@ internal class ParameterFilter(
             else -> this
         }
 
-        private fun find(testClass: Class<*>, name: String): StaticFunction =
-            findStaticFunction(testClass, name) ?: throw InvalidFilterException(
-                if (hasInstanceFunction(testClass, name)) {
+        private fun find(classes: List<Class<*>>, name: String): StaticFunction =
+            findStaticFunction(classes, name) ?: throw InvalidFilterException(
+                if (hasInstanceFunction(classes, name)) {
                     "Filter [$name] must be static or declared in a companion object, because filtering " +
                         "happens before the test instance exists"
                 } else {
-                    "No filter named [$name] on ${testClass.name}"
+                    "No filter named [$name] on ${classes.first().name}"
                 }
             )
 
