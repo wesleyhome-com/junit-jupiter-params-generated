@@ -61,12 +61,20 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
 
 ### Build and docs
 
+- Builds enforce minimum line and branch test coverage for `extension`, `validation` and
+  `annotation-processor` (#145). `./gradlew check` now runs `jacocoTestCoverageVerification`, which
+  failed before checking anything. Each module's minimums sit just below the coverage when the
+  gate was added, so a pull request that lowers coverage past them fails its `build` check.
 - The release workflow creates the GitHub release. Its notes are this changelog's section for the
   version, followed by the release's pull requests grouped by label.
 - `CHANGELOG.md` records each release's changes, starting from 4.0.0.
 - Pull requests must pass a `changelog` check: an entry under `[Unreleased]`, a release-note label,
   and an Upgrade note for anything labeled `breaking`.
 - `CLAUDE.md` gives Claude Code sessions the project's contribution rules.
+- Releases build on JDK 17, as pull requests and `main` do, and run every project's build and tests
+  before publishing. Before building, and again before publishing, they check that `main` hasn't
+  moved, that the release tag doesn't exist yet, and that the deploy key can still reach the
+  repository for pushing. The release plugin's tasks are listed by `./gradlew tasks`.
 
 ## [4.1.0] - 2026-11-14
 

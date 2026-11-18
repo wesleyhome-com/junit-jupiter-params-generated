@@ -30,6 +30,8 @@ Run from repository root.
   - `./gradlew :junit-jupiter-params-generated:test`
 - Run one test class:
   - `./gradlew :junit-jupiter-params-generated:test --tests com.wesleyhome.test.jupiter.provider.datetime.RandomInstanceSourceDataProviderTest`
+- Check test coverage against the gate (see [Coverage Gate](#coverage-gate)):
+  - `./gradlew jacocoTestCoverageVerification`
 - Generate docs:
   - `./gradlew dokkaGenerate`
 
@@ -46,6 +48,52 @@ Run from repository root.
 - Prefer behavior-focused tests around tuple generation and invocation output.
 - Cover both Kotlin and Java interop paths for API-facing features.
 - For deterministic behavior claims, add explicit repeatability assertions.
+
+## Coverage Gate
+
+`./gradlew check`, and so `build` and the required `build` pull request check, runs
+`jacocoTestCoverageVerification` in `extension`, `validation` and `annotation-processor`. Each of
+those modules sets a minimum line and branch coverage for the module as a whole, in its
+`build.gradle.kts`. A change that takes a module below either minimum fails the build:
+
+```
+Rule violated for bundle annotation-processor: branches covered ratio is 0.66, but expected minimum is 0.67
+```
+
+The minimums started at the coverage when the gate was added, rounded down to the percent (a
+percent lower in the two small modules), so coverage can stay where it is or rise:
+
+| Module                 | Lines | Branches | Headroom                                      |
+|------------------------|-------|----------|-----------------------------------------------|
+| `extension`            | 0.98  | 0.92     | only the rounding                             |
+| `validation`           | 0.93  | 0.83     | a percent lower: about 2 lines and 1 branch   |
+| `annotation-processor` | 0.86  | 0.67     | a percent lower: about 2 lines and 2 branches |
+
+`validation` and `annotation-processor` are small enough that a single uncovered line or branch
+moves their coverage by half a percent or more, so they keep a percent of headroom.
+
+The JaCoCo version is pinned as `jacoco` in `gradle/libs.versions.toml`, because a different
+JaCoCo can measure unchanged code differently. Renovate proposes its bumps in a pull request of
+their own, and the gate judges that pull request like any other.
+
+- **Run it:** `./gradlew jacocoTestCoverageVerification`, or one module with, for example,
+  `./gradlew :annotation-processor:jacocoTestCoverageVerification`. It runs the tests it needs.
+- **See what isn't covered:** each test run writes `<module>/build/reports/jacoco/test/html/index.html`,
+  which marks missed lines and branches in the source.
+- **When it fails,** add tests for the code the change added or left uncovered. Lowering a minimum
+  is a decision for the pull request to explain, not a fix.
+- **Raise a minimum** when coverage rises, keeping the same headroom: read the module's Total row
+  in the HTML report, round down to the percent (and take a percent off for `validation` and
+  `annotation-processor`), and change the `minimum` values in that module's `build.gradle.kts` in
+  the same pull request, so the gain is kept.
+
+`validation` has no tests of its own. Its report and gate read the JaCoCo data from the
+`extension` and `annotation-processor` tests, so checking it runs those tests. `examples` has no
+gate: its samples are compiled, and checked by the annotation processor, but never run.
+
+The JaCoCo agent only instruments `com.wesleyhome.*` classes. Instrumenting everything also
+instruments the Kotlin compiler that the annotation processor's tests run, which slowed them by
+about 40%.
 
 ## Measuring Generation Performance
 
@@ -130,23 +178,65 @@ matters; async-profiler is the better tool if the question is where CPU time goe
 Main release/publish behavior is driven by GitHub workflows under `.github/workflows`.
 
 - `build-pr.yml`:
-  - builds and tests every pull request to `main`; its `build` check is required to merge.
+  - builds and tests every pull request to `main`, including the [coverage gate](#coverage-gate);
+    its `build` check is required to merge.
 - `build-main.yml`:
   - builds/tests,
   - publishes SNAPSHOT artifacts when `version` ends with `-SNAPSHOT`,
   - generates docs and publishes them as the snapshot docs (see below).
 - `release.yml`:
   - manual release workflow (`workflow_dispatch`),
-  - runs `net.researchgate.release`,
-  - publishes non-SNAPSHOT release artifacts to Maven Central,
-  - pushes the release commits and tag with the `RELEASE_DEPLOY_KEY` deploy key, the only actor
-    allowed to push to `main` directly,
+  - runs `net.researchgate.release` on JDK 17, the same as the pull request and `main` builds,
+  - checks that the release will be able to push (see below),
   - renames `CHANGELOG.md`'s `[Unreleased]` section to the release version before building, and
     stops the release there if that section is empty (see below),
+  - runs the same `build dokkaGenerate` as CI, in every project, then publishes non-SNAPSHOT release
+    artifacts to Maven Central,
+  - pushes the release commits and tag with the `RELEASE_DEPLOY_KEY` deploy key, the only actor
+    allowed to push to `main` directly,
   - creates the GitHub release: that version's changelog section, then the pull requests since the
     previous GA tag (or the tag just before a pre-release) grouped by label. An `X.Y.Z` version is
     marked Latest, anything else a pre-release. If that last step fails, the artifacts are already
     published; create the release by hand.
+
+### Publishing Before Pushing
+
+The release publishes to Maven Central before the release plugin pushes its commits and tag, and
+Central never replaces or removes a published version. So `.github/scripts/check-release-push.sh`
+runs twice before anything is published: right after checkout, and as `checkReleasePush`, the last
+task before the upload. It stops the release if `main` on GitHub is no longer the commit being
+released, the tag already exists, or a dry-run push with the deploy key fails, and also if git
+can't make one of those checks.
+
+A dry-run push sends no ref update, so it never reaches `main`'s ruleset. It proves the deploy key
+authenticates, not that the ruleset still lets it push. If the push fails after publishing (the
+deployment shows as published on the [Central Portal](https://central.sonatype.com/publishing/deployments)),
+don't run the release again for that version. Fix what stopped the push, then do by hand what the
+run didn't push. The log shows which release plugin task failed:
+
+- **`preTagCommit`: nothing was pushed.** Recreate the release commits from the commit the run built
+  (`gh run view <run id> --json headSha`):
+  ```bash
+  git switch -c release-<version> <headSha>
+  # set version=<version> in gradle.properties
+  ./gradlew releaseChangelog
+  # releaseChangelog dates the section today: change it in CHANGELOG.md to the day it was published
+  git commit -am "[Gradle Release Plugin] - pre tag commit: 'v<version>'."
+  git tag -a v<version> -m "[Gradle Release Plugin] - creating tag: 'v<version>'."
+  # set version=<next version> in gradle.properties
+  git commit -am "[Gradle Release Plugin] - new version commit: 'v<next version>'."
+  git push origin v<version> release-<version>
+  ```
+  Open a pull request from `release-<version>`, label it `skip-changelog`, and merge it with a merge
+  commit, so the tagged commit stays in `main`'s history. If `main` has moved since `<headSha>`,
+  which is the likely reason the push failed, the pull request can conflict on `CHANGELOG.md`: merge
+  `main` into the branch rather than rebasing it, which would leave the tag off `main`, and keep the
+  newer entries under `[Unreleased]`, above the `[<version>]` section.
+- **`createReleaseTag`: `main` has the pre-tag commit but there's no tag.** Tag that commit with
+  `git tag -a v<version>`, push the tag, then set the next version in a pull request.
+- **`commitNewVersion`: the tag is pushed.** Set the next version in a pull request.
+
+Then create the GitHub release by hand. Pushing the tag publishes the versioned docs.
 
 ## Changelog and Labels
 
