@@ -262,7 +262,10 @@ companion object {
 
 A filter declares only the parameters it is about, matched **by name**, so several small rules
 compose instead of one predicate that has to know about everything. A combination runs only if every
-filter accepts it. Use a suffix when a test has more than one:
+filter accepts it. The names come from Kotlin's metadata, or for Java from `-parameters` or the
+debug information Gradle and Maven compile with by default, so no compiler flag is needed. See
+[Parameter Names](#parameter-names) for the Java filters that still bind by position, as they did
+before names were read. Use a suffix when a test has more than one:
 
 ```kotlin
 @JvmStatic fun prices_filter_ordered(start: Int, end: Int): Boolean = start <= end
@@ -298,13 +301,16 @@ fun prices(...)
   silently widened by reflection.
 - A filter must return `Boolean` and must not return null.
 - A filter's name can be **overloaded**. The overload used is the one that can filter the test:
-  every parameter names a generated parameter, with a type that can hold it, and it returns
-  `Boolean`. Where several in the nearest class can, a public one comes before an `internal` one,
-  then a static or `@JvmStatic` one before one declared only in a companion object. If that still
-  leaves more than one, the test fails and lists them. Which one applied used to depend on the order
-  reflection listed them in, and that can change between builds. `@JvmOverloads` makes overloads
-  too: `@JvmOverloads fun upTo(start: Int, end: Int = 2)` filters a test that generates only
-  `start`, but is ambiguous for one that generates both.
+  every parameter binds to a generated parameter (see [Parameter Names](#parameter-names)), with
+  a type that can hold it, and it returns `Boolean`. Where several in the nearest class can, a
+  public one comes before an `internal` one, then a static or `@JvmStatic` one before one declared
+  only in a companion object. If that still leaves more than one, the test fails and lists them.
+  Which one applied used to depend on the order reflection listed them in, and that can change
+  between builds. `@JvmOverloads` makes overloads too:
+  `@JvmOverloads fun upTo(start: Int, end: Int = 2)` filters a test that generates only `start`,
+  but is ambiguous for one that generates both. An overload that bound by position before, and
+  whose names now say otherwise but don't all match, fails the test rather than giving way to
+  another overload.
 - If every combination is rejected, the test fails and the message names the filters responsible.
 - Filtering reduces what *runs*, not what is *generated*, so the invocation ceiling still applies to
   the full product and `generated.invocations` still reports it.
@@ -349,9 +355,52 @@ Only generated parameters are listed. A parameter resolved by another extension 
 
 ### Parameter Names
 
-`{argumentsWithNames}` needs the declared parameter names to be present in the compiled class file.
-Kotlin records them in its own metadata, so Kotlin test sources need nothing. Java test sources must
-be compiled with `-parameters`, or the names fall back to `arg0`, `arg1`:
+Filters and `{argumentsWithNames}` both use the names parameters were declared with, which have to
+be recorded in the compiled class files.
+
+- **Kotlin** records them in its own metadata, so Kotlin sources need nothing.
+- **Java filters** find them either way Java records them: with `-parameters`, or in the debug
+  information that `-g` adds. Gradle and Maven compile with `-g` by default, so a default build
+  needs nothing. `@ValuesFrom` messages use these names too.
+- **Java display names** use `-parameters` names only. Without them, `{argumentsWithNames}` and the
+  `generated.parameters` report entry show `arg0`, `arg1`.
+
+#### When a filter binds by position
+
+A Java test compiled without `-parameters` has names only in its debug information, if at all, and
+4.1.0 bound filters to it by position: a filter's first parameter took the test's first, whatever
+either was called. That applies when the filter has no `-parameters` names either, which is the
+case for a Java filter compiled the same way and for a Kotlin filter compiled without
+`javaParameters`. Position still decides those, so a filter that repeats the test's parameters in
+order keeps working, whatever it calls them. That includes a filter shared by tests whose names
+differ.
+
+Names decide instead when one of the filter's names belongs to a generated parameter at another
+position: `endNotOne_filter(int end)` on `test(int start, int end)` filters on `end`, not `start`. The
+filter's names then all have to be the test's, as everywhere else.
+
+When position decides and names could have told it otherwise, the filter logs a warning, once for
+each test that uses it:
+
+- One side doesn't record names, as with `-g:none`:
+
+  ```text
+  Filter [ordered_filter] binds to the parameters of [ordered] by position, because the class files don't record their names. Compile with -parameters to bind by name.
+  ```
+
+- The filter's names aren't all the test's:
+
+  ```text
+  Filter [loBeforeHi] binds to the parameters of [ordered] by position, because the test has no parameter named [lo, hi]. Name the filter's parameters as the test does to bind by name.
+  ```
+
+A filter whose names aren't recorded anywhere, such as one from a jar compiled with `-g:none`,
+binds by its `arg0`, `arg1`. So with a test whose names are recorded (Kotlin, or Java with
+`-parameters`), it fails with `declares [arg0], which is not a generated parameter of the test`, as
+it did in 4.1.0. With a Java test compiled without `-parameters`, it binds by position and logs the
+first warning.
+
+To record the names everywhere, compile Java with `-parameters`:
 
 ```kotlin
 // Gradle

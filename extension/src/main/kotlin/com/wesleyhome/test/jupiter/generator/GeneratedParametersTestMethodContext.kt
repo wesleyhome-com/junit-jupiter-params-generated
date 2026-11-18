@@ -23,9 +23,11 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
     private val explicitFilterNames: Set<String>
     private val conventionalFilterClasses: List<Class<*>>
     private val conventionalFilterNames: Set<String>
+    private val testName: String
 
     init {
         val requiredTestMethod = context.requiredTestMethod.kotlinFunction!!
+        testName = requiredTestMethod.name
         val generated = requiredTestMethod.findAnnotation<GeneratedParametersTest>()
         namePattern = generated?.name ?: DEFAULT_DISPLAY_NAME
         explicitFilterNames = generated?.filters?.toSet() ?: emptySet()
@@ -44,7 +46,8 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
                     isNullable = generatesNull(parameter, jvmTypes[index]),
                     annotations = parameter.annotations.toList()
                 )
-            }
+            },
+            declaredNames = context.requiredTestMethod.declaredParameterNames()
         )
     }
 
@@ -62,6 +65,7 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
         (ParameterFilter.resolve(conventionalFilterClasses, conventionalFilterNames, layout) +
             ParameterFilter.resolve(enclosingClassesOf(testClass).toList(), explicitFilterNames, layout))
             .distinctBy { it.method }
+            .onEach { it.warnIfBoundByPosition(testName) }
 
     /**
      * Conventional filters are looked for from the class running the test, where explicit filters

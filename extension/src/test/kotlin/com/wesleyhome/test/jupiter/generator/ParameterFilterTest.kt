@@ -5,7 +5,6 @@ import assertk.assertThat
 import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
-import assertk.assertions.messageContains
 import com.wesleyhome.test.jupiter.InvalidFilterException
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.WithNull
@@ -248,14 +247,12 @@ class ParameterFilterTest {
     }
 
     /**
-     * A `@JvmSynthetic` filter is the user's own, so it must not be skipped as compiler-generated. It
-     * fails at the moment, because a synthetic method records no parameter names, but it fails loudly.
+     * A `@JvmSynthetic` filter is the user's own, so it must not be skipped as compiler-generated. A
+     * synthetic method records no parameter names for Java reflection, but its Kotlin declaration does.
      */
     @Test
-    fun testAJvmSyntheticConventionalFilterIsReportedRatherThanIgnored() {
-        assertThat(executionFailure(Fixture::class.java, "jvmSynthetic"))
-            .isInstanceOf(InvalidFilterException::class)
-            .messageContains("Filter [jvmSynthetic_filter_small]")
+    fun testAJvmSyntheticConventionalFilterApplies() {
+        assertThat(invocationNames(Fixture::class.java, "jvmSynthetic")).isEqualTo(listOf("1", "2"))
     }
 
     /**

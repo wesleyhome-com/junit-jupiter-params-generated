@@ -54,6 +54,26 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   startRule(int, int)`. Give the overloads different names, or drop `@JvmOverloads`. Where the
   choice never depended on that order, the same overload is still used: a public one before an
   `internal` one, then a static or `@JvmStatic` one before one declared only in a companion object.
+- **A filter that names a different parameter than its position gave it now gets the one it
+  names** (#120). For a Java test compiled without `-parameters`, a filter with no `-parameters`
+  names either was bound by position: each of its parameters took the test parameter in the same
+  place, whatever either was called. That covers a Java filter compiled the same way, and a Kotlin
+  filter compiled without `javaParameters`. Position still decides, unless one of the filter's
+  names belongs to a generated parameter in another place. `endNotOne_filter(int end)` on
+  `test(int start, int end)` filtered on `start`, and passed; it now filters on `end`. The test runs
+  the combinations it was written for, which can mean different invocations, and failures the old
+  binding hid. Once one name decides, they all must be the test's. So `(int end, int other)` now
+  fails with `declares [other], which is not a generated parameter of the test`, and
+  `(int a, int start)`, which ran by position, fails with `declares [a]`: rename the parameter. A
+  filter whose names agree with their positions binds as before. So does one with names the test
+  doesn't have, such as `(int a, int b)` or `(int a, int end)`, which also logs a warning naming
+  them. For Kotlin tests and tests compiled with `-parameters`, only filters that used to fail are
+  affected. With overloads, this can now fail a test in two ways. An overload that now binds by
+  name can leave two that filter it: for `mixed(int start, String label)`, `rule(String label)`
+  used to take `start` and couldn't, so `rule(int start)` was used. Now both can, and the test
+  fails with `Filter [rule] is overloaded, and 2 overloads can filter this test`; give them
+  different names. And an overload that bound by position, but whose names now don't all match,
+  fails the test as it would alone, rather than giving way to another overload.
 
 ### Fixed
 
@@ -82,6 +102,17 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   rather than the bridge the compiler adds for it, which sometimes failed with `[pts] must return a
   List, Sequence or array, but returns Any`. If no overload of a filter can filter the test, the
   failure lists what's wrong with each one.
+- **Filters work without `javaParameters` or `-parameters`** (#120). Kotlin filters failed with
+  `Filter [...] declares [arg0], which is not a generated parameter of the test` unless compiled
+  with `javaParameters`, which isn't Kotlin's default. They now bind by the names in Kotlin's
+  metadata, `@JvmSynthetic` ones included. Java filters read their names from the debug
+  information, so they also bind for a test whose first parameter is resolved by another
+  extension, such as `TestInfo`. Messages about a filter's parameters, and `@ValuesFrom` messages
+  for Java tests, name parameters as declared rather than `arg0`. A filter that still binds to a
+  Java test by position, whether it's in Java or in Kotlin compiled without `javaParameters`, logs
+  a warning, once for each test that uses it, when the class files record no names or the
+  filter's names aren't the test's. Display names and report entries are unchanged: for Java they
+  still need `-parameters` to show declared names.
 
 ### Build and docs
 
