@@ -92,6 +92,18 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   null alone. The filter now gets the value its Kotlin declaration says, so such a test runs the
   combinations its filter was written for. That can mean different invocations, or a failure the
   old value hid. Display names and generated values don't change.
+- **On JUnit 6.0, a test method taking a value class whose box fits its compiled type now gets
+  the value inside** (#168), as it already did on JUnit 6.1. These are the value classes in the
+  note above, `AnyBox`, `Box<T>`, `Result<T>` and `Label`, and a value class over one of them.
+  JUnit 6.0 calls the test with `Method.invoke`, so the test was given the box where its code
+  expected the value: `box.value` was the box itself, `box.value` of a `Box<Int>` threw a
+  `ClassCastException`, and `result.isSuccess` was true for a failure. A test body that passed with
+  the box can now fail, such as one that calls `result.getOrThrow()` and ignores the result, or
+  compares `box.value` with a box, as `assertEquals(AnyBox("x"), box.value)` does. The same goes
+  for such a box from another extension's parameter resolver. On any JUnit version, an
+  `InvocationInterceptor` of your own that reads the test's arguments now sees a generated value
+  of these classes unboxed, as the test gets it. Display names, report entries, filters and
+  invocation counts don't change.
 
 ### Fixed
 
@@ -148,9 +160,9 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   that then throws on the null is reported as a throwing filter.
 - **A filter over a value class wrapping `Any` or a type parameter, or implementing the interface
   it wraps, gets the value its Kotlin declaration says** (#115). That's the value the test method
-  gets on JUnit 6.1 and later; on JUnit 6.0 the test method itself is still given the box. Given
-  the box, a filter declaring `box: Box<Int>` failed the test with `InvocationTargetException:
-  null`, caused by a `ClassCastException`, and one declaring `box: AnyBox` rejected everything:
+  gets too, on every JUnit version (#168). Given the box, a filter declaring `box: Box<Int>`
+  failed the test with `InvocationTargetException: null`, caused by a `ClassCastException`, and
+  one declaring `box: AnyBox` rejected everything:
   `All 2 generated combinations were rejected by [anyBox_filter]`. Values are now unboxed as far
   as the filter's Kotlin parameter types say. A filter with a context parameter is still given the
   box, as a Java filter is: its Kotlin parameters don't line up with its compiled ones. A filter
@@ -163,6 +175,29 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   rather than `IndexOutOfBoundsException: Index 1 out of bounds for length 1`. Its Kotlin
   parameters don't line up with its compiled ones, so it's judged by its compiled signature alone:
   `Filter [rule] declares [amount] as long, but the generated parameter is Money`.
+- **A test method taking some combinations of value classes no longer fails on JUnit 6.1**
+  (#168). JUnit 6.1 has kotlin-reflect call the test when an argument is a value class's box, and
+  kotlin-reflect takes every value-class argument to be boxed. So a test taking `Money`, passed
+  unboxed as a `long`, beside a box such as an `AnyBox`, a `Money?` or a `Box<Money>`, failed with
+  `object is not an instance of declaring class`. One taking `Wallet?`, for
+  `Wallet(val money: Money)`, failed with `argument type mismatch` for every value but null. When
+  an argument is a box, the test is now called with `Method.invoke`, as JUnit 6.0 calls it, given
+  each value as its compiled signature takes it. Otherwise JUnit calls it, as before, and so it
+  does a `suspend` test. On JUnit 6.1, a test that threw with a box among its arguments was
+  reported as an `InvocationTargetException`, with its exception as the cause. So
+  `assumeTrue(false)` failed the test rather than aborting it, and a
+  `TestExecutionExceptionHandler` was given the `InvocationTargetException` rather than the test's
+  exception. The test is now reported as what it threw: aborted for a failed assumption, and
+  handed to the handler as it is.
+- **A value class over a nullable type reaches the test method holding null** (#168), when it comes
+  boxed from `@ValuesFrom` or a custom provider. `Nickname(null)`, for
+  `Nickname(val value: String?)`, failed on every JUnit version with `ParameterResolver [...]
+  resolved a value of type [...Nickname] for parameter [java.lang.String nickname] in method [...],
+  but a value assignment compatible with [java.lang.String] is required`. So did
+  `OuterMoney(null)`, for `OuterMoney(val inner: Money?)`. The null `@WithNull` adds already
+  reached a `Nickname` test as `Nickname(null)`. On JUnit 6.1, a value class over a nullable value
+  class failed holding a value too, such as `OuterMoney(Money(1))`, with `object is not an instance
+  of declaring class`. These now run.
 
 ### Build and docs
 
@@ -181,6 +216,8 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   moved, that the release tag doesn't exist yet, and that the deploy key can still reach the
   repository for pushing. The release plugin's tasks are listed by `./gradlew tasks`.
 - JaCoCo 0.8.16 measures the coverage gate.
+- `./gradlew test -PjunitVersion=6.0.3` runs every project's tests on another JUnit version, such
+  as 6.0.3, the oldest this library supports (#168). Only the tests' runtime classpath changes.
 
 ## [4.1.0] - 2026-11-14
 
