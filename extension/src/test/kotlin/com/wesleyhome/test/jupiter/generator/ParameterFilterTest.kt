@@ -440,6 +440,39 @@ class ParameterFilterTest {
         assertThat(executionFailure(MisplacedFilterFixture.Middle.Deep::class.java, "t")).hasMessage(mustBeStatic)
     }
 
+    /** Naming a filter is how a `@Nested` test uses one its enclosing class's same-named test claims. */
+    @Test
+    fun testAnExplicitFilterIsFoundInAnEnclosingClassThatClaimsItsConventionalOne() {
+        assertThat(invocationNames(SameNameOuterFixture.ExplicitInner::class.java, "ordered")).isEqualTo(ORDERED)
+    }
+
+    @Test
+    fun testAMissingFilterOnANestedTestNamesTheNestedClass() {
+        assertThat(executionFailure(OuterFixture.Inner::class.java, "missing"))
+            .hasMessage("No filter named [nope] on ${OuterFixture.Inner::class.java.name}")
+    }
+
+    /** As before explicit filters were resolved separately, so a conventional guard protects them. */
+    @Test
+    fun testConventionalFiltersRunBeforeExplicitOnes() {
+        assertThat(invocationNames(Fixture::class.java, "guarded")).isEqualTo(listOf("1", "2"))
+    }
+
+    @Test
+    fun testTheFiltersThatRejectedEverythingAreListedInOrder() {
+        assertThat(executionFailure(Fixture::class.java, "zeta")).hasMessage(
+            "All 3 generated combinations were rejected by [alpha, zeta_filter]. " +
+                "Relax a filter, or widen the values the parameters generate."
+        )
+    }
+
+    /** One declared name, two functions: naming each applies each, as it did before. */
+    @Test
+    fun testTwoFunctionsWithOneDeclaredNameBothApply() {
+        assertThat(invocationNames(OverloadFixture::class.java, "bothOverloads"))
+            .isEqualTo(listOf("2, 2", "2, 3", "3, 3"))
+    }
+
     /** The subclass's `internal` filter is the nearer of two with one name, so it replaces the base class's. */
     @Test
     fun testASubclassInternalFilterReplacesABaseFilterOfTheSameName() {
@@ -714,6 +747,16 @@ class ParameterFilterTest {
             }
         }
 
+        @Nested
+        inner class ExplicitInner {
+            @GeneratedParametersTest(name = "{arguments}", filters = ["ordered_filter"])
+            fun ordered(
+                @IntRangeSource(min = 1, max = 3) start: Int,
+                @IntRangeSource(min = 1, max = 3) end: Int
+            ) {
+            }
+        }
+
         companion object {
             @JvmStatic
             fun ordered_filter(start: Int, end: Int): Boolean = start <= end
@@ -897,6 +940,13 @@ class ParameterFilterTest {
         fun valueClassAndInternal(@LongSource([1, 2, 3]) amount: Money) {
         }
 
+        @GeneratedParametersTest(name = "{arguments}", filters = ["mixed", "mixed\$$TEST_MODULE"])
+        fun bothOverloads(
+            @IntRangeSource(min = 1, max = 3) start: Int,
+            @IntRangeSource(min = 1, max = 3) end: Int
+        ) {
+        }
+
         companion object {
             @JvmStatic
             internal fun valueClassAndPublic_filter(amount: Money): Boolean = amount.cents != 2L
@@ -921,6 +971,10 @@ class ParameterFilterTest {
             internal fun mixRule(start: Int, end: Int): Boolean = true
 
             internal fun mixRule(start: Int, end: Int, other: Int): Boolean = true
+
+            fun mixed(start: Int): Boolean = start >= 2
+
+            internal fun mixed(start: Int, end: Int): Boolean = start <= end
         }
     }
 
@@ -1092,6 +1146,10 @@ class ParameterFilterTest {
                 @IntRangeSource(min = 1, max = 2) start: Int,
                 @IntRangeSource(min = 1, max = 2) end: Int
             ) {
+            }
+
+            @GeneratedParametersTest(filters = ["nope"])
+            fun missing(@IntRangeSource(min = 1, max = 2) start: Int) {
             }
 
             @Nested
@@ -1365,6 +1423,14 @@ class ParameterFilterTest {
         fun jvmSynthetic(@IntRangeSource(min = 1, max = 3) start: Int) {
         }
 
+        @GeneratedParametersTest(name = "{arguments}", filters = ["divides"])
+        fun guarded(@IntRangeSource(min = 0, max = 2) d: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["alpha"])
+        fun zeta(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
         fun instanceRule(start: Int): Boolean = true
 
         companion object {
@@ -1468,6 +1534,18 @@ class ParameterFilterTest {
             @JvmStatic
             @JvmSynthetic
             fun jvmSynthetic_filter_small(start: Int): Boolean = start <= 2
+
+            @JvmStatic
+            fun guarded_filter(d: Int): Boolean = d != 0
+
+            @JvmStatic
+            fun divides(d: Int): Boolean = 10 / d > 0
+
+            @JvmStatic
+            fun zeta_filter(start: Int): Boolean = false
+
+            @JvmStatic
+            fun alpha(start: Int): Boolean = true
         }
     }
 }
