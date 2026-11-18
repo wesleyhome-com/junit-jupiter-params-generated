@@ -66,6 +66,7 @@ internal class GeneratedParametersTestMethodContext(context: ExtensionContext) {
             ParameterFilter.resolve(enclosingClassesOf(testClass).toList(), explicitFilterNames, layout))
             .distinctBy { it.method }
             .onEach { it.warnIfBoundByPosition(testName) }
+            .also(ParameterFilter::requireNullsHeld)
 
     /**
      * Conventional filters are looked for from the class running the test, where explicit filters

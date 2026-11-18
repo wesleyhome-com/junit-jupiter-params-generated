@@ -100,8 +100,9 @@ internal class ParametersGenerator(
 
     /**
      * Lets a source written for the underlying type, such as `@LongSource` on a `Money(val cents: Long)`,
-     * generate the value class. Only explicit sources get this second chance: a value class over
-     * Boolean or an enum with no annotation still belongs to whichever resolver handled it before.
+     * generate the value class, through as many value classes as wrap it. Only explicit sources get
+     * this second chance: a value class over Boolean or an enum with no annotation still belongs to
+     * whichever resolver handled it before.
      */
     private fun valueClassOptionsFor(
         testParameter: TestParameter,
@@ -109,8 +110,13 @@ internal class ParametersGenerator(
     ): List<Any?>? {
         val shape = ValueClassShape.of(testParameter.type) ?: return null
         val underlying = testParameter.copy(type = shape.underlying)
-        val providers = annotatedProviders.filter { it.providesDataFor(underlying) }.ifEmpty { return null }
-        return providers.flatMap { it.createParameterOptionsData(underlying) }.map { raw -> raw?.let(shape::wrap) }
+        val providers = annotatedProviders.filter { it.providesDataFor(underlying) }
+        val raws = if (providers.isEmpty()) {
+            valueClassOptionsFor(underlying, annotatedProviders) ?: return null
+        } else {
+            providers.flatMap { it.createParameterOptionsData(underlying) }
+        }
+        return raws.map { raw -> if (raw == null || raw is RejectedValue) raw else shape.wrap(raw) }
     }
 }
 

@@ -242,6 +242,16 @@ class ParameterNamesTest {
             }).isEmpty()
         }
 
+        /** The warning says how the filter bound, which explains the parameter the rejection names. */
+        @Test
+        fun testAFilterThatBindsByPositionIsWarnedAboutBeforeItsNullIsRejected() {
+            assertThat(warningsWhile {
+                assertThat(executionFailure(JavaKotlinFiltersFixture::class.java, "positionalNull"))
+                    .isInstanceOf(InvalidFilterException::class)
+                    .hasMessage("Filter [labelNotB] declares [a] as String, which cannot hold the null this parameter generates")
+            }).containsExactly(otherNamesWarning("labelNotB", "positionalNull", "[a]"))
+        }
+
         /** Both overloads bound by position, which was ambiguous, and still is. */
         @Test
         fun testAnOverloadThatBoundByPositionStillCountsTowardsAnAmbiguity() {
@@ -313,6 +323,14 @@ class ParameterNamesTest {
         @Test
         fun testNothingIsLogged() {
             assertThat(warningsWhile { invocationNames(JavaConsumerFixture::class.java, "ordered") }).isEmpty()
+        }
+
+        /** The combination is named as display names name it, so it says `arg0` where they do. */
+        @Test
+        fun testAThrowingFilterNamesTheCombinationAsDisplayNamesDo() {
+            assertThat(executionFailure(JavaConsumerFixture::class.java, "throwing"))
+                .isInstanceOf(InvalidFilterException::class)
+                .hasMessage("Filter [throwsAtTwo] on [arg0=2, arg1=1] threw IllegalStateException: boom")
         }
     }
 

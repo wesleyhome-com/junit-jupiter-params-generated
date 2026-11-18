@@ -1,12 +1,13 @@
 package com.wesleyhome.test.jupiter.generator
 
 import com.wesleyhome.test.jupiter.InvalidFilterException
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 import java.lang.reflect.Parameter
 import java.util.logging.Logger
 import kotlin.reflect.KClass
-import kotlin.reflect.full.valueParameters
-import kotlin.reflect.jvm.kotlinFunction
+import kotlin.reflect.KType
 
 /**
  * One filter bound to the generated slots its parameters name, so a rule declares only the
@@ -17,10 +18,13 @@ internal class ParameterFilter(
     val method: Method,
     private val receiver: Any?,
     private val slots: IntArray,
-    private val boundByPositionBecause: String?
+    private val boundByPositionBecause: String?,
+    private val layout: GeneratedParameterLayout,
+    /** The message for each slot generating a null that the filter's Kotlin parameter type can't hold. */
+    private val refusedNulls: Map<Int, String>,
+    /** The value classes each argument is unboxed from, as its Kotlin parameter type says. */
+    private val unboxing: Array<Array<ValueClassShape>>
 ) {
-
-    private val parameterTypes: Array<Class<*>> = method.parameterTypes
 
     /** What reports call it: the declared name, whichever name found it. */
     val declaredName: String get() = method.kotlinName()
@@ -36,13 +40,44 @@ internal class ParameterFilter(
             val value = values[slots[i]]
             // Filtering this combination out would hide the rejection; letting it run reports it.
             if (value is RejectedValue) return true
-            arguments[i] = value.adaptedTo(parameterTypes[i])
+            arguments[i] = value.unboxedFrom(unboxing[i])
         }
-        return method.invoke(receiver, *arguments) as? Boolean
-            ?: throw InvalidFilterException("Filter [$name] returned null")
+        val accepted = try {
+            method.invoke(receiver, *arguments)
+        } catch (e: InvocationTargetException) {
+            throw threw(e.targetException, values)
+        }
+        return accepted as? Boolean ?: throw InvalidFilterException("Filter [$name] returned null")
     }
 
+    /** JUnit ends the whole run on an OutOfMemoryError; wrapping one would fail this test and carry on. */
+    private fun threw(cause: Throwable, values: Array<Any?>): Throwable =
+        if (cause is OutOfMemoryError) {
+            cause
+        } else {
+            InvalidFilterException(
+                "Filter [$name] on [${InvocationDisplayNameFormatter.argumentsWithNames(values, layout)}] " +
+                    "threw ${cause.javaClass.simpleName}: ${cause.message}",
+                cause
+            )
+        }
+
     companion object {
+
+        /**
+         * Rejects a filter whose Kotlin parameter can't hold the null its slot generates, as [slotFor]
+         * rejects a primitive one, unless another of the test's filters takes that parameter and can
+         * hold the null. Conventional filters run in no fixed order, so that one may run first and turn
+         * away every combination holding the null. Without one, whichever filter of that parameter runs
+         * first is handed the null, and Kotlin's own check fails the test.
+         */
+        fun requireNullsHeld(filters: List<ParameterFilter>) {
+            for (filter in filters) {
+                filter.refusedNulls.entries
+                    .firstOrNull { (slot, _) -> filters.none { slot in it.slots && slot !in it.refusedNulls } }
+                    ?.let { throw InvalidFilterException(it.value) }
+            }
+        }
 
         /** Looks for each of [names] in [classes] only, the first of which is the test class. */
         fun resolve(
@@ -125,12 +160,72 @@ internal class ParameterFilter(
                 )
             }
             val binding = FilterBinding(method, layout, namesMayDecide)
-            val slots = method.parameters.mapIndexed { index, parameter -> slotFor(name, method, index, parameter, binding) }
-            return ParameterFilter(name, method, receiver, slots.toIntArray(), binding.boundByPositionBecause)
+            val kotlinTypes = method.kotlinValueParameters()?.map { it.type }
+            val slots = method.parameters.mapIndexed { index, parameter ->
+                slotFor(name, kotlinTypes?.get(index), index, parameter, binding)
+            }
+            return ParameterFilter(
+                name,
+                method,
+                receiver,
+                slots.toIntArray(),
+                binding.boundByPositionBecause,
+                layout,
+                refusedNulls(name, method, slots, binding),
+                unboxing(method, kotlinTypes)
+            )
         }
+
+        /**
+         * Without Kotlin types that line up with the signature, the boxes go as they are. For a Java
+         * filter that is right, a value class being a class to Java, but a Kotlin filter with a
+         * context parameter is given the box where its code expects what is inside.
+         */
+        private fun unboxing(method: Method, kotlinTypes: List<KType>?): Array<Array<ValueClassShape>> =
+            Array(method.parameterCount) { index ->
+                kotlinTypes?.let { unboxedLayers(it[index], method.parameterTypes[index]) } ?: emptyArray()
+            }
 
         private fun signatureOf(name: String, method: Method): String =
             method.parameterTypes.joinToString(", ", "$name(", ")") { it.simpleName }
+
+        /**
+         * Only where Kotlin's own null check would fail the test anyway. Kotlin compiles that check into
+         * every function but a private one, so a private filter takes the null, as a Java filter does.
+         * A type parameter isn't judged: an unbounded one takes the null, and one bounded by `Any` fails
+         * on it when it's reached, reported as the filter throwing.
+         */
+        private fun refusedNulls(
+            name: String,
+            method: Method,
+            slots: List<Int>,
+            binding: FilterBinding
+        ): Map<Int, String> {
+            if (Modifier.isPrivate(method.modifiers)) return emptyMap()
+            val kotlinParameters = method.kotlinValueParameters() ?: return emptyMap()
+            return slots.withIndex().mapNotNull { (index, slot) ->
+                val type = kotlinParameters[index].type
+                if (binding.layout.isNullable(slot) && !type.takesNull()) {
+                    slot to cannotHoldNull(name, binding.names[index], (type.classifier as KClass<*>).simpleName)
+                } else {
+                    null
+                }
+            }.toMap()
+        }
+
+        /**
+         * Whether a JVM null is a value of [this] type. A value class's JVM type doesn't say: `Name` over
+         * `String` compiles to a `String` that rejects null, but `Nickname` over `String?` compiles to one
+         * where null is `Nickname(null)`, the value a test declaring `Nickname` receives too.
+         */
+        private fun KType.takesNull(): Boolean =
+            isMarkedNullable || when (val type = classifier) {
+                is KClass<*> -> ValueClassShape.of(type)?.underlyingType?.takesNull() == true
+                else -> true
+            }
+
+        private fun cannotHoldNull(name: String, declaredAs: String, type: String?): String =
+            "Filter [$name] declares [$declaredAs] as $type, which cannot hold the null this parameter generates"
 
         /**
          * Types are checked here rather than left to [Method.invoke], which reports a mismatch as a
@@ -141,7 +236,7 @@ internal class ParameterFilter(
          */
         private fun slotFor(
             name: String,
-            method: Method,
+            kotlinType: KType?,
             index: Int,
             parameter: Parameter,
             binding: FilterBinding
@@ -156,7 +251,7 @@ internal class ParameterFilter(
             val generated = generatedType.javaObjectType
             val declared = parameter.type
             if (!declared.boxed().isAssignableFrom(generated) &&
-                !(generatedType.isValue && method.declaresKotlinType(index, generatedType))
+                !(generatedType.isValue && kotlinType?.classifier == generatedType)
             ) {
                 throw InvalidFilterException(
                     "Filter [$name] declares [$declaredAs] as ${declared.simpleName}, " +
@@ -164,10 +259,7 @@ internal class ParameterFilter(
                 )
             }
             if (layout.isNullable(slot) && declared.isPrimitive) {
-                throw InvalidFilterException(
-                    "Filter [$name] declares [$declaredAs] as ${declared.simpleName}, " +
-                        "which cannot hold the null this parameter generates"
-                )
+                throw InvalidFilterException(cannotHoldNull(name, declaredAs, declared.simpleName))
             }
             return slot
         }
@@ -197,9 +289,6 @@ internal class ParameterFilter(
                     }
                 )
             }
-
-        private fun Method.declaresKotlinType(index: Int, type: KClass<*>): Boolean =
-            kotlinFunction?.let { it.valueParameters[index].type.classifier == type } == true
     }
 }
 
