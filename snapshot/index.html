@@ -142,7 +142,7 @@
             </tr>
             <tr>
               <td>Maven</td>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@73da457a lang-kotlin">test</code> scope for the extension</td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@3a8bcf80 lang-kotlin">test</code> scope for the extension</td>
               <td>-</td>
             </tr>
           </tbody>
@@ -344,7 +344,19 @@
           <p class="paragraph">Parameter types must match the generated parameter. A supertype is fine - <code class="lang-kotlin">Number</code> accepts a   generated <code class="lang-kotlin">Int</code> - but a filter declaring <code class="lang-kotlin">Long</code> against a generated <code class="lang-kotlin">Int</code> is rejected rather than   silently widened by reflection.</p>
         </li>
         <li>
+          <p class="paragraph">A filter parameter must hold the null its parameter generates, from <code class="lang-kotlin">@WithNull</code> or a nullable   type. A primitive is rejected before anything runs. So is a Kotlin type that isn't nullable, such   as <code class="lang-kotlin">String</code> or a value class like <code class="lang-kotlin">Name</code>, where Kotlin's own null check would fail the test once   the null reached it: in a filter that isn't <code class="lang-kotlin">private</code>, unless another filter of the test takes the   same parameter and can hold the null. That one may turn the null away first. Conventional filters   run before the ones in <code class="lang-kotlin">filters = [...]</code>, which run in the order listed, but conventional filters   run among themselves in no fixed order. A <code class="lang-kotlin">private</code> Kotlin filter has no null check, so it takes   the null, as a Java filter's object types do. So does a value class over a nullable type:   <code class="lang-kotlin">Nickname(val value: String?)</code> takes it as <code class="lang-kotlin">Nickname(null)</code>. A filter that throws on the null is   reported as a filter that throws, below.</p>
+        </li>
+        <li>
           <p class="paragraph">A filter must return <code class="lang-kotlin">Boolean</code> and must not return null.</p>
+        </li>
+        <li>
+          <p class="paragraph">A filter that throws fails the test. The message names the filter and the combination it threw   on, as <code class="lang-kotlin">{argumentsWithNames}</code> shows it, and the exception is the cause:</p>
+          <div class="sample-container">
+            <pre><code class="block lang-text" theme="idea">Filter [ordered_filter] on [start=2, end=1] threw IllegalStateException: boom</code></pre>
+<span class="copy-tooltip">
+              <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+          <p class="paragraph">With <code class="lang-kotlin">CARTESIAN</code>, the invocations before that combination have run. <code class="lang-kotlin">PAIRWISE</code> checks every   combination before choosing, so nothing has. An <code class="lang-kotlin">OutOfMemoryError</code> is thrown as it is.</p>
         </li>
         <li>
           <p class="paragraph">A filter's name can be <strong>overloaded</strong>. The overload used is the one that can filter the test:   every parameter binds to a generated parameter (see #parameter-names), with   a type that can hold it, and it returns <code class="lang-kotlin">Boolean</code>. Where several in the nearest class can, a   public one comes before an <code class="lang-kotlin">internal</code> one, then a static or <code class="lang-kotlin">@JvmStatic</code> one before one declared   only in a companion object. If that still leaves more than one, the test fails and lists them.   Which one applied used to depend on the order reflection listed them in, and that can change   between builds. <code class="lang-kotlin">@JvmOverloads</code> makes overloads too:   <code class="lang-kotlin">@JvmOverloads fun upTo(start: Int, end: Int = 2)</code> filters a test that generates only <code class="lang-kotlin">start</code>,   but is ambiguous for one that generates both. An overload that bound by position before, and   whose names now say otherwise but don't all match, fails the test rather than giving way to   another overload.</p>
@@ -380,23 +392,23 @@
           </thead>
           <tbody>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@73da457a lang-kotlin">{index}</code></td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@3a8bcf80 lang-kotlin">{index}</code></td>
               <td>the 1-based invocation number</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@73da457a lang-kotlin">{arguments}</code></td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@3a8bcf80 lang-kotlin">{arguments}</code></td>
               <td>the generated values, comma separated</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@73da457a lang-kotlin">{argumentsWithNames}</code></td>
-              <td>the generated values as <code class="org.jetbrains.dokka.pages.commenttable@73da457a lang-kotlin">name=value</code>, comma separated</td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@3a8bcf80 lang-kotlin">{argumentsWithNames}</code></td>
+              <td>the generated values as <code class="org.jetbrains.dokka.pages.commenttable@3a8bcf80 lang-kotlin">name=value</code>, comma separated</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@73da457a lang-kotlin">{displayName}</code></td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@3a8bcf80 lang-kotlin">{displayName}</code></td>
               <td>the test method's own display name</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@73da457a lang-kotlin">{0}</code>, <code class="org.jetbrains.dokka.pages.commenttable@73da457a lang-kotlin">{1}</code>, ...</td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@3a8bcf80 lang-kotlin">{0}</code>, <code class="org.jetbrains.dokka.pages.commenttable@3a8bcf80 lang-kotlin">{1}</code>, ...</td>
               <td>a single generated value, by position</td>
             </tr>
           </tbody>
@@ -505,7 +517,7 @@
 <span class="copy-icon"></span></span></div>
       <p class="paragraph">A filter can't skip a rejected value either; the invocation runs and fails.</p>
       <p class="paragraph">Display names and report entries show the value class's <code class="lang-kotlin">toString</code>, such as <code class="lang-kotlin">Money(cents=250)</code>. <code class="lang-kotlin">@WithNull</code> works on a nullable value class (<code class="lang-kotlin">amount: Money?</code>). On a non-null value class over a primitive it is an error, because the compiled method takes a <code class="lang-kotlin">long</code> there.</p>
-      <p class="paragraph">Filters can declare the value-class parameter as itself (<code class="lang-kotlin">fun formatsAmounts_filter(amount: Money)</code>). Declaring the underlying type (<code class="lang-kotlin">amount: Long</code>) is an error: both compile to <code class="lang-kotlin">long</code>, so the Kotlin declaration is the only thing that tells them apart.</p>
+      <p class="paragraph">Filters can declare the value-class parameter as itself (<code class="lang-kotlin">fun formatsAmounts_filter(amount: Money)</code>). Declaring the underlying type (<code class="lang-kotlin">amount: Long</code>) is an error: both compile to <code class="lang-kotlin">long</code>, so the Kotlin declaration is the only thing that tells them apart. For a parameter that generates null, declare it nullable in the filter too (<code class="lang-kotlin">amount: Money?</code>), unless the value class wraps a nullable type.</p>
       <p class="paragraph">A value class with no source annotation is left to other parameter resolvers, even when it wraps a type such as <code class="lang-kotlin">Boolean</code> that would otherwise be generated.</p>
       <p class="paragraph">A compiled version of these, checked by the annotation processor, is <code class="lang-kotlin">examples.ValueClasses</code> in the <code class="lang-kotlin">examples</code> module.</p>
       <h2 class="">Values From a Function</h2>
@@ -611,7 +623,7 @@
           <thead>
             <tr>
               <th>Concern</th>
-              <th><code class="org.jetbrains.dokka.pages.commenttable@73da457a lang-kotlin">@MethodSource</code></th>
+              <th><code class="org.jetbrains.dokka.pages.commenttable@3a8bcf80 lang-kotlin">@MethodSource</code></th>
               <th>Generated Sources</th>
             </tr>
           </thead>
