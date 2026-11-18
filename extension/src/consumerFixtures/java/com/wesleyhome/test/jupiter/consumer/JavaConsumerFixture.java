@@ -8,13 +8,20 @@ import com.wesleyhome.test.jupiter.annotations.number.LongSource;
 import com.wesleyhome.test.jupiter.stripped.JavaStrippedFilters;
 import org.junit.jupiter.api.TestInfo;
 
+import java.util.function.IntPredicate;
+
 /**
  * Compiled with Gradle's defaults and without -parameters, so parameter names are only in the
  * debug information. Driven by ParameterNamesTest; not run directly.
+ *
+ * Its constants, lambda and interface call put every kind of constant pool entry a test class
+ * usually has into the class file that ParameterNamesTest reads names from.
  */
 public class JavaConsumerFixture extends JavaStrippedFilters implements JavaConsumerContract {
 
     private static final int ONE = 1;
+
+    private static final float LIMIT = 1f;
 
     public static final Rules Companion = new Rules();
 
@@ -23,7 +30,8 @@ public class JavaConsumerFixture extends JavaStrippedFilters implements JavaCons
     }
 
     static boolean endNotOne_filter(int end) {
-        return end != ONE;
+        IntPredicate isOne = value -> value == ONE;
+        return !isOne.test(end);
     }
 
     @GeneratedParametersTest(name = "{arguments}")
@@ -64,7 +72,7 @@ public class JavaConsumerFixture extends JavaStrippedFilters implements JavaCons
     }
 
     static boolean wide_filter(double ratio, long big, int small) {
-        return small > big && ratio < 1;
+        return small > big && ratio < LIMIT;
     }
 
     @GeneratedParametersTest(name = "{arguments}", filters = {"interfaceRule"})
