@@ -3,6 +3,7 @@
  */
 plugins {
     id("buildlogic.kotlin-common-conventions")
+    id("buildlogic.coverage-conventions")
 }
 
 dependencies {
@@ -18,4 +19,25 @@ dependencies {
     testRuntimeOnly(libs.ksp.common.deps)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
+}
+
+tasks.jacocoTestCoverageVerification {
+    violationRules {
+        // A percent below the coverage when the gate was added, rounded down, because in a module
+        // this small one uncovered line or branch moves coverage by half a percent or more.
+        // Raising it: DEVELOPERS.md.
+        rule {
+            element = "BUNDLE"
+            limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = "0.86".toBigDecimal()
+            }
+            limit {
+                counter = "BRANCH"
+                value = "COVEREDRATIO"
+                minimum = "0.67".toBigDecimal()
+            }
+        }
+    }
 }
