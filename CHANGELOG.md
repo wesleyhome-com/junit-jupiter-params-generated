@@ -55,13 +55,12 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   test`: rename its parameters to the test's. A filter that repeats the test's parameters in order
   runs as before, and so does any build with `-parameters`. A build that records no names at all
   (`-g:none`) still binds by position, and now logs a warning for each such filter.
-- **A Kotlin filter parameter that isn't nullable can't take a generated null** (#123). This almost
-  always failed already, with a `NullPointerException` partway through the run. It passed in two
-  cases, which now fail before anything runs: a value class over a nullable type, such as
-  `nick: Nickname` for `value class Nickname(val value: String?)`, which took the null as
-  `Nickname(null)`; and a filter compiled with `-Xno-param-assertions`, which took the null without
-  a check. Declare the filter's parameter nullable (`nick: Nickname?`). A filter after one that
-  takes the same parameter is still accepted, because that one can turn the null away.
+- **A Kotlin filter parameter that isn't nullable can't take a generated null** (#123). This
+  failed already, with a `NullPointerException` partway through the run, unless the filter was
+  compiled with `-Xno-param-assertions`, which drops that check, so the filter took the null in a
+  parameter declared not to hold one. Such a filter now fails before anything runs. Declare its
+  parameter nullable (`label: String?`). A filter after one that takes the same parameter is still
+  accepted, because that one can turn the null away.
 
 ### Fixed
 
@@ -96,7 +95,9 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   `Filter [label_filter] declares [label] as String, which cannot hold the null this parameter
   generates`. The test used to run until the null reached the filter, then fail with a
   `NullPointerException` from inside it. A value class is judged by its Kotlin type, so `name: Name`
-  is rejected and `name: Name?` accepted. Java filters are unchanged.
+  is rejected and `name: Name?` accepted. One over a nullable type, such as
+  `Nickname(val value: String?)`, still takes the null as `Nickname(null)`. Java filters are
+  unchanged.
 
 ### Build and docs
 

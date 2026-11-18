@@ -6,6 +6,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.Parameter
 import java.util.logging.Logger
 import kotlin.reflect.KClass
+import kotlin.reflect.KType
 import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.kotlinFunction
 
@@ -108,11 +109,7 @@ internal class ParameterFilter(
             )
         }
 
-        /**
-         * A Kotlin parameter's own type says whether it takes null, and a value class's JVM type doesn't:
-         * `Name` over `String` compiles to a `String` that rejects null, and `Nickname` over `String?` to
-         * one that takes null as `Nickname(null)`. A Java type, or a type parameter, takes null as before.
-         */
+        /** A Java type, or a type parameter, takes null as before. */
         private fun refusedNulls(
             name: String,
             method: Method,
@@ -122,14 +119,24 @@ internal class ParameterFilter(
             val kotlinParameters = method.kotlinValueParameters() ?: return emptyMap()
             return slots.withIndex().mapNotNull { (index, slot) ->
                 val type = kotlinParameters[index].type
-                val classifier = type.classifier
-                if (binding.layout.isNullable(slot) && classifier is KClass<*> && !type.isMarkedNullable) {
-                    slot to cannotHoldNull(name, binding.names[index], classifier.simpleName)
+                if (binding.layout.isNullable(slot) && !type.takesNull()) {
+                    slot to cannotHoldNull(name, binding.names[index], (type.classifier as KClass<*>).simpleName)
                 } else {
                     null
                 }
             }.toMap()
         }
+
+        /**
+         * Whether a JVM null is a value of [this] type. A value class's JVM type doesn't say: `Name` over
+         * `String` compiles to a `String` that rejects null, but `Nickname` over `String?` compiles to one
+         * where null is `Nickname(null)`, the value a test declaring `Nickname` receives too.
+         */
+        private fun KType.takesNull(): Boolean =
+            isMarkedNullable || when (val type = classifier) {
+                is KClass<*> -> ValueClassShape.of(type)?.underlyingType?.takesNull() == true
+                else -> true
+            }
 
         private fun cannotHoldNull(name: String, declaredAs: String, type: String?): String =
             "Filter [$name] declares [$declaredAs] as $type, which cannot hold the null this parameter generates"

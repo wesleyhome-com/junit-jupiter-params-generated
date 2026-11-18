@@ -10,6 +10,7 @@ import com.wesleyhome.test.jupiter.InvalidFilterException
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.GenerationStrategy
 import com.wesleyhome.test.jupiter.annotations.StringSource
+import com.wesleyhome.test.jupiter.annotations.ValuesFrom
 import com.wesleyhome.test.jupiter.annotations.WithNull
 import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource
 import com.wesleyhome.test.jupiter.annotations.number.IntSource
@@ -598,19 +599,24 @@ class ParameterFilterTest {
         assertThat(invocationNames(JavaFilterFixture::class.java, "nullable")).isEqualTo(listOf("a", "null"))
     }
 
-    /**
-     * A value class's nullability is its Kotlin type's, whatever it compiles to. `Name` over `String`
-     * compiles to a `String` but rejects a null, and `Nickname` over `String?` took the null as
-     * `Nickname(null)`, where the test receives null.
-     */
+    /** `Name` over `String` compiles to a `String`, but rejects a null. */
     @Test
     fun testANonNullValueClassFilterParameterCannotTakeAGeneratedNull() {
         assertThat(executionFailure(ValueClassNullFixture::class.java, "name")).hasMessage(
             "Filter [nonNullName] declares [name] as Name, which cannot hold the null this parameter generates"
         )
-        assertThat(executionFailure(ValueClassNullFixture::class.java, "nickname")).hasMessage(
-            "Filter [nonNullNickname] declares [nickname] as Nickname, which cannot hold the null this parameter generates"
-        )
+    }
+
+    /**
+     * `Nickname` over `String?` compiles to a `String`, where null is the value `Nickname(null)`, and a
+     * value class over `Nickname` likewise. The filter takes that, as before. Each filter accepts only a
+     * box around null.
+     */
+    @Test
+    fun testANonNullValueClassOverANullableTypeTakesTheNullAsABoxAroundNull() {
+        assertThat(invocationNames(ValueClassNullFixture::class.java, "nickname")).isEqualTo(listOf("null"))
+        assertThat(invocationNames(ValueClassNullFixture::class.java, "withNullNickname")).isEqualTo(listOf("null"))
+        assertThat(invocationNames(ValueClassNullFixture::class.java, "nested")).isEqualTo(listOf("null"))
     }
 
     /** Each filter accepts only null, so a box around null would leave nothing to run. */
@@ -1601,6 +1607,14 @@ class ParameterFilterTest {
         fun nickname(@StringSource(["a"]) @WithNull nickname: Nickname?) {
         }
 
+        @GeneratedParametersTest(name = "{arguments}", filters = ["nonNullNickname"])
+        fun withNullNickname(@StringSource(["a"]) @WithNull nickname: Nickname) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["nullInside"])
+        fun nested(@ValuesFrom("nestedNicknames") @WithNull nested: NestedNickname?) {
+        }
+
         @GeneratedParametersTest(name = "{arguments}", filters = ["takesNullableName"])
         fun nullableName(@StringSource(["a"]) @WithNull name: Name?) {
         }
@@ -1618,7 +1632,13 @@ class ParameterFilterTest {
             fun nonNullName(name: Name): Boolean = true
 
             @JvmStatic
-            fun nonNullNickname(nickname: Nickname): Boolean = true
+            fun nonNullNickname(nickname: Nickname): Boolean = nickname.value == null
+
+            @JvmStatic
+            fun nullInside(nested: NestedNickname): Boolean = nested.nickname.value == null
+
+            @JvmStatic
+            fun nestedNicknames(): List<NestedNickname> = listOf(NestedNickname(Nickname("a")))
 
             @JvmStatic
             fun takesNullableName(name: Name?): Boolean = name == null
@@ -1634,3 +1654,6 @@ class ParameterFilterTest {
 
 @JvmInline
 value class Nickname(val value: String?)
+
+@JvmInline
+value class NestedNickname(val nickname: Nickname)
