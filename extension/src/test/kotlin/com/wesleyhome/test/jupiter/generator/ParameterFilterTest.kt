@@ -10,9 +10,14 @@ import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest
 import com.wesleyhome.test.jupiter.annotations.WithNull
 import com.wesleyhome.test.jupiter.annotations.number.IntRangeSource
 import com.wesleyhome.test.jupiter.annotations.number.IntSource
+import com.wesleyhome.test.jupiter.annotations.number.LongSource
+import com.wesleyhome.test.jupiter.java.filter.JavaCompanionFieldFixture
 import com.wesleyhome.test.jupiter.java.filter.JavaFilterFixture
+import com.wesleyhome.test.jupiter.java.filter.JavaFilterScopesFixture
 import com.wesleyhome.test.jupiter.testkit.executionFailure
 import com.wesleyhome.test.jupiter.testkit.invocationNames
+import com.wesleyhome.test.jupiter.testkit.reportEntries
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -21,6 +26,17 @@ import java.util.concurrent.atomic.AtomicInteger
 
 /** Counts calls to `duplicated_filter`, to prove naming a filter twice does not apply it twice. */
 private val duplicateCalls = AtomicInteger(0)
+
+private val jvmStaticCalls = AtomicInteger(0)
+
+private val compiledNameCalls = AtomicInteger(0)
+
+private val ORDERED = listOf("1, 1", "1, 2", "1, 3", "2, 2", "2, 3", "3, 3")
+
+private val ALL_PAIRS = listOf("1, 1", "1, 2", "1, 3", "2, 1", "2, 2", "2, 3", "3, 1", "3, 2", "3, 3")
+
+/** What the compiler appends to this module's `internal` names. */
+internal const val TEST_MODULE = "com_wesleyhome_test_junit_jupiter_params_generated_test"
 
 /**
  * A Cartesian product generates combinations that are invalid rather than merely uninteresting.
@@ -246,6 +262,730 @@ class ParameterFilterTest {
         assertThat(invocationNames(JavaFilterFixture::class.java, "ordered")).isEqualTo(listOf("1", "2"))
     }
 
+    @Test
+    fun testFiltersInANamedCompanionApply() {
+        assertThat(invocationNames(NamedCompanionFixture::class.java, "ordered")).isEqualTo(ORDERED)
+        assertThat(invocationNames(NamedCompanionFixture::class.java, "explicit")).isEqualTo(ORDERED)
+    }
+
+    @Test
+    fun testFiltersInAPrivateCompanionApply() {
+        assertThat(invocationNames(PrivateCompanionFixture::class.java, "ordered")).isEqualTo(ORDERED)
+    }
+
+    /** The static bridge and the companion member of a `@JvmStatic` filter are one filter. */
+    @Test
+    fun testAJvmStaticFilterInANamedCompanionRunsOnce() {
+        jvmStaticCalls.set(0)
+        assertThat(invocationNames(NamedCompanionFixture::class.java, "jvmStatic")).isEqualTo(listOf("1", "2"))
+        assertThat(jvmStaticCalls.get()).isEqualTo(3)
+    }
+
+    /** An `internal` function's JVM name is mangled to `<name>$<module>`. */
+    @Test
+    fun testInternalFiltersApply() {
+        assertThat(invocationNames(InternalFixture::class.java, "ordered")).isEqualTo(ORDERED)
+        assertThat(invocationNames(InternalFixture::class.java, "companionOnly")).isEqualTo(ORDERED)
+        assertThat(invocationNames(InternalFixture::class.java, "explicit")).isEqualTo(ORDERED)
+    }
+
+    @Test
+    fun testAnInternalFilterIsNamedByItsKotlinName() {
+        assertThat(reportEntries(Fixture::class.java, "internalSuffixed").single()["generated.filters"])
+            .isEqualTo("internalSuffixed_filter_small")
+        assertThat(executionFailure(InternalFixture::class.java, "rejectsAll"))
+            .hasMessage(
+                "All 3 generated combinations were rejected by [rejectsAll_filter]. " +
+                    "Relax a filter, or widen the values the parameters generate."
+            )
+    }
+
+    /** Neither Kotlin nor older Java lets an inner class declare static functions of its own. */
+    @Test
+    fun testANestedClassUsesFiltersFromItsEnclosingClasses() {
+        assertThat(invocationNames(OuterFixture.Inner::class.java, "ordered")).isEqualTo(ORDERED)
+        assertThat(invocationNames(OuterFixture.Inner::class.java, "explicit")).isEqualTo(ORDERED)
+        assertThat(invocationNames(OuterFixture.Inner.Deeper::class.java, "deeper")).isEqualTo(ORDERED)
+        assertThat(invocationNames(OuterFixture.Inner::class.java, "fromTheOuterSuperclass"))
+            .isEqualTo(listOf("1, 1", "1, 2", "2, 2"))
+        assertThat(invocationNames(JavaFilterScopesFixture.Inner::class.java, "ordered")).isEqualTo(ORDERED)
+        assertThat(invocationNames(JavaFilterScopesFixture.Inner::class.java, "explicit")).isEqualTo(ORDERED)
+    }
+
+    @Test
+    fun testANestedClassPrefersItsOwnHierarchyToItsEnclosingClass() {
+        assertThat(invocationNames(OuterFixture.Shadowing::class.java, "shadowed")).isEqualTo(listOf("3"))
+    }
+
+    /** A named companion is its class's own, so it comes before anything in a superclass. */
+    @Test
+    fun testTheNearestClassWinsWhateverItsCompanionIsCalled() {
+        assertThat(invocationNames(NamedCompanionFixture::class.java, "shadowed")).isEqualTo(listOf("1"))
+    }
+
+    /** Conventional filters are looked for from the class running the test, not the one declaring it. */
+    @Test
+    fun testASubclassFilterAppliesToAnInheritedTest() {
+        assertThat(invocationNames(InheritingFixture::class.java, "inheritedTest")).isEqualTo(listOf("2", "3"))
+        assertThat(invocationNames(InheritingFixture::class.java, "inheritedExplicitly")).isEqualTo(listOf("2", "3"))
+        assertThat(invocationNames(UnfilteredInheritingFixture::class.java, "inheritedTest"))
+            .isEqualTo(listOf("1", "2", "3"))
+        assertThat(invocationNames(JavaFilterScopesFixture.Inheriting::class.java, "inherited"))
+            .isEqualTo(listOf("2", "3"))
+    }
+
+    @Test
+    fun testFiltersOnAnInterfaceApplyToItsDefaultTests() {
+        assertThat(invocationNames(ImplementingFixture::class.java, "fromInterface")).isEqualTo(listOf("2", "3"))
+        assertThat(invocationNames(ImplementingFixture::class.java, "explicitFromInterface"))
+            .isEqualTo(listOf("2", "3"))
+        assertThat(invocationNames(JavaFilterScopesFixture.Implementing::class.java, "fromInterface"))
+            .isEqualTo(listOf("2", "3"))
+        assertThat(invocationNames(JavaFilterScopesFixture.Implementing::class.java, "explicitFromInterface"))
+            .isEqualTo(listOf("2", "3"))
+    }
+
+    /** An enclosing class's `<test>_filter` belongs to its own test of that name, inherited or not. */
+    @Test
+    fun testAnEnclosingFilterForATestOfTheSameNameStaysWithThatTest() {
+        assertThat(invocationNames(SameNameOuterFixture::class.java, "ordered")).isEqualTo(ORDERED)
+        assertThat(invocationNames(SameNameOuterFixture.Inner::class.java, "ordered")).isEqualTo(ALL_PAIRS)
+        assertThat(invocationNames(SameNameOuterFixture.Inner::class.java, "parse")).isEqualTo(listOf("1", "2", "3"))
+        assertThat(invocationNames(InheritedSameNameOuterFixture.Inner::class.java, "ordered")).isEqualTo(ALL_PAIRS)
+    }
+
+    /** A class between the test and the filter that has a test of that name claims the filter too. */
+    @Test
+    fun testAnEnclosingFilterStopsAtAnIntermediateTestOfTheSameName() {
+        assertThat(invocationNames(ThreeLevelFixture.Middle::class.java, "ordered")).isEqualTo(ORDERED)
+        assertThat(invocationNames(ThreeLevelFixture.Middle.Deep::class.java, "ordered")).isEqualTo(ALL_PAIRS)
+    }
+
+    /** Only an inner class can be `@Nested`; a static nested class can declare a companion of its own. */
+    @Test
+    fun testAStaticNestedClassDoesNotSearchItsEnclosingClass() {
+        assertThat(invocationNames(StaticOuterFixture.StaticNested::class.java, "ordered")).isEqualTo(ALL_PAIRS)
+        assertThat(executionFailure(StaticOuterFixture.StaticNested::class.java, "explicit"))
+            .hasMessage("No filter named [outerOrdered] on ${StaticOuterFixture.StaticNested::class.java.name}")
+    }
+
+    @Test
+    fun testASuperclassComesBeforeTheTestClassesInterfaces() {
+        assertThat(invocationNames(PrecedenceFixture::class.java, "superclassFirst")).isEqualTo(listOf("1"))
+    }
+
+    @Test
+    fun testFiltersOnASuperclassesInterfaceApply() {
+        assertThat(invocationNames(ThroughSuperclassFixture::class.java, "throughSuperclass")).isEqualTo(listOf("2", "3"))
+        assertThat(invocationNames(ThroughSuperclassFixture::class.java, "explicitThroughSuperclass"))
+            .isEqualTo(listOf("2", "3"))
+    }
+
+    /**
+     * An `internal` overload compiles to `<name>$<module>` and was never a candidate before, so the
+     * public overload it would now tie with is still chosen.
+     */
+    @Test
+    fun testAPublicOverloadIsChosenOverAnInternalOne() {
+        assertThat(invocationNames(OverloadFixture::class.java, "conventional")).isEqualTo(listOf("2", "3"))
+        assertThat(invocationNames(OverloadFixture::class.java, "conventionalWithBridge")).isEqualTo(listOf("2", "3"))
+        assertThat(invocationNames(OverloadFixture::class.java, "explicit")).isEqualTo(listOf("2", "3"))
+    }
+
+    /** A value class mangles the name too, as `vc_filter-<hash>$<module>`, and that form was always found. */
+    @Test
+    fun testAnInternalFilterTakingAValueClassIsChosenAsBefore() {
+        val oneAndThree = listOf("Money(cents=1)", "Money(cents=3)")
+        assertThat(invocationNames(OverloadFixture::class.java, "valueClassAndPublic")).isEqualTo(oneAndThree)
+        assertThat(invocationNames(OverloadFixture::class.java, "valueClassAndInternal")).isEqualTo(oneAndThree)
+    }
+
+    @Test
+    fun testAnInternalFilterCanBeNamedByItsCompiledName() {
+        assertThat(invocationNames(InternalFixture::class.java, "compiledName")).isEqualTo(listOf("2", "3"))
+        assertThat(reportEntries(InternalFixture::class.java, "compiledName").single()["generated.filters"])
+            .isEqualTo("compiledRule")
+    }
+
+    @Test
+    fun testAnInternalFilterNamedBothWaysRunsOnce() {
+        compiledNameCalls.set(0)
+        assertThat(invocationNames(InternalFixture::class.java, "bothNames")).isEqualTo(listOf("1", "2"))
+        assertThat(compiledNameCalls.get()).isEqualTo(3)
+    }
+
+    @Test
+    fun testAnInternalFilterNamedBothWaysIsReportedOnce() {
+        assertThat(reportEntries(InternalFixture::class.java, "bothNames").single()["generated.filters"])
+            .isEqualTo("bothNames_filter_small")
+        assertThat(reportEntries(InternalFixture::class.java, "explicitBothNames").single()["generated.filters"])
+            .isEqualTo("bothNamesRule")
+    }
+
+    /**
+     * An inner class can't have a companion object, so an instance `<test>_filter` there is an easy
+     * mistake. It fails as it always has, rather than falling through to an enclosing test's filter.
+     */
+    @Test
+    fun testAnInstanceFilterInANestedClassIsReportedRatherThanReplaced() {
+        val mustBeStatic = "Filter [t_filter] must be static or declared in a companion object, because " +
+            "filtering happens before the test instance exists"
+        assertThat(executionFailure(MisplacedFilterFixture.Inner::class.java, "t")).hasMessage(mustBeStatic)
+        assertThat(executionFailure(MisplacedFilterFixture.Middle.Deep::class.java, "t")).hasMessage(mustBeStatic)
+    }
+
+    /** Naming a filter is how a `@Nested` test uses one its enclosing class's same-named test claims. */
+    @Test
+    fun testAnExplicitFilterIsFoundInAnEnclosingClassThatClaimsItsConventionalOne() {
+        assertThat(invocationNames(SameNameOuterFixture.ExplicitInner::class.java, "ordered")).isEqualTo(ORDERED)
+    }
+
+    @Test
+    fun testAMissingFilterOnANestedTestNamesTheNestedClass() {
+        assertThat(executionFailure(OuterFixture.Inner::class.java, "missing"))
+            .hasMessage("No filter named [nope] on ${OuterFixture.Inner::class.java.name}")
+    }
+
+    /** As before explicit filters were resolved separately, so a conventional guard protects them. */
+    @Test
+    fun testConventionalFiltersRunBeforeExplicitOnes() {
+        assertThat(invocationNames(Fixture::class.java, "guarded")).isEqualTo(listOf("1", "2"))
+    }
+
+    @Test
+    fun testTheFiltersThatRejectedEverythingAreListedInOrder() {
+        assertThat(executionFailure(Fixture::class.java, "zeta")).hasMessage(
+            "All 3 generated combinations were rejected by [alpha, zeta_filter]. " +
+                "Relax a filter, or widen the values the parameters generate."
+        )
+    }
+
+    /** One declared name, two functions: naming each applies each, as it did before. */
+    @Test
+    fun testTwoFunctionsWithOneDeclaredNameBothApply() {
+        assertThat(invocationNames(OverloadFixture::class.java, "bothOverloads"))
+            .isEqualTo(listOf("2, 2", "2, 3", "3, 3"))
+    }
+
+    /** The subclass's `internal` filter is the nearer of two with one name, so it replaces the base class's. */
+    @Test
+    fun testASubclassInternalFilterReplacesABaseFilterOfTheSameName() {
+        assertThat(invocationNames(ReplacingFixture::class.java, "replaced")).isEqualTo(listOf("1", "2"))
+    }
+
+    /** A Java class has no companion object, but a static field named `Companion` has long served as one. */
+    @Test
+    fun testAJavaStaticFieldNamedCompanionIsSearched() {
+        assertThat(invocationNames(JavaCompanionFieldFixture::class.java, "ordered")).isEqualTo(ORDERED)
+        assertThat(invocationNames(JavaCompanionFieldFixture::class.java, "explicit")).isEqualTo(ORDERED)
+    }
+
+    class SameNameOuterFixture {
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun ordered(
+            @IntRangeSource(min = 1, max = 3) start: Int,
+            @IntRangeSource(min = 1, max = 3) end: Int
+        ) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun parse(@IntRangeSource(min = 1, max = 3) a: Int) {
+        }
+
+        @Nested
+        inner class Inner {
+            @GeneratedParametersTest(name = "{arguments}")
+            fun ordered(
+                @IntRangeSource(min = 1, max = 3) start: Int,
+                @IntRangeSource(min = 1, max = 3) end: Int
+            ) {
+            }
+
+            @GeneratedParametersTest(name = "{arguments}")
+            fun parse(@IntRangeSource(min = 1, max = 3) b: Int) {
+            }
+        }
+
+        @Nested
+        inner class ExplicitInner {
+            @GeneratedParametersTest(name = "{arguments}", filters = ["ordered_filter"])
+            fun ordered(
+                @IntRangeSource(min = 1, max = 3) start: Int,
+                @IntRangeSource(min = 1, max = 3) end: Int
+            ) {
+            }
+        }
+
+        companion object {
+            @JvmStatic
+            fun ordered_filter(start: Int, end: Int): Boolean = start <= end
+
+            @JvmStatic
+            fun parse_filter_small(a: Int): Boolean = a <= 2
+        }
+    }
+
+    abstract class OrderedTestBase {
+        @GeneratedParametersTest(name = "{arguments}")
+        fun ordered(
+            @IntRangeSource(min = 1, max = 3) start: Int,
+            @IntRangeSource(min = 1, max = 3) end: Int
+        ) {
+        }
+    }
+
+    class InheritedSameNameOuterFixture : OrderedTestBase() {
+
+        @Nested
+        inner class Inner {
+            @GeneratedParametersTest(name = "{arguments}")
+            fun ordered(
+                @IntRangeSource(min = 1, max = 3) start: Int,
+                @IntRangeSource(min = 1, max = 3) end: Int
+            ) {
+            }
+        }
+
+        companion object {
+            @JvmStatic
+            fun ordered_filter(start: Int, end: Int): Boolean = start <= end
+        }
+    }
+
+    class ThreeLevelFixture {
+
+        @Nested
+        inner class Middle {
+            @GeneratedParametersTest(name = "{arguments}")
+            fun ordered(
+                @IntRangeSource(min = 1, max = 3) start: Int,
+                @IntRangeSource(min = 1, max = 3) end: Int
+            ) {
+            }
+
+            @Nested
+            inner class Deep {
+                @GeneratedParametersTest(name = "{arguments}")
+                fun ordered(
+                    @IntRangeSource(min = 1, max = 3) start: Int,
+                    @IntRangeSource(min = 1, max = 3) end: Int
+                ) {
+                }
+            }
+        }
+
+        companion object {
+            @JvmStatic
+            fun ordered_filter(start: Int, end: Int): Boolean = start <= end
+        }
+    }
+
+    class MisplacedFilterFixture {
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun t(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @Nested
+        inner class Inner {
+            @GeneratedParametersTest(name = "{arguments}")
+            fun t(@IntRangeSource(min = 1, max = 3) start: Int) {
+            }
+
+            fun t_filter(start: Int): Boolean = start != 1
+        }
+
+        @Nested
+        inner class Middle {
+            fun t_filter(start: Int): Boolean = start != 1
+
+            @Nested
+            inner class Deep {
+                @GeneratedParametersTest(name = "{arguments}")
+                fun t(@IntRangeSource(min = 1, max = 3) start: Int) {
+                }
+            }
+        }
+
+        companion object {
+            @JvmStatic
+            fun t_filter(start: Int): Boolean = start != 1
+        }
+    }
+
+    class StaticOuterFixture {
+
+        class StaticNested {
+            @GeneratedParametersTest(name = "{arguments}")
+            fun ordered(
+                @IntRangeSource(min = 1, max = 3) start: Int,
+                @IntRangeSource(min = 1, max = 3) end: Int
+            ) {
+            }
+
+            @GeneratedParametersTest(name = "{arguments}", filters = ["outerOrdered"])
+            fun explicit(
+                @IntRangeSource(min = 1, max = 3) start: Int,
+                @IntRangeSource(min = 1, max = 3) end: Int
+            ) {
+            }
+        }
+
+        companion object {
+            fun ordered_filter(start: Int, end: Int): Boolean = start <= end
+
+            fun outerOrdered(start: Int, end: Int): Boolean = start <= end
+        }
+    }
+
+    open class PrecedenceBase {
+        companion object {
+            @JvmStatic
+            fun precedenceRule(start: Int): Boolean = start == 1
+        }
+    }
+
+    interface PrecedenceContract {
+        companion object {
+            fun precedenceRule(start: Int): Boolean = start == 3
+        }
+    }
+
+    class PrecedenceFixture : PrecedenceBase(), PrecedenceContract {
+        @GeneratedParametersTest(name = "{arguments}", filters = ["precedenceRule"])
+        fun superclassFirst(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+    }
+
+    interface InheritedContract {
+        companion object {
+            fun throughSuperclass_filter(start: Int): Boolean = start >= 2
+
+            fun inheritedContractRule(start: Int): Boolean = start >= 2
+        }
+    }
+
+    open class ContractBase : InheritedContract
+
+    class ThroughSuperclassFixture : ContractBase() {
+        @GeneratedParametersTest(name = "{arguments}")
+        fun throughSuperclass(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["inheritedContractRule"])
+        fun explicitThroughSuperclass(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+    }
+
+    class OverloadFixture {
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun conventional(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun conventionalWithBridge(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["mixRule"])
+        fun explicit(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun valueClassAndPublic(@LongSource([1, 2, 3]) amount: Money) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun valueClassAndInternal(@LongSource([1, 2, 3]) amount: Money) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["mixed", "mixed\$$TEST_MODULE"])
+        fun bothOverloads(
+            @IntRangeSource(min = 1, max = 3) start: Int,
+            @IntRangeSource(min = 1, max = 3) end: Int
+        ) {
+        }
+
+        companion object {
+            @JvmStatic
+            internal fun valueClassAndPublic_filter(amount: Money): Boolean = amount.cents != 2L
+
+            fun valueClassAndPublic_filter(other: Int): Boolean = true
+
+            internal fun valueClassAndInternal_filter(amount: Money): Boolean = amount.cents != 2L
+
+            internal fun valueClassAndInternal_filter(cents: Long): Boolean = true
+
+            fun conventional_filter(start: Int): Boolean = start >= 2
+
+            internal fun conventional_filter(start: Int, end: Int): Boolean = true
+
+            fun conventionalWithBridge_filter(start: Int): Boolean = start >= 2
+
+            @JvmStatic
+            internal fun conventionalWithBridge_filter(start: Int, end: Int): Boolean = true
+
+            fun mixRule(start: Int): Boolean = start >= 2
+
+            internal fun mixRule(start: Int, end: Int): Boolean = true
+
+            internal fun mixRule(start: Int, end: Int, other: Int): Boolean = true
+
+            fun mixed(start: Int): Boolean = start >= 2
+
+            internal fun mixed(start: Int, end: Int): Boolean = start <= end
+        }
+    }
+
+    open class ReplacedFilterBase {
+        companion object {
+            @JvmStatic
+            fun replaced_filter_a(start: Int): Boolean = start >= 2
+        }
+    }
+
+    class ReplacingFixture : ReplacedFilterBase() {
+        @GeneratedParametersTest(name = "{arguments}")
+        fun replaced(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        companion object {
+            internal fun replaced_filter_a(start: Int): Boolean = start <= 2
+        }
+    }
+
+    open class ShadowBase {
+        companion object {
+            @JvmStatic
+            fun shadowRule(start: Int): Boolean = start == 3
+        }
+    }
+
+    class NamedCompanionFixture : ShadowBase() {
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun ordered(
+            @IntRangeSource(min = 1, max = 3) start: Int,
+            @IntRangeSource(min = 1, max = 3) end: Int
+        ) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["explicitRule"])
+        fun explicit(
+            @IntRangeSource(min = 1, max = 3) start: Int,
+            @IntRangeSource(min = 1, max = 3) end: Int
+        ) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["jvmStatic_filter"])
+        fun jvmStatic(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["shadowRule"])
+        fun shadowed(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        companion object Rules {
+            fun ordered_filter(start: Int, end: Int): Boolean = start <= end
+
+            fun explicitRule(start: Int, end: Int): Boolean = start <= end
+
+            @JvmStatic
+            fun jvmStatic_filter(start: Int): Boolean {
+                jvmStaticCalls.incrementAndGet()
+                return start <= 2
+            }
+
+            fun shadowRule(start: Int): Boolean = start == 1
+        }
+    }
+
+    class PrivateCompanionFixture {
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun ordered(
+            @IntRangeSource(min = 1, max = 3) start: Int,
+            @IntRangeSource(min = 1, max = 3) end: Int
+        ) {
+        }
+
+        private companion object {
+            fun ordered_filter(start: Int, end: Int): Boolean = start <= end
+        }
+    }
+
+    class InternalFixture {
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun ordered(
+            @IntRangeSource(min = 1, max = 3) start: Int,
+            @IntRangeSource(min = 1, max = 3) end: Int
+        ) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun companionOnly(
+            @IntRangeSource(min = 1, max = 3) start: Int,
+            @IntRangeSource(min = 1, max = 3) end: Int
+        ) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["internalRule"])
+        fun explicit(
+            @IntRangeSource(min = 1, max = 3) start: Int,
+            @IntRangeSource(min = 1, max = 3) end: Int
+        ) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun rejectsAll(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["compiledRule\$$TEST_MODULE"])
+        fun compiledName(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["bothNames_filter_small\$$TEST_MODULE"])
+        fun bothNames(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["bothNamesRule", "bothNamesRule\$$TEST_MODULE"])
+        fun explicitBothNames(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        companion object {
+            internal fun compiledRule(start: Int): Boolean = start >= 2
+
+            internal fun bothNamesRule(start: Int): Boolean = start >= 2
+
+            @JvmStatic
+            internal fun bothNames_filter_small(start: Int): Boolean {
+                compiledNameCalls.incrementAndGet()
+                return start <= 2
+            }
+
+            @JvmStatic
+            internal fun ordered_filter(start: Int, end: Int): Boolean = start <= end
+
+            internal fun companionOnly_filter(start: Int, end: Int): Boolean = start <= end
+
+            internal fun internalRule(start: Int, end: Int): Boolean = start <= end
+
+            @JvmStatic
+            internal fun rejectsAll_filter(start: Int): Boolean = false
+        }
+    }
+
+    class OuterFixture : BaseFixture() {
+
+        /** Only starts with `ordered`, so it doesn't claim `ordered_filter` from [Inner.ordered]. */
+        @GeneratedParametersTest
+        fun orderedPairs(@IntRangeSource(min = 1, max = 2) start: Int) {
+        }
+
+        @Nested
+        inner class Inner {
+
+            @GeneratedParametersTest(name = "{arguments}")
+            fun ordered(
+                @IntRangeSource(min = 1, max = 3) start: Int,
+                @IntRangeSource(min = 1, max = 3) end: Int
+            ) {
+            }
+
+            @GeneratedParametersTest(name = "{arguments}", filters = ["outerOrdered"])
+            fun explicit(
+                @IntRangeSource(min = 1, max = 3) start: Int,
+                @IntRangeSource(min = 1, max = 3) end: Int
+            ) {
+            }
+
+            @GeneratedParametersTest(name = "{arguments}", filters = ["sharedStartBeforeEnd"])
+            fun fromTheOuterSuperclass(
+                @IntRangeSource(min = 1, max = 2) start: Int,
+                @IntRangeSource(min = 1, max = 2) end: Int
+            ) {
+            }
+
+            @GeneratedParametersTest(filters = ["nope"])
+            fun missing(@IntRangeSource(min = 1, max = 2) start: Int) {
+            }
+
+            @Nested
+            inner class Deeper {
+                @GeneratedParametersTest(name = "{arguments}")
+                fun deeper(
+                    @IntRangeSource(min = 1, max = 3) start: Int,
+                    @IntRangeSource(min = 1, max = 3) end: Int
+                ) {
+                }
+            }
+        }
+
+        @Nested
+        inner class Shadowing : ShadowBase() {
+            @GeneratedParametersTest(name = "{arguments}", filters = ["shadowRule"])
+            fun shadowed(@IntRangeSource(min = 1, max = 3) start: Int) {
+            }
+        }
+
+        companion object {
+            fun ordered_filter(start: Int, end: Int): Boolean = start <= end
+
+            fun deeper_filter(start: Int, end: Int): Boolean = start <= end
+
+            @JvmStatic
+            fun outerOrdered(start: Int, end: Int): Boolean = start <= end
+
+            @JvmStatic
+            fun shadowRule(start: Int): Boolean = start == 2
+        }
+    }
+
+    abstract class InheritedTestBase {
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun inheritedTest(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["notOne"])
+        fun inheritedExplicitly(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+    }
+
+    class InheritingFixture : InheritedTestBase() {
+        companion object {
+            @JvmStatic
+            fun inheritedTest_filter(start: Int): Boolean = start != 1
+
+            @JvmStatic
+            fun notOne(start: Int): Boolean = start != 1
+        }
+    }
+
+    /** Shares [InheritedTestBase] with [InheritingFixture], whose filter must not reach it. */
+    class UnfilteredInheritingFixture : InheritedTestBase()
+
+    interface DefaultTestContract {
+
+        @GeneratedParametersTest(name = "{arguments}")
+        fun fromInterface(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["keepBig"])
+        fun explicitFromInterface(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
+        companion object {
+            fun fromInterface_filter(start: Int): Boolean = start >= 2
+
+            fun keepBig(start: Int): Boolean = start >= 2
+        }
+    }
+
+    class ImplementingFixture : DefaultTestContract
+
     open class BaseFixture {
         companion object {
             @JvmStatic
@@ -443,6 +1183,14 @@ class ParameterFilterTest {
         fun jvmSynthetic(@IntRangeSource(min = 1, max = 3) start: Int) {
         }
 
+        @GeneratedParametersTest(name = "{arguments}", filters = ["divides"])
+        fun guarded(@IntRangeSource(min = 0, max = 2) d: Int) {
+        }
+
+        @GeneratedParametersTest(name = "{arguments}", filters = ["alpha"])
+        fun zeta(@IntRangeSource(min = 1, max = 3) start: Int) {
+        }
+
         fun instanceRule(start: Int): Boolean = true
 
         companion object {
@@ -546,6 +1294,18 @@ class ParameterFilterTest {
             @JvmStatic
             @JvmSynthetic
             fun jvmSynthetic_filter_small(start: Int): Boolean = start <= 2
+
+            @JvmStatic
+            fun guarded_filter(d: Int): Boolean = d != 0
+
+            @JvmStatic
+            fun divides(d: Int): Boolean = 10 / d > 0
+
+            @JvmStatic
+            fun zeta_filter(start: Int): Boolean = false
+
+            @JvmStatic
+            fun alpha(start: Int): Boolean = true
         }
     }
 }

@@ -2,46 +2,105 @@ package com.wesleyhome.test.jupiter.generator
 
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import kotlin.reflect.full.companionObject
 
 /** A function that can be called before the test instance exists, and what to call it on. */
 internal data class StaticFunction(val method: Method, val receiver: Any?)
 
 /**
- * Finds [name] as a static method, a member of an object, or a member of a companion object. Walks
- * superclasses, so a function shared by several test classes can live in a base class.
+ * Finds [name] as a static method, a member of an object, or a member of a companion object, in
+ * [type] and its supertypes, then in the classes enclosing it if it's `@Nested`. A function shared
+ * by several test classes can live in a base class, an interface, or the class enclosing a
+ * `@Nested` one.
  */
-internal fun findStaticFunction(type: Class<*>, name: String): StaticFunction? {
-    hierarchyOf(type).forEach { candidate ->
-        candidate.declaredMethods
-            .firstOrNull { it.isNamed(name) && Modifier.isStatic(it.modifiers) }
-            ?.let { return StaticFunction(it, null) }
-        objectInstanceOf(candidate)?.let { instance ->
-            candidate.declaredMethods
-                .firstOrNull { it.isNamed(name) }
-                ?.let { return StaticFunction(it, instance) }
-        }
-        companionOf(candidate)?.let { companion ->
-            companion.javaClass.declaredMethods
-                .firstOrNull { it.isNamed(name) }
-                ?.let { return StaticFunction(it, companion) }
-        }
+internal fun findStaticFunction(type: Class<*>, name: String): StaticFunction? =
+    findStaticFunction(enclosingClassesOf(type).toList(), name)
+
+/**
+ * Looks in [classes] only, each with its supertypes, and takes the nearest that has [name].
+ *
+ * An `internal` function compiles to `name$module`, and only that compiled name used to find it.
+ * Within one class, a function the old matching finds still wins over one found by its Kotlin name
+ * alone, so an `internal` overload doesn't displace the function chosen before.
+ */
+internal fun findStaticFunction(classes: List<Class<*>>, name: String): StaticFunction? =
+    scopesOf(classes).firstNotNullOfOrNull { scope ->
+        val named = callableIn(scope).filter { it.method.isNamed(name) }.toList()
+        named.firstOrNull { it.method.wasNamed(name) } ?: named.firstOrNull()
     }
-    return null
-}
 
 /** Whether [name] exists only as an instance method, which nothing can call before the test instance exists. */
 internal fun hasInstanceFunction(type: Class<*>, name: String): Boolean =
-    hierarchyOf(type).flatMap { it.declaredMethods.asSequence() }.any { it.isNamed(name) }
+    hasInstanceFunction(enclosingClassesOf(type).toList(), name)
 
-/** The prefix check keeps Kotlin reflection off every method that could not be a match. */
+internal fun hasInstanceFunction(classes: List<Class<*>>, name: String): Boolean =
+    scopesOf(classes).flatMap { it.declaredMethods.asSequence() }.any { it.isNamed(name) }
+
+/**
+ * The class, then the class enclosing it for as long as it is an inner class, as `@Nested` requires.
+ * An inner class can't declare a companion object in Kotlin, or static methods before Java 16.
+ */
+internal fun enclosingClassesOf(type: Class<*>): Sequence<Class<*>> =
+    generateSequence(type) { inner -> if (Modifier.isStatic(inner.modifiers)) null else inner.declaringClass }
+
+/** Every method declared on [type], its supertypes and their companion objects, callable or not. */
+internal fun declaredFunctionsOf(type: Class<*>): Sequence<Method> =
+    supertypesOf(type).flatMap { scope ->
+        scope.declaredMethods.asSequence() + companionOf(scope)?.javaClass?.declaredMethods.orEmpty()
+    }
+
+/** Matches the compiled name, or the declared name when compiling mangled it. */
 private fun Method.isNamed(name: String): Boolean =
-    this.name.startsWith(name) && kotlinName() == name
+    this.name == name || (this.name.startsWith(name) && kotlinName() == name)
 
-private fun hierarchyOf(type: Class<*>): Sequence<Class<*>> =
-    generateSequence(type) { it.superclass }.takeWhile { it != Any::class.java }
+/**
+ * Of the methods [isNamed] matches, the ones matched before `internal` names were understood: only a
+ * value class's mangling, `name-<hash>`, was resolved then, so a `$` meant the compiled name.
+ */
+private fun Method.wasNamed(name: String): Boolean = this.name == name || '$' !in this.name || '-' in this.name
 
-private fun companionOf(type: Class<*>): Any? =
-    runCatching { type.getDeclaredField("Companion").apply { isAccessible = true }.get(null) }.getOrNull()
+/** Static methods, then an object's members, then its companion object's: the order a name is looked for. */
+private fun callableIn(scope: Class<*>): Sequence<StaticFunction> =
+    scope.declaredMethods.asSequence().filter { Modifier.isStatic(it.modifiers) }.map { StaticFunction(it, null) } +
+        membersOf(objectInstanceOf(scope)) +
+        membersOf(companionOf(scope))
+
+private fun membersOf(instance: Any?): Sequence<StaticFunction> =
+    if (instance == null) {
+        emptySequence()
+    } else {
+        instance.javaClass.declaredMethods.asSequence().map { StaticFunction(it, instance) }
+    }
+
+/**
+ * Each of [classes] with its superclasses, then its interfaces. Enclosing classes come after the
+ * test class's own supertypes, so they never displace a function found there.
+ */
+private fun scopesOf(classes: List<Class<*>>): Sequence<Class<*>> =
+    classes.asSequence().flatMap { supertypesOf(it) }.distinct()
+
+private fun supertypesOf(type: Class<*>): Sequence<Class<*>> {
+    val classes = generateSequence(type) { it.superclass }.takeWhile { it != Any::class.java }
+    return classes + classes.flatMap { interfacesOf(it) }
+}
+
+private fun interfacesOf(type: Class<*>): Sequence<Class<*>> =
+    type.interfaces.asSequence().flatMap { sequenceOf(it) + interfacesOf(it) }
+
+/**
+ * A Kotlin companion's field is named after the companion, which can be named, and is private when
+ * the companion is. A Java class has no companion, but a static field named `Companion` has always
+ * been searched as one. Failing to read either means there is no companion to search, not a failed
+ * test: this runs on every supertype, third-party ones included.
+ */
+private fun companionOf(type: Class<*>): Any? = runCatching {
+    val field = if (type.isAnnotationPresent(Metadata::class.java)) {
+        type.kotlin.companionObject?.simpleName
+    } else {
+        "Companion"
+    }
+    field?.let { type.getDeclaredField(it).apply { isAccessible = true }.get(null) }
+}.getOrNull()
 
 private fun objectInstanceOf(type: Class<*>): Any? =
     runCatching { type.getDeclaredField("INSTANCE").get(null) }.getOrNull()

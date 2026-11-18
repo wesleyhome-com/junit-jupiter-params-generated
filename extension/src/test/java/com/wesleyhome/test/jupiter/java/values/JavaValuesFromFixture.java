@@ -3,6 +3,7 @@ package com.wesleyhome.test.jupiter.java.values;
 import com.wesleyhome.test.jupiter.annotations.GeneratedParametersTest;
 import com.wesleyhome.test.jupiter.annotations.ValuesFrom;
 import com.wesleyhome.test.jupiter.generator.Point;
+import org.junit.jupiter.api.Nested;
 
 import java.util.List;
 
@@ -24,5 +25,27 @@ public class JavaValuesFromFixture {
     @SuppressWarnings("rawtypes")
     public static List rawList() {
         return List.of("not a point");
+    }
+
+    @Nested
+    public class Inner {
+
+        @GeneratedParametersTest(name = "{arguments}")
+        public void fromOuter(@ValuesFrom("points") Point point) {
+        }
+    }
+
+    public interface Contract {
+
+        @GeneratedParametersTest(name = "{arguments}")
+        default void fromInterface(@ValuesFrom("interfacePoints") Point point) {
+        }
+
+        static List<Point> interfacePoints() {
+            return List.of(new Point(50, 50));
+        }
+    }
+
+    public static class Implementing implements Contract {
     }
 }

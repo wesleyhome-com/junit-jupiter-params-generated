@@ -19,7 +19,9 @@ internal fun executeFixture(
     methodName: String,
     vararg configurationParameters: Pair<String, String>
 ): EngineExecutionResults {
-    val method = fixture.declaredMethods.firstOrNull { it.kotlinName() == methodName }
+    // Public methods include those inherited from a base class or an interface's defaults.
+    val method = (fixture.declaredMethods.asSequence() + fixture.methods.asSequence())
+        .firstOrNull { it.kotlinName() == methodName }
         ?: error("No method named [$methodName] on ${fixture.name}")
     var builder = EngineTestKit.engine("junit-jupiter").selectors(selectMethod(fixture, method))
     for ((key, value) in configurationParameters) {
