@@ -142,7 +142,7 @@
             </tr>
             <tr>
               <td>Maven</td>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@45683cda lang-kotlin">test</code> scope for the extension</td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@73da457a lang-kotlin">test</code> scope for the extension</td>
               <td>-</td>
             </tr>
           </tbody>
@@ -314,7 +314,7 @@
 <span class="copy-tooltip">
           <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
 <span class="copy-icon"></span></span></div>
-      <p class="paragraph">A filter declares only the parameters it is about, matched <strong>by name</strong>, so several small rules compose instead of one predicate that has to know about everything. A combination runs only if every filter accepts it. Use a suffix when a test has more than one:</p>
+      <p class="paragraph">A filter declares only the parameters it is about, matched <strong>by name</strong>, so several small rules compose instead of one predicate that has to know about everything. A combination runs only if every filter accepts it. The names come from Kotlin's metadata, or for Java from <code class="lang-kotlin">-parameters</code> or the debug information Gradle and Maven compile with by default, so no compiler flag is needed. See #parameter-names for the Java filters that still bind by position, as they did before names were read. Use a suffix when a test has more than one:</p>
       <div class="sample-container">
         <pre><code class="block lang-kotlin" theme="idea">@JvmStatic fun prices_filter_ordered(start: Int, end: Int): Boolean = start &lt;= end<br>@JvmStatic fun prices_filter_currency(currency: Currency, country: Country): Boolean =<br>    currency in country.currencies</code></pre>
 <span class="copy-tooltip">
@@ -347,7 +347,7 @@
           <p class="paragraph">A filter must return <code class="lang-kotlin">Boolean</code> and must not return null.</p>
         </li>
         <li>
-          <p class="paragraph">A filter's name can be <strong>overloaded</strong>. The overload used is the one that can filter the test:   every parameter names a generated parameter, with a type that can hold it, and it returns   <code class="lang-kotlin">Boolean</code>. Where several in the nearest class can, a public one comes before an <code class="lang-kotlin">internal</code> one,   then a static or <code class="lang-kotlin">@JvmStatic</code> one before one declared only in a companion object. If that still   leaves more than one, the test fails and lists them. Which one applied used to depend on the order   reflection listed them in, and that can change between builds. <code class="lang-kotlin">@JvmOverloads</code> makes overloads   too: <code class="lang-kotlin">@JvmOverloads fun upTo(start: Int, end: Int = 2)</code> filters a test that generates only   <code class="lang-kotlin">start</code>, but is ambiguous for one that generates both.</p>
+          <p class="paragraph">A filter's name can be <strong>overloaded</strong>. The overload used is the one that can filter the test:   every parameter binds to a generated parameter (see #parameter-names), with   a type that can hold it, and it returns <code class="lang-kotlin">Boolean</code>. Where several in the nearest class can, a   public one comes before an <code class="lang-kotlin">internal</code> one, then a static or <code class="lang-kotlin">@JvmStatic</code> one before one declared   only in a companion object. If that still leaves more than one, the test fails and lists them.   Which one applied used to depend on the order reflection listed them in, and that can change   between builds. <code class="lang-kotlin">@JvmOverloads</code> makes overloads too:   <code class="lang-kotlin">@JvmOverloads fun upTo(start: Int, end: Int = 2)</code> filters a test that generates only <code class="lang-kotlin">start</code>,   but is ambiguous for one that generates both. An overload that bound by position before, and   whose names now say otherwise but don't all match, fails the test rather than giving way to   another overload.</p>
         </li>
         <li>
           <p class="paragraph">If every combination is rejected, the test fails and the message names the filters responsible.</p>
@@ -380,23 +380,23 @@
           </thead>
           <tbody>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@45683cda lang-kotlin">{index}</code></td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@73da457a lang-kotlin">{index}</code></td>
               <td>the 1-based invocation number</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@45683cda lang-kotlin">{arguments}</code></td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@73da457a lang-kotlin">{arguments}</code></td>
               <td>the generated values, comma separated</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@45683cda lang-kotlin">{argumentsWithNames}</code></td>
-              <td>the generated values as <code class="org.jetbrains.dokka.pages.commenttable@45683cda lang-kotlin">name=value</code>, comma separated</td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@73da457a lang-kotlin">{argumentsWithNames}</code></td>
+              <td>the generated values as <code class="org.jetbrains.dokka.pages.commenttable@73da457a lang-kotlin">name=value</code>, comma separated</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@45683cda lang-kotlin">{displayName}</code></td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@73da457a lang-kotlin">{displayName}</code></td>
               <td>the test method's own display name</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@45683cda lang-kotlin">{0}</code>, <code class="org.jetbrains.dokka.pages.commenttable@45683cda lang-kotlin">{1}</code>, ...</td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@73da457a lang-kotlin">{0}</code>, <code class="org.jetbrains.dokka.pages.commenttable@73da457a lang-kotlin">{1}</code>, ...</td>
               <td>a single generated value, by position</td>
             </tr>
           </tbody>
@@ -404,7 +404,42 @@
       </div>
       <p class="paragraph">Only generated parameters are listed. A parameter resolved by another extension - <code class="lang-kotlin">TestInfo</code>, <code class="lang-kotlin">@TempDir</code>, an injected mock - is not named and does not shift the <code class="lang-kotlin">{0}</code>, <code class="lang-kotlin">{1}</code> positions.</p>
       <h3 class="">Parameter Names</h3>
-      <p class="paragraph"><code class="lang-kotlin">{argumentsWithNames}</code> needs the declared parameter names to be present in the compiled class file. Kotlin records them in its own metadata, so Kotlin test sources need nothing. Java test sources must be compiled with <code class="lang-kotlin">-parameters</code>, or the names fall back to <code class="lang-kotlin">arg0</code>, <code class="lang-kotlin">arg1</code>:</p>
+      <p class="paragraph">Filters and <code class="lang-kotlin">{argumentsWithNames}</code> both use the names parameters were declared with, which have to be recorded in the compiled class files.</p>
+      <ul>
+        <li>
+          <p class="paragraph"><strong>Kotlin</strong> records them in its own metadata, so Kotlin sources need nothing.</p>
+        </li>
+        <li>
+          <p class="paragraph"><strong>Java filters</strong> find them either way Java records them: with <code class="lang-kotlin">-parameters</code>, or in the debug   information that <code class="lang-kotlin">-g</code> adds. Gradle and Maven compile with <code class="lang-kotlin">-g</code> by default, so a default build   needs nothing. <code class="lang-kotlin">@ValuesFrom</code> messages use these names too.</p>
+        </li>
+        <li>
+          <p class="paragraph"><strong>Java display names</strong> use <code class="lang-kotlin">-parameters</code> names only. Without them, <code class="lang-kotlin">{argumentsWithNames}</code> and the   <code class="lang-kotlin">generated.parameters</code> report entry show <code class="lang-kotlin">arg0</code>, <code class="lang-kotlin">arg1</code>.</p>
+        </li>
+      </ul>
+      <h4 class="">When a filter binds by position</h4>
+      <p class="paragraph">A Java test compiled without <code class="lang-kotlin">-parameters</code> has names only in its debug information, if at all, and 4.1.0 bound filters to it by position: a filter's first parameter took the test's first, whatever either was called. That applies when the filter has no <code class="lang-kotlin">-parameters</code> names either, which is the case for a Java filter compiled the same way and for a Kotlin filter compiled without <code class="lang-kotlin">javaParameters</code>. Position still decides those, so a filter that repeats the test's parameters in order keeps working, whatever it calls them. That includes a filter shared by tests whose names differ.</p>
+      <p class="paragraph">Names decide instead when one of the filter's names belongs to a generated parameter at another position: <code class="lang-kotlin">endNotOne_filter(int end)</code> on <code class="lang-kotlin">test(int start, int end)</code> filters on <code class="lang-kotlin">end</code>, not <code class="lang-kotlin">start</code>. The filter's names then all have to be the test's, as everywhere else.</p>
+      <p class="paragraph">When position decides and names could have told it otherwise, the filter logs a warning, once for each test that uses it:</p>
+      <ul>
+        <li>
+          <p class="paragraph">One side doesn't record names, as with <code class="lang-kotlin">-g:none</code>:</p>
+          <div class="sample-container">
+            <pre><code class="block lang-text" theme="idea">Filter [ordered_filter] binds to the parameters of [ordered] by position, because the class files don't record their names. Compile with -parameters to bind by name.</code></pre>
+<span class="copy-tooltip">
+              <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+        </li>
+        <li>
+          <p class="paragraph">The filter's names aren't all the test's:</p>
+          <div class="sample-container">
+            <pre><code class="block lang-text" theme="idea">Filter [loBeforeHi] binds to the parameters of [ordered] by position, because the test has no parameter named [lo, hi]. Name the filter's parameters as the test does to bind by name.</code></pre>
+<span class="copy-tooltip">
+              <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+        </li>
+      </ul>
+      <p class="paragraph">A filter whose names aren't recorded anywhere, such as one from a jar compiled with <code class="lang-kotlin">-g:none</code>, binds by its <code class="lang-kotlin">arg0</code>, <code class="lang-kotlin">arg1</code>. So with a test whose names are recorded (Kotlin, or Java with <code class="lang-kotlin">-parameters</code>), it fails with <code class="lang-kotlin">declares [arg0], which is not a generated parameter of the test</code>, as it did in 4.1.0. With a Java test compiled without <code class="lang-kotlin">-parameters</code>, it binds by position and logs the first warning.</p>
+      <p class="paragraph">To record the names everywhere, compile Java with <code class="lang-kotlin">-parameters</code>:</p>
       <div class="sample-container">
         <pre><code class="block lang-kotlin" theme="idea">// Gradle<br>tasks.withType&lt;JavaCompile&gt;().configureEach {<br>    options.compilerArgs.add(&quot;-parameters&quot;)<br>}</code></pre>
 <span class="copy-tooltip">
@@ -576,7 +611,7 @@
           <thead>
             <tr>
               <th>Concern</th>
-              <th><code class="org.jetbrains.dokka.pages.commenttable@45683cda lang-kotlin">@MethodSource</code></th>
+              <th><code class="org.jetbrains.dokka.pages.commenttable@73da457a lang-kotlin">@MethodSource</code></th>
               <th>Generated Sources</th>
             </tr>
           </thead>
