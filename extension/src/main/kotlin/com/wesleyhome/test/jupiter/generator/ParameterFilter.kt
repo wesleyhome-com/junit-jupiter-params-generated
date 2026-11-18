@@ -3,11 +3,11 @@ package com.wesleyhome.test.jupiter.generator
 import com.wesleyhome.test.jupiter.InvalidFilterException
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 import java.lang.reflect.Parameter
 import java.util.logging.Logger
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
-import kotlin.reflect.KVisibility
 import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.kotlinFunction
 
@@ -68,15 +68,15 @@ internal class ParameterFilter(
 
         /**
          * Rejects a filter whose Kotlin parameter can't hold the null its slot generates, as [slotFor]
-         * rejects a primitive one, unless another of the test's filters takes that parameter too.
-         * Conventional filters run in no fixed order, so that one may run first and turn away every
-         * combination holding the null. Without one, whatever combinations reach the filter, the same
-         * ones holding the null reach it as well.
+         * rejects a primitive one, unless another of the test's filters takes that parameter and can
+         * hold the null. Conventional filters run in no fixed order, so that one may run first and turn
+         * away every combination holding the null. Without one, whichever filter of that parameter runs
+         * first is handed the null, and Kotlin's own check fails the test.
          */
         fun requireNullsHeld(filters: List<ParameterFilter>) {
             for (filter in filters) {
                 filter.refusedNulls.entries
-                    .firstOrNull { (slot, _) -> filters.none { other -> other !== filter && slot in other.slots } }
+                    .firstOrNull { (slot, _) -> filters.none { slot in it.slots && slot !in it.refusedNulls } }
                     ?.let { throw InvalidFilterException(it.value) }
             }
         }
@@ -189,7 +189,7 @@ internal class ParameterFilter(
             slots: List<Int>,
             binding: FilterBinding
         ): Map<Int, String> {
-            if (method.kotlinFunction?.visibility == KVisibility.PRIVATE) return emptyMap()
+            if (Modifier.isPrivate(method.modifiers)) return emptyMap()
             val kotlinParameters = method.kotlinValueParameters() ?: return emptyMap()
             return slots.withIndex().mapNotNull { (index, slot) ->
                 val type = kotlinParameters[index].type

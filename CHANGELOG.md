@@ -79,8 +79,8 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   already, with a `NullPointerException` partway through the run. Compiled with
   `-Xno-param-assertions`, it has no such check and took the null in a parameter declared not to
   hold one. It now fails before anything runs. Declare its parameter nullable (`label: String?`).
-  This doesn't affect a `private` filter, or a filter whose parameter another of the test's filters
-  also takes: those still take the null.
+  This doesn't affect a `private` filter, which has no check, or a filter whose parameter another
+  of the test's filters takes and can hold the null: those run as before.
 
 ### Fixed
 
@@ -130,11 +130,11 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
   `Filter [label_filter] declares [label] as String, which cannot hold the null this parameter
   generates`. It's rejected before anything runs where Kotlin's own null check would fail the test
   once the null reached the filter, with a `NullPointerException` from inside it: in a filter that
-  isn't `private`, when no other filter of the test takes the same parameter. A value class is
-  judged by its Kotlin type, so `name: Name` is rejected and `name: Name?` accepted. One over a
-  nullable type, such as `Nickname(val value: String?)`, still takes the null as `Nickname(null)`.
-  A `private` filter and a Java filter take the null as before. Any filter that then throws on the
-  null is reported as a throwing filter.
+  isn't `private`, unless another filter of the test takes the same parameter and can hold the
+  null. A value class is judged by its Kotlin type, so `name: Name` is rejected and `name: Name?`
+  accepted. One over a nullable type, such as `Nickname(val value: String?)`, still takes the null
+  as `Nickname(null)`. A `private` filter and a Java filter take the null as before. Any filter
+  that then throws on the null is reported as a throwing filter.
 
 ### Build and docs
 
