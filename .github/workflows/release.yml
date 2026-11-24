@@ -4,12 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       release_version:
-        description: 'Release version to publish, e.g. 4.0.2'
-        required: true
+        description: 'Version to release, e.g. 4.2.0. Blank: the version in gradle.properties, without -SNAPSHOT'
+        required: false
+        default: ''
         type: string
       next_version:
-        description: 'Next version to write after release, e.g. 0.2.1-SNAPSHOT'
-        required: true
+        description: 'Version main moves to afterwards, e.g. 4.3.0-SNAPSHOT. Blank: the next patch version, or 4.2.0-SNAPSHOT after a pre-release such as 4.2.0-RC1'
+        required: false
+        default: ''
         type: string
 
 permissions:
@@ -47,9 +49,17 @@ jobs:
           fetch-depth: 0
           ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
 
+      # Every later step uses these outputs rather than the inputs, which may be blank.
+      - name: Resolve the release versions
+        id: versions
+        env:
+          TYPED_RELEASE_VERSION: ${{ inputs.release_version }}
+          TYPED_NEXT_VERSION: ${{ inputs.next_version }}
+        run: bash .github/scripts/resolve-release-versions.sh "${TYPED_RELEASE_VERSION}" "${TYPED_NEXT_VERSION}"
+
       - name: Check the release can push its commits and tag
         env:
-          TAG: v${{ inputs.release_version }}
+          TAG: ${{ steps.versions.outputs.tag }}
         run: bash .github/scripts/check-release-push.sh "${TAG}"
 
       # The same JDK as build-pr.yml and build-main.yml, so the release builds what CI tested.
@@ -71,18 +81,21 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Run release plugin and publish
+        env:
+          RELEASE_VERSION: ${{ steps.versions.outputs.release_version }}
+          NEXT_VERSION: ${{ steps.versions.outputs.next_version }}
         run: >-
           ./gradlew release
-          -Prelease.releaseVersion=${{ inputs.release_version }}
-          -Prelease.newVersion=${{ inputs.next_version }}
+          "-Prelease.releaseVersion=${RELEASE_VERSION}"
+          "-Prelease.newVersion=${NEXT_VERSION}"
           --no-daemon
 
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ inputs.release_version }}
+          VERSION: ${{ steps.versions.outputs.release_version }}
+          TAG: ${{ steps.versions.outputs.tag }}
         run: |
-          TAG="v${VERSION}"
           PREVIOUS_TAG="$(bash .github/scripts/previous-release-tag.sh "${TAG}")"
           git show "${TAG}:CHANGELOG.md" > "${RUNNER_TEMP}/CHANGELOG.md"
           SECTION="$(bash .github/scripts/changelog-section.sh "${VERSION}" "${RUNNER_TEMP}/CHANGELOG.md")"
