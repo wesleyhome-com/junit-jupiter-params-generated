@@ -9,6 +9,13 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
 
 ## [Unreleased]
 
+### Build and docs
+
+- The release workflow's `release_version` and `next_version` inputs are optional (#177). Left
+  blank, it releases the version in `gradle.properties` without `-SNAPSHOT` and moves `main` to the
+  next patch version. It checks both versions before anything is built, and lists them in the
+  run's summary.
+
 ## [4.1.1] - 2026-11-24
 
 ### Upgrade notes

@@ -265,6 +265,8 @@ Main release/publish behavior is driven by GitHub workflows under `.github/workf
   - generates docs and publishes them as the snapshot docs (see below).
 - `release.yml`:
   - manual release workflow (`workflow_dispatch`),
+  - works out the release and next versions, from `gradle.properties` unless they're typed, and
+    stops if they don't make sense (see [Running a Release](#running-a-release)),
   - runs `net.researchgate.release` on JDK 17, the same as the pull request and `main` builds,
   - checks that the release will be able to push (see below),
   - renames `CHANGELOG.md`'s `[Unreleased]` section to the release version before building, and
@@ -277,6 +279,35 @@ Main release/publish behavior is driven by GitHub workflows under `.github/workf
     previous GA tag (or the tag just before a pre-release) grouped by label. An `X.Y.Z` version is
     marked Latest, anything else a pre-release. If that last step fails, the artifacts are already
     published; create the release by hand.
+
+### Running a Release
+
+Run **Release To Maven Central** from `main` in the Actions tab. Both inputs are optional:
+
+- **`release_version`:** left blank, it's the version in `gradle.properties` without `-SNAPSHOT`, so
+  `version=4.1.2-SNAPSHOT` releases 4.1.2. Type one to release something else, such as `4.2.0` or
+  the pre-release `4.2.0-RC1`.
+- **`next_version`:** the version `main` is left at. Left blank, it's the next patch version,
+  `4.1.3-SNAPSHOT` after 4.1.2, or after a pre-release the version it leads up to, `4.2.0-SNAPSHOT`
+  after 4.2.0-RC1. Type one to move elsewhere, such as `4.2.0-SNAPSHOT` after 4.1.2.
+
+So a patch release needs no inputs, and a minor or major release only `release_version`.
+
+The first step after checkout, `.github/scripts/resolve-release-versions.sh`, works the versions out
+from the inputs and the checked-out `gradle.properties` and lists them in the run's summary. Every
+later step uses what it resolved: `steps.versions.outputs.release_version`, `next_version` and
+`tag`. It stops the release before anything is built or published if:
+
+- `gradle.properties`' version doesn't end in `-SNAPSHOT`;
+- either version isn't one such as `4.1.2`, `4.2.0-RC1` or `4.1.3-SNAPSHOT`, written without a `v`
+  or leading zeros;
+- `release_version` is a SNAPSHOT, or `next_version` doesn't end in `-SNAPSHOT`;
+- `next_version` isn't newer than `release_version`. A SNAPSHOT counts as the version it leads up
+  to, so `4.1.2-SNAPSHOT` can't follow 4.1.2, but `4.2.0-SNAPSHOT` can follow 4.2.0-RC1. Versions
+  compare as numbers, 4.10.0 after 4.9.0, and may skip ahead.
+
+To see what a release with blank inputs would use, run
+`bash .github/scripts/resolve-release-versions.sh "" ""` from the repository root.
 
 ### Publishing Before Pushing
 
