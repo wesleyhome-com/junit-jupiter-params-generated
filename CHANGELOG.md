@@ -11,10 +11,12 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
 
 ### Build and docs
 
-- The release workflow won't release a version whose milestone still has open issues or pull
-  requests, and names each one (#176). It also stops when no milestone has the version as its
-  title, which catches a mistyped version. Pre-releases have no milestone and skip the check. Once
-  the GitHub release is created, the workflow closes the milestone.
+- The release workflow won't release a version whose milestone, open or closed, still has open
+  issues or pull requests, and names each one (#176). It also stops when no milestone has the
+  version as its title, which catches a mistyped version. Pre-releases have no milestone and skip
+  the check. Once the GitHub release is created, the workflow closes the milestone. The check and
+  the closing run in jobs of their own, so the release job's token still has no access to issues.
+  Pull request and `main` builds test the script that does both.
 
 ## [4.1.1] - 2026-11-24
 
