@@ -351,7 +351,7 @@ for endpoint in milestones issues pulls; do
     exits 1 check 4.1.2 "${expected}"
   done
   for raw in '[{"number": 2, "title": "4.1.2", "state": "open", "open_issues": 0' '<html>Unicorn!</html>' \
-      '{"message": "Bad credentials"}' '[7]' '["4.1.2"]'; do
+      '{"message": "Bad credentials"}' '[7]' '["4.1.2"]' null 7; do
     start "${endpoint}: response ${raw}"
     milestone 2 4.1.2 open 0
     switch "raw-${endpoint}" "${raw}"

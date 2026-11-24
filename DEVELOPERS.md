@@ -384,10 +384,10 @@ lists open pull requests from the pulls endpoint as well.
 
 - **The milestone, open or closed, has open issues or pull requests.** The error lists each one and
   links the milestone. Finish them or move them to another milestone, then run the release again.
-  The check also goes by the milestone's own count of open issues, which leaves out pull requests.
-  If the count is higher than what could be listed, the error says
-  `GitHub counts <n> open issues in the milestone, but only <m> could be listed`: open the milestone
-  to see the rest.
+  The check also goes by the milestone's own count of open issues, which may leave out pull
+  requests, as it does in this repository. If the count is higher than what could be listed, the
+  error says `GitHub counts <n> open issues in the milestone, but only <m> could be listed`: open
+  the milestone to see the rest.
 - **No milestone has exactly the version as its title.** That's most likely a mistyped
   `release_version`, or a milestone that was never created: run the release again with the right
   version, or create the milestone.
