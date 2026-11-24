@@ -4,6 +4,6 @@
     {"label": "4.1.1 (latest)", "path": "v/4.1.1/"}
    ,{"label": "4.1.0", "path": "v/4.1.0/"}
    ,{"label": "4.0.0", "path": "v/4.0.0/"}
-   ,{"label": "4.1.1-SNAPSHOT", "path": "snapshot/"}
+   ,{"label": "4.1.1", "path": "snapshot/"}
   ]
 }
