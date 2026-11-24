@@ -316,7 +316,8 @@ later step uses what it resolved: `steps.versions.outputs.release_version`, `nex
 To see what a release with blank inputs would use, run
 `bash .github/scripts/resolve-release-versions.sh "" ""` from the repository root.
 `bash .github/scripts/test/resolve-release-versions-test.sh` tests the script, one case per line;
-pull request and `main` builds run it before the Gradle build, in the `build` job.
+pull request and `main` builds run it before the Gradle build, in the `build` and
+`build-snapshot-gradle-project` jobs.
 
 ### Publishing Before Pushing
 

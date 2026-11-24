@@ -111,6 +111,7 @@ ok "pre-release with two dashes" "${P}" 4.2.0-RC-1 "" 4.2.0-RC-1 4.2.0-SNAPSHOT
 ok "pre-release, next pre-release" "${P}" 4.2.0-RC1 4.2.0-RC2-SNAPSHOT 4.2.0-RC1 4.2.0-RC2-SNAPSHOT
 ok "pre-release of the version main works towards" 'version=4.2.0-SNAPSHOT' 4.2.0-RC1 "" 4.2.0-RC1 4.2.0-SNAPSHOT
 ok "pre-release of gradle.properties' patch" "${P}" 4.1.2-RC1 "" 4.1.2-RC1 4.1.2-SNAPSHOT
+ok "two-dash pre-release of gradle.properties' patch" "${P}" 4.1.2-RC-1 "" 4.1.2-RC-1 4.1.2-SNAPSHOT
 ok "earlier pre-release of the same version" 'version=4.2.0-RC2-SNAPSHOT' 4.2.0-RC1 "" 4.2.0-RC1 4.2.0-SNAPSHOT
 fails "next is the pre-release's own snapshot" "${P}" 4.2.0-RC1 4.2.0-RC1-SNAPSHOT \
   "next_version 4.2.0-RC1-SNAPSHOT isn't newer than release_version 4.2.0-RC1."
