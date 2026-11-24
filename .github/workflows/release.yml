@@ -14,18 +14,66 @@ on:
         default: ''
         type: string
 
-permissions:
-  # Creates the GitHub release. Pushes to main still need the deploy key; the ruleset blocks this token.
-  contents: write
+permissions: {}
 
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
+  # Every later job uses these outputs rather than the inputs, which may be blank.
+  versions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      release_version: ${{ steps.versions.outputs.release_version }}
+      next_version: ${{ steps.versions.outputs.next_version }}
+      tag: ${{ steps.versions.outputs.tag }}
+    steps:
+      - name: Checkout gradle.properties and the release scripts
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/scripts
+
+      - name: Resolve the release versions
+        id: versions
+        env:
+          TYPED_RELEASE_VERSION: ${{ inputs.release_version }}
+          TYPED_NEXT_VERSION: ${{ inputs.next_version }}
+        run: bash .github/scripts/resolve-release-versions.sh "${TYPED_RELEASE_VERSION}" "${TYPED_NEXT_VERSION}"
+
+  # A job of its own, so that a release with unfinished work stops in seconds and the release job's
+  # token gets no access to issues.
+  milestone-check:
+    needs: versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: read
+      # Without it, the issues listing leaves out pull requests.
+      pull-requests: read
+    steps:
+      - name: Checkout the release scripts
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/scripts
+
+      - name: Check the version's milestone is finished
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.versions.outputs.release_version }}
+        run: bash .github/scripts/release-milestone.sh check "${VERSION}"
+
   release:
+    needs: [versions, milestone-check]
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      # Creates the GitHub release. Pushes to main still need the deploy key; the ruleset blocks this token.
+      contents: write
     env:
       ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
       ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
@@ -49,17 +97,9 @@ jobs:
           fetch-depth: 0
           ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
 
-      # Every later step uses these outputs rather than the inputs, which may be blank.
-      - name: Resolve the release versions
-        id: versions
-        env:
-          TYPED_RELEASE_VERSION: ${{ inputs.release_version }}
-          TYPED_NEXT_VERSION: ${{ inputs.next_version }}
-        run: bash .github/scripts/resolve-release-versions.sh "${TYPED_RELEASE_VERSION}" "${TYPED_NEXT_VERSION}"
-
       - name: Check the release can push its commits and tag
         env:
-          TAG: ${{ steps.versions.outputs.tag }}
+          TAG: ${{ needs.versions.outputs.tag }}
         run: bash .github/scripts/check-release-push.sh "${TAG}"
 
       # The same JDK as build-pr.yml and build-main.yml, so the release builds what CI tested.
@@ -82,8 +122,8 @@ jobs:
 
       - name: Run release plugin and publish
         env:
-          RELEASE_VERSION: ${{ steps.versions.outputs.release_version }}
-          NEXT_VERSION: ${{ steps.versions.outputs.next_version }}
+          RELEASE_VERSION: ${{ needs.versions.outputs.release_version }}
+          NEXT_VERSION: ${{ needs.versions.outputs.next_version }}
         run: >-
           ./gradlew release
           "-Prelease.releaseVersion=${RELEASE_VERSION}"
@@ -93,8 +133,8 @@ jobs:
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.versions.outputs.release_version }}
-          TAG: ${{ steps.versions.outputs.tag }}
+          VERSION: ${{ needs.versions.outputs.release_version }}
+          TAG: ${{ needs.versions.outputs.tag }}
         run: |
           PREVIOUS_TAG="$(bash .github/scripts/previous-release-tag.sh "${TAG}")"
           git show "${TAG}:CHANGELOG.md" > "${RUNNER_TEMP}/CHANGELOG.md"
@@ -110,3 +150,24 @@ jobs:
             ARGS+=(--prerelease --latest=false)
           fi
           gh release create "${TAG}" "${ARGS[@]}"
+
+  close-milestone:
+    needs: [versions, release]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # The release is published by now. The script only warns, and nothing else here may fail the run.
+    continue-on-error: true
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout the release scripts
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/scripts
+
+      - name: Close the version's milestone
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.versions.outputs.release_version }}
+        run: bash .github/scripts/release-milestone.sh close "${VERSION}"

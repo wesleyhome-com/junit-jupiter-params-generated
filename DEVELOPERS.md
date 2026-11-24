@@ -256,8 +256,9 @@ Main release/publish behavior is driven by GitHub workflows under `.github/workf
 
 - `build-pr.yml`:
   - builds and tests every pull request to `main`, including the [coverage gate](#coverage-gate),
-    the [Kotlin 2.2 projects](#kotlin-versions) and the
-    [release version script's test](#running-a-release); its `build` check is required to merge,
+    the [Kotlin 2.2 projects](#kotlin-versions) and the tests of the release scripts for
+    [versions](#running-a-release) and [milestones](#release-milestones); its `build` check is
+    required to merge,
   - reruns the tests on the oldest Kotlin runtime and JUnit supported, as the `floor-versions` check.
 - `build-main.yml`:
   - builds/tests, including the Kotlin 2.2 projects, and reruns the tests on the oldest Kotlin
@@ -268,6 +269,8 @@ Main release/publish behavior is driven by GitHub workflows under `.github/workf
   - manual release workflow (`workflow_dispatch`),
   - works out the release and next versions, from `gradle.properties` unless they're typed, and
     stops if they don't make sense (see [Running a Release](#running-a-release)),
+  - then checks, in a job of its own, that the version's milestone is finished (see
+    [Release Milestones](#release-milestones)),
   - runs `net.researchgate.release` on JDK 17, the same as the pull request and `main` builds,
   - checks that the release will be able to push (see below),
   - renames `CHANGELOG.md`'s `[Unreleased]` section to the release version before building, and
@@ -278,8 +281,9 @@ Main release/publish behavior is driven by GitHub workflows under `.github/workf
     allowed to push to `main` directly,
   - creates the GitHub release: that version's changelog section, then the pull requests since the
     previous GA tag (or the tag just before a pre-release) grouped by label. An `X.Y.Z` version is
-    marked Latest, anything else a pre-release. If that last step fails, the artifacts are already
-    published; create the release by hand.
+    marked Latest, anything else a pre-release. If that step fails, the artifacts are already
+    published; create the release and close the milestone by hand,
+  - closes the version's milestone, in a job of its own.
 
 ### Running a Release
 
@@ -294,10 +298,10 @@ Run **Release To Maven Central** from `main` in the Actions tab. Both inputs are
 
 So a patch release needs no inputs, and a minor or major release only `release_version`.
 
-The first step after checkout, `.github/scripts/resolve-release-versions.sh`, works the versions out
-from the inputs and the checked-out `gradle.properties` and lists them in the run's summary. Every
-later step uses what it resolved: `steps.versions.outputs.release_version`, `next_version` and
-`tag`. It stops the release before anything is built or published if:
+The first job, `versions`, runs `.github/scripts/resolve-release-versions.sh`, which works the
+versions out from the inputs and the `gradle.properties` being released, and lists them in the run's
+summary. Every later job uses what it resolved: `needs.versions.outputs.release_version`,
+`next_version` and `tag`. It stops the release before anything is checked, built or published if:
 
 - `gradle.properties`' version isn't a version ending in `-SNAPSHOT`;
 - either version isn't one such as `4.1.2`, `4.2.0-RC1` or `4.1.3-SNAPSHOT`, written without a `v`
@@ -356,7 +360,50 @@ run didn't push. The log shows which release plugin task failed:
   `git tag -a v<version>`, push the tag, then set the next version in a pull request.
 - **`commitNewVersion`: the tag is pushed.** Set the next version in a pull request.
 
-Then create the GitHub release by hand. Pushing the tag publishes the versioned docs.
+Then create the GitHub release and close the milestone by hand, since the run skips both. Pushing
+the tag publishes the versioned docs.
+
+### Release Milestones
+
+Each release is planned in a milestone titled with its version, such as `4.1.2`. `release.yml` runs
+four jobs, one after another, each with only the token permissions it needs:
+
+| Job               | Token permissions                                   | Runs                  |
+|-------------------|-----------------------------------------------------|-----------------------|
+| `versions`        | `contents: read`                                    | the version script    |
+| `milestone-check` | `contents: read, issues: read, pull-requests: read` | the milestone check   |
+| `release`         | `contents: write`                                   | the release           |
+| `close-milestone` | `contents: read, issues: write`                     | closing the milestone |
+
+The jobs other than `release` check out only `.github/scripts` and the files at the root, such as
+`gradle.properties`, which is what their `contents: read` is for. The issues listing leaves out pull
+requests for a token without `pull-requests: read`, so `milestone-check` has it, and the script
+lists open pull requests from the pulls endpoint as well.
+
+`milestone-check` takes seconds and stops the release before the `release` job starts when:
+
+- **The milestone, open or closed, has open issues or pull requests.** The error lists each one and
+  links the milestone. Finish them or move them to another milestone, then run the release again.
+  The check also goes by the milestone's own count of open issues, which may leave out pull
+  requests, as it does in this repository. If the count is higher than what could be listed, the
+  error says `GitHub counts <n> open issues in the milestone, but only <m> could be listed`: open
+  the milestone to see the rest.
+- **No milestone has exactly the version as its title.** That's most likely a mistyped
+  `release_version`, or a milestone that was never created: run the release again with the right
+  version, or create the milestone.
+- **GitHub couldn't be asked, or its answer couldn't be read.** An error never counts as "no open
+  issues". Run the release again.
+
+A pre-release (any version other than `X.Y.Z`) has no milestone and skips the check.
+
+`close-milestone` runs once `release` has succeeded, and closes the milestone, or leaves it alone if
+it's already closed. The artifacts are published by then, so if closing fails it prints a warning
+that links the milestone and the run stays green: close it by hand. The job is
+`continue-on-error`, so even a failure the script doesn't expect, such as a failed checkout, fails
+only that job, not the run. If the `release` job fails, `close-milestone` doesn't run.
+
+`bash .github/scripts/test/release-milestone-test.sh` tests the script against a stub of `gh`, with
+no network; pull request and `main` builds run it in the same step as the version script's test.
 
 ## Changelog and Labels
 
