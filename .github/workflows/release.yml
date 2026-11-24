@@ -9,7 +9,7 @@ on:
         default: ''
         type: string
       next_version:
-        description: 'Version main moves to afterwards, e.g. 4.3.0-SNAPSHOT. Blank: the next patch version'
+        description: 'Version main moves to afterwards, e.g. 4.3.0-SNAPSHOT. Blank: the next patch version, or 4.2.0-SNAPSHOT after a pre-release such as 4.2.0-RC1'
         required: false
         default: ''
         type: string

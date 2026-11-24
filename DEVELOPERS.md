@@ -255,8 +255,9 @@ matters; async-profiler is the better tool if the question is where CPU time goe
 Main release/publish behavior is driven by GitHub workflows under `.github/workflows`.
 
 - `build-pr.yml`:
-  - builds and tests every pull request to `main`, including the [coverage gate](#coverage-gate)
-    and the [Kotlin 2.2 projects](#kotlin-versions); its `build` check is required to merge,
+  - builds and tests every pull request to `main`, including the [coverage gate](#coverage-gate),
+    the [Kotlin 2.2 projects](#kotlin-versions) and the
+    [release version script's test](#running-a-release); its `build` check is required to merge,
   - reruns the tests on the oldest Kotlin runtime and JUnit supported, as the `floor-versions` check.
 - `build-main.yml`:
   - builds/tests, including the Kotlin 2.2 projects, and reruns the tests on the oldest Kotlin
@@ -298,16 +299,24 @@ from the inputs and the checked-out `gradle.properties` and lists them in the ru
 later step uses what it resolved: `steps.versions.outputs.release_version`, `next_version` and
 `tag`. It stops the release before anything is built or published if:
 
-- `gradle.properties`' version doesn't end in `-SNAPSHOT`;
+- `gradle.properties`' version isn't a version ending in `-SNAPSHOT`;
 - either version isn't one such as `4.1.2`, `4.2.0-RC1` or `4.1.3-SNAPSHOT`, written without a `v`
   or leading zeros;
-- `release_version` is a SNAPSHOT, or `next_version` doesn't end in `-SNAPSHOT`;
+- `release_version` is a SNAPSHOT in any case, such as `4.2.0-snapshot`. Maven treats that as a
+  snapshot, but only `-SNAPSHOT` keeps the upload to Maven Central from running;
+- `release_version` comes before the version `main` is working towards. Only `X.Y.Z` is compared:
+  with `version=4.1.2-SNAPSHOT`, 4.1.1 and 4.1.1-RC1 are refused, while 4.1.2-RC1, 4.1.2 and
+  4.2.0 are released;
+- `next_version` doesn't end in `-SNAPSHOT`, or says SNAPSHOT twice, as `4.3.0-SNAPSHOT-SNAPSHOT`
+  does;
 - `next_version` isn't newer than `release_version`. A SNAPSHOT counts as the version it leads up
   to, so `4.1.2-SNAPSHOT` can't follow 4.1.2, but `4.2.0-SNAPSHOT` can follow 4.2.0-RC1. Versions
   compare as numbers, 4.10.0 after 4.9.0, and may skip ahead.
 
 To see what a release with blank inputs would use, run
 `bash .github/scripts/resolve-release-versions.sh "" ""` from the repository root.
+`bash .github/scripts/test/resolve-release-versions-test.sh` tests the script, one case per line;
+pull request and `main` builds run it before the Gradle build, in the `build` job.
 
 ### Publishing Before Pushing
 

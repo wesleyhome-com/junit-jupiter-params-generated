@@ -13,8 +13,9 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
 
 - The release workflow's `release_version` and `next_version` inputs are optional (#177). Left
   blank, it releases the version in `gradle.properties` without `-SNAPSHOT` and moves `main` to the
-  next patch version. It checks both versions before anything is built, and lists them in the
-  run's summary.
+  next patch version. Before anything is built it checks both versions, refusing a release version
+  that's a SNAPSHOT in any case or older than the one `main` is working towards, and lists them in
+  the run's summary. Pull request and `main` builds test the script that does this.
 
 ## [4.1.1] - 2026-11-24
 
