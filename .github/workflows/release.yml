@@ -4,12 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       release_version:
-        description: 'Release version to publish, e.g. 4.0.2'
-        required: true
+        description: 'Version to release, e.g. 4.2.0. Blank: the version in gradle.properties, without -SNAPSHOT'
+        required: false
+        default: ''
         type: string
       next_version:
-        description: 'Next version to write after release, e.g. 0.2.1-SNAPSHOT'
-        required: true
+        description: 'Version main moves to afterwards, e.g. 4.3.0-SNAPSHOT. Blank: the next patch version, or 4.2.0-SNAPSHOT after a pre-release such as 4.2.0-RC1'
+        required: false
+        default: ''
         type: string
 
 permissions: {}
@@ -19,9 +21,33 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Every later job uses these outputs rather than the inputs, which may be blank.
+  versions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      release_version: ${{ steps.versions.outputs.release_version }}
+      next_version: ${{ steps.versions.outputs.next_version }}
+      tag: ${{ steps.versions.outputs.tag }}
+    steps:
+      - name: Checkout gradle.properties and the release scripts
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/scripts
+
+      - name: Resolve the release versions
+        id: versions
+        env:
+          TYPED_RELEASE_VERSION: ${{ inputs.release_version }}
+          TYPED_NEXT_VERSION: ${{ inputs.next_version }}
+        run: bash .github/scripts/resolve-release-versions.sh "${TYPED_RELEASE_VERSION}" "${TYPED_NEXT_VERSION}"
+
   # A job of its own, so that a release with unfinished work stops in seconds and the release job's
   # token gets no access to issues.
   milestone-check:
+    needs: versions
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -38,11 +64,11 @@ jobs:
       - name: Check the version's milestone is finished
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ inputs.release_version }}
+          VERSION: ${{ needs.versions.outputs.release_version }}
         run: bash .github/scripts/release-milestone.sh check "${VERSION}"
 
   release:
-    needs: milestone-check
+    needs: [versions, milestone-check]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -73,7 +99,7 @@ jobs:
 
       - name: Check the release can push its commits and tag
         env:
-          TAG: v${{ inputs.release_version }}
+          TAG: ${{ needs.versions.outputs.tag }}
         run: bash .github/scripts/check-release-push.sh "${TAG}"
 
       # The same JDK as build-pr.yml and build-main.yml, so the release builds what CI tested.
@@ -95,18 +121,21 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Run release plugin and publish
+        env:
+          RELEASE_VERSION: ${{ needs.versions.outputs.release_version }}
+          NEXT_VERSION: ${{ needs.versions.outputs.next_version }}
         run: >-
           ./gradlew release
-          -Prelease.releaseVersion=${{ inputs.release_version }}
-          -Prelease.newVersion=${{ inputs.next_version }}
+          "-Prelease.releaseVersion=${RELEASE_VERSION}"
+          "-Prelease.newVersion=${NEXT_VERSION}"
           --no-daemon
 
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ inputs.release_version }}
+          VERSION: ${{ needs.versions.outputs.release_version }}
+          TAG: ${{ needs.versions.outputs.tag }}
         run: |
-          TAG="v${VERSION}"
           PREVIOUS_TAG="$(bash .github/scripts/previous-release-tag.sh "${TAG}")"
           git show "${TAG}:CHANGELOG.md" > "${RUNNER_TEMP}/CHANGELOG.md"
           SECTION="$(bash .github/scripts/changelog-section.sh "${VERSION}" "${RUNNER_TEMP}/CHANGELOG.md")"
@@ -123,7 +152,7 @@ jobs:
           gh release create "${TAG}" "${ARGS[@]}"
 
   close-milestone:
-    needs: release
+    needs: [versions, release]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     # The release is published by now. The script only warns, and nothing else here may fail the run.
@@ -140,5 +169,5 @@ jobs:
       - name: Close the version's milestone
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ inputs.release_version }}
+          VERSION: ${{ needs.versions.outputs.release_version }}
         run: bash .github/scripts/release-milestone.sh close "${VERSION}"

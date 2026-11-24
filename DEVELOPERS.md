@@ -256,8 +256,9 @@ Main release/publish behavior is driven by GitHub workflows under `.github/workf
 
 - `build-pr.yml`:
   - builds and tests every pull request to `main`, including the [coverage gate](#coverage-gate),
-    the [Kotlin 2.2 projects](#kotlin-versions) and the
-    [release milestone script's test](#release-milestones); its `build` check is required to merge,
+    the [Kotlin 2.2 projects](#kotlin-versions) and the tests of the release scripts for
+    [versions](#running-a-release) and [milestones](#release-milestones); its `build` check is
+    required to merge,
   - reruns the tests on the oldest Kotlin runtime and JUnit supported, as the `floor-versions` check.
 - `build-main.yml`:
   - builds/tests, including the Kotlin 2.2 projects, and reruns the tests on the oldest Kotlin
@@ -266,7 +267,9 @@ Main release/publish behavior is driven by GitHub workflows under `.github/workf
   - generates docs and publishes them as the snapshot docs (see below).
 - `release.yml`:
   - manual release workflow (`workflow_dispatch`),
-  - first checks, in a job of its own, that the version's milestone is finished (see
+  - works out the release and next versions, from `gradle.properties` unless they're typed, and
+    stops if they don't make sense (see [Running a Release](#running-a-release)),
+  - then checks, in a job of its own, that the version's milestone is finished (see
     [Release Milestones](#release-milestones)),
   - runs `net.researchgate.release` on JDK 17, the same as the pull request and `main` builds,
   - checks that the release will be able to push (see below),
@@ -281,6 +284,44 @@ Main release/publish behavior is driven by GitHub workflows under `.github/workf
     marked Latest, anything else a pre-release. If that step fails, the artifacts are already
     published; create the release and close the milestone by hand,
   - closes the version's milestone, in a job of its own.
+
+### Running a Release
+
+Run **Release To Maven Central** from `main` in the Actions tab. Both inputs are optional:
+
+- **`release_version`:** left blank, it's the version in `gradle.properties` without `-SNAPSHOT`, so
+  `version=4.1.2-SNAPSHOT` releases 4.1.2. Type one to release something else, such as `4.2.0` or
+  the pre-release `4.2.0-RC1`.
+- **`next_version`:** the version `main` is left at. Left blank, it's the next patch version,
+  `4.1.3-SNAPSHOT` after 4.1.2, or after a pre-release the version it leads up to, `4.2.0-SNAPSHOT`
+  after 4.2.0-RC1. Type one to move elsewhere, such as `4.2.0-SNAPSHOT` after 4.1.2.
+
+So a patch release needs no inputs, and a minor or major release only `release_version`.
+
+The first job, `versions`, runs `.github/scripts/resolve-release-versions.sh`, which works the
+versions out from the inputs and the `gradle.properties` being released, and lists them in the run's
+summary. Every later job uses what it resolved: `needs.versions.outputs.release_version`,
+`next_version` and `tag`. It stops the release before anything is checked, built or published if:
+
+- `gradle.properties`' version isn't a version ending in `-SNAPSHOT`;
+- either version isn't one such as `4.1.2`, `4.2.0-RC1` or `4.1.3-SNAPSHOT`, written without a `v`
+  or leading zeros;
+- `release_version` is a SNAPSHOT in any case, such as `4.2.0-snapshot`. Maven treats that as a
+  snapshot, but only `-SNAPSHOT` keeps the upload to Maven Central from running;
+- `release_version` comes before the version `main` is working towards. Only `X.Y.Z` is compared:
+  with `version=4.1.2-SNAPSHOT`, 4.1.1 and 4.1.1-RC1 are refused, while 4.1.2-RC1, 4.1.2 and
+  4.2.0 are released;
+- `next_version` doesn't end in `-SNAPSHOT`, or says SNAPSHOT twice, as `4.3.0-SNAPSHOT-SNAPSHOT`
+  does;
+- `next_version` isn't newer than `release_version`. A SNAPSHOT counts as the version it leads up
+  to, so `4.1.2-SNAPSHOT` can't follow 4.1.2, but `4.2.0-SNAPSHOT` can follow 4.2.0-RC1. Versions
+  compare as numbers, 4.10.0 after 4.9.0, and may skip ahead.
+
+To see what a release with blank inputs would use, run
+`bash .github/scripts/resolve-release-versions.sh "" ""` from the repository root.
+`bash .github/scripts/test/resolve-release-versions-test.sh` tests the script, one case per line;
+pull request and `main` builds run it before the Gradle build, in the `build` and
+`build-snapshot-gradle-project` jobs.
 
 ### Publishing Before Pushing
 
@@ -325,18 +366,19 @@ the tag publishes the versioned docs.
 ### Release Milestones
 
 Each release is planned in a milestone titled with its version, such as `4.1.2`. `release.yml` runs
-three jobs, one after another, each with only the token permissions it needs:
+four jobs, one after another, each with only the token permissions it needs:
 
 | Job               | Token permissions                                   | Runs                  |
 |-------------------|-----------------------------------------------------|-----------------------|
+| `versions`        | `contents: read`                                    | the version script    |
 | `milestone-check` | `contents: read, issues: read, pull-requests: read` | the milestone check   |
 | `release`         | `contents: write`                                   | the release           |
 | `close-milestone` | `contents: read, issues: write`                     | closing the milestone |
 
-`milestone-check` and `close-milestone` check out only `.github/scripts`, which is what their
-`contents: read` is for. The issues listing leaves out pull requests for a token without
-`pull-requests: read`, so `milestone-check` has it, and the script lists open pull requests from the
-pulls endpoint as well.
+The jobs other than `release` check out only `.github/scripts` and the files at the root, such as
+`gradle.properties`, which is what their `contents: read` is for. The issues listing leaves out pull
+requests for a token without `pull-requests: read`, so `milestone-check` has it, and the script
+lists open pull requests from the pulls endpoint as well.
 
 `milestone-check` takes seconds and stops the release before the `release` job starts when:
 
@@ -347,7 +389,8 @@ pulls endpoint as well.
   `GitHub counts <n> open issues in the milestone, but only <m> could be listed`: open the milestone
   to see the rest.
 - **No milestone has exactly the version as its title.** That's most likely a mistyped
-  `release_version`: run the release again with the right one, or create the milestone.
+  `release_version`, or a milestone that was never created: run the release again with the right
+  version, or create the milestone.
 - **GitHub couldn't be asked, or its answer couldn't be read.** An error never counts as "no open
   issues". Run the release again.
 
@@ -360,7 +403,7 @@ that links the milestone and the run stays green: close it by hand. The job is
 only that job, not the run. If the `release` job fails, `close-milestone` doesn't run.
 
 `bash .github/scripts/test/release-milestone-test.sh` tests the script against a stub of `gh`, with
-no network; pull request and `main` builds run it before the Gradle build, in the `build` job.
+no network; pull request and `main` builds run it in the same step as the version script's test.
 
 ## Changelog and Labels
 
