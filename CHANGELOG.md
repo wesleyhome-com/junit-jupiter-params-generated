@@ -9,6 +9,13 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
 
 ## [Unreleased]
 
+### Build and docs
+
+- The release workflow won't release a version whose milestone still has open issues or pull
+  requests, and names each one (#176). It also stops when no milestone has the version as its
+  title, which catches a mistyped version. Pre-releases have no milestone and skip the check. Once
+  the GitHub release is created, the workflow closes the milestone.
+
 ## [4.1.1] - 2026-11-24
 
 ### Upgrade notes

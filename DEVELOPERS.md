@@ -266,7 +266,8 @@ Main release/publish behavior is driven by GitHub workflows under `.github/workf
 - `release.yml`:
   - manual release workflow (`workflow_dispatch`),
   - runs `net.researchgate.release` on JDK 17, the same as the pull request and `main` builds,
-  - checks that the release will be able to push (see below),
+  - checks that the release will be able to push, and that the version's milestone is finished
+    (see below),
   - renames `CHANGELOG.md`'s `[Unreleased]` section to the release version before building, and
     stops the release there if that section is empty (see below),
   - runs the same `build dokkaGenerate` as CI, in every project, then publishes non-SNAPSHOT release
@@ -275,8 +276,9 @@ Main release/publish behavior is driven by GitHub workflows under `.github/workf
     allowed to push to `main` directly,
   - creates the GitHub release: that version's changelog section, then the pull requests since the
     previous GA tag (or the tag just before a pre-release) grouped by label. An `X.Y.Z` version is
-    marked Latest, anything else a pre-release. If that last step fails, the artifacts are already
-    published; create the release by hand.
+    marked Latest, anything else a pre-release. If that step fails, the artifacts are already
+    published; create the release and close the milestone by hand,
+  - closes the version's milestone.
 
 ### Publishing Before Pushing
 
@@ -316,6 +318,32 @@ run didn't push. The log shows which release plugin task failed:
 - **`commitNewVersion`: the tag is pushed.** Set the next version in a pull request.
 
 Then create the GitHub release by hand. Pushing the tag publishes the versioned docs.
+
+### Release Milestones
+
+Each release is planned in a milestone titled with its version, such as `4.1.2`.
+`.github/scripts/release-milestone.sh check` runs right after the push check, before the JDK is set
+up, and stops the release before anything is built when:
+
+- **The milestone has open issues or pull requests.** The error lists each one with a link to the
+  milestone. Finish them or move them to another milestone, then run the release again. A closed
+  milestone counts as finished, whatever is still open in it.
+- **No milestone has exactly the version as its title.** That's most likely a mistyped
+  `release_version`: run the release again with the right one, or create the milestone.
+- **GitHub couldn't be asked, or its answer couldn't be read.** An error never counts as "no open
+  issues". Run the release again.
+
+A pre-release (any version other than `X.Y.Z`) has no milestone and skips the check.
+
+The listing only shows what the job's token can read, so the check also goes by the milestone's own
+count of open items, which includes pull requests. If they disagree, the error says
+`GitHub counts <n>, but none of them could be listed`, or lists only some: open the milestone to see
+the rest.
+
+After the GitHub release is created, `release-milestone.sh close` closes the milestone. A milestone
+that's already closed is left alone. The artifacts are published by then, so if closing fails the
+job stays green with a warning that links the milestone: close it by hand. The job's token has
+`issues: write` for this, which would also let it edit issues, labels and comments.
 
 ## Changelog and Labels
 
