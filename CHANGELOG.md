@@ -9,6 +9,8 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
 
 ## [Unreleased]
 
+## [4.1.1] - 2026-11-24
+
 ### Upgrade notes
 
 - **A lambda or local function inside a suffixed `<test>_filter_<name>` filter is no longer
@@ -323,6 +325,7 @@ build, with what to do about it), **Added**, **Changed**, **Fixed**, **Build and
 See the [3.0.0 release](https://github.com/wesleyhome-com/junit-jupiter-params-generated/releases/tag/junit-jupiter-params-generated-3.0.0)
 and the repository's tags.
 
-[Unreleased]: https://github.com/wesleyhome-com/junit-jupiter-params-generated/compare/v4.1.0...HEAD
+[Unreleased]: https://github.com/wesleyhome-com/junit-jupiter-params-generated/compare/v4.1.1...HEAD
+[4.1.1]: https://github.com/wesleyhome-com/junit-jupiter-params-generated/compare/v4.1.0...v4.1.1
 [4.1.0]: https://github.com/wesleyhome-com/junit-jupiter-params-generated/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/wesleyhome-com/junit-jupiter-params-generated/compare/junit-jupiter-params-generated-3.0.0...v4.0.0
