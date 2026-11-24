@@ -44,7 +44,7 @@
         </button>
         <div class="navigation-controls--break ui-kit_mobile-only"></div>
         <div class="library-version" id="library-version">
-4.1.0        </div>
+4.1.1        </div>
         <div class="navigation-controls">
             <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button"
                     type="button">Switch theme
@@ -96,6 +96,7 @@
 <span class="copy-tooltip">
           <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
 <span class="copy-icon"></span></span></div>
+      <p class="paragraph">On Kotlin 2.2 or 2.3 with Maven, and without Spring Boot's dependency management, also declare <code class="lang-kotlin">kotlin-reflect</code> at your Kotlin version, as described under #compatibility-matrix.</p>
       <h3 class="">Annotation Processor (Optional, recommended)</h3>
       <p class="paragraph">Gradle (KSP):</p>
       <div class="sample-container">
@@ -127,8 +128,13 @@
             </tr>
             <tr>
               <td>Kotlin/JVM</td>
-              <td>2.4+</td>
-              <td>2.4.20</td>
+              <td>2.2+</td>
+              <td>2.4.21, with the full suite re-run on <code class="org.jetbrains.dokka.pages.commenttable@3b56fb7d lang-kotlin">kotlin-stdlib</code> and <code class="org.jetbrains.dokka.pages.commenttable@3b56fb7d lang-kotlin">kotlin-reflect</code> 2.2.21, and Kotlin 2.2.21 projects built against it: Gradle with and without Spring Boot 4.0.9's dependency management, and Maven</td>
+            </tr>
+            <tr>
+              <td>KSP, for the annotation processor</td>
+              <td>KSP2, 2.2.21-2.0.4+</td>
+              <td>2.2.21-2.0.4 in that Kotlin 2.2.21 Gradle project, and 2.3.14 in the processor's tests</td>
             </tr>
             <tr>
               <td>JUnit Jupiter</td>
@@ -142,13 +148,24 @@
             </tr>
             <tr>
               <td>Maven</td>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@79ab82c2 lang-kotlin">test</code> scope for the extension</td>
-              <td>-</td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@3b56fb7d lang-kotlin">test</code> scope for the extension</td>
+              <td>3.9.11, and the CI runner's</td>
             </tr>
           </tbody>
         </table>
       </div>
-      <p class="paragraph">Kotlin 2.4 is a floor rather than a preference: the published classes carry Kotlin metadata v2.4, and earlier compilers refuse to read it. Consuming this library from a Kotlin 2.3 build fails with &quot;compiled with an incompatible version of Kotlin&quot;.</p>
+      <p class="paragraph">The library is compiled by Kotlin 2.4 for Kotlin 2.2, Spring Boot 4.0's: its classes carry Kotlin 2.2 metadata, which compilers from 2.2 on read. The extension asks for the <code class="lang-kotlin">kotlin-stdlib</code> and <code class="lang-kotlin">kotlin-reflect</code> of the Kotlin it's compiled with, 2.4.21, at run time:</p>
+      <ul>
+        <li>
+          <p class="paragraph">In a Spring Boot 4.0 or 4.1 project, Boot's dependency management sets them to its own Kotlin   version, 2.2.21 or 2.3.21, and the library runs on it.</p>
+        </li>
+        <li>
+          <p class="paragraph">In a Gradle project on Kotlin 2.2 or 2.3 without it, they stay off the compile classpath: your   code compiles against your own <code class="lang-kotlin">kotlin-stdlib</code>, and your tests run on 2.4.21's. A newer standard   library runs code compiled for an older one.</p>
+        </li>
+        <li>
+          <p class="paragraph">In a Maven project on Kotlin 2.2 or 2.3 without it, declare <code class="lang-kotlin">kotlin-stdlib</code> and <code class="lang-kotlin">kotlin-reflect</code>   at your own Kotlin version, <code class="lang-kotlin">kotlin-reflect</code> with <code class="lang-kotlin">test</code> scope. Maven puts a test dependency's   runtime dependencies on the test compile classpath, where a Kotlin 2.2 compiler fails on   <code class="lang-kotlin">kotlin-reflect</code> 2.4.21's metadata. Your declarations are nearer, so they win.</p>
+        </li>
+      </ul>
       <p class="paragraph">The optional annotation processor runs under KSP, so compile-time validation applies to Kotlin sources only. Java sources get the full runtime behaviour, but misconfigured annotations surface when the test runs rather than when it compiles.</p>
       <h2 class="">Getting Started</h2>
       <div class="sample-container">
@@ -314,7 +331,7 @@
 <span class="copy-tooltip">
           <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
 <span class="copy-icon"></span></span></div>
-      <p class="paragraph">A filter declares only the parameters it is about, matched <strong>by name</strong>, so several small rules compose instead of one predicate that has to know about everything. A combination runs only if every filter accepts it. Use a suffix when a test has more than one:</p>
+      <p class="paragraph">A filter declares only the parameters it is about, matched <strong>by name</strong>, so several small rules compose instead of one predicate that has to know about everything. A combination runs only if every filter accepts it. The names come from Kotlin's metadata, or for Java from <code class="lang-kotlin">-parameters</code> or the debug information Gradle and Maven compile with by default, so no compiler flag is needed. See #parameter-names for the Java filters that still bind by position, as they did before names were read. Use a suffix when a test has more than one:</p>
       <div class="sample-container">
         <pre><code class="block lang-kotlin" theme="idea">@JvmStatic fun prices_filter_ordered(start: Int, end: Int): Boolean = start &lt;= end<br>@JvmStatic fun prices_filter_currency(currency: Currency, country: Country): Boolean =<br>    currency in country.currencies</code></pre>
 <span class="copy-tooltip">
@@ -329,13 +346,37 @@
       <h3 class="">Rules</h3>
       <ul>
         <li>
-          <p class="paragraph">A filter must be <strong>static</strong>, or declared in a <strong>companion object</strong>. Filtering happens before the   test instance exists, which is the same constraint <code class="lang-kotlin">@MethodSource</code> has. Filters may live in a   superclass.</p>
+          <p class="paragraph">A filter must be <strong>static</strong>, or declared in a <strong>companion object</strong>, named or not. Filtering   happens before the test instance exists, which is the same constraint <code class="lang-kotlin">@MethodSource</code> has.</p>
+        </li>
+        <li>
+          <p class="paragraph">Filters are looked for on the class running the test, then its superclasses, then the interfaces   it and its superclasses implement. Kotlin doesn't allow a companion object in a <code class="lang-kotlin">@Nested</code> class,   so the classes enclosing it come after that, each with its own superclasses and interfaces. The   first class with a function of that name wins, so a subclass's <code class="lang-kotlin">&lt;test&gt;_filter</code> applies to a test   it inherits. If that class has several functions of that name, the overload rule below picks one.</p>
+        </li>
+        <li>
+          <p class="paragraph">An enclosing class's <code class="lang-kotlin">&lt;test&gt;_filter</code> applies to a test of that name in its <code class="lang-kotlin">@Nested</code> classes,   unless the enclosing class, or a class between them, has a test of that name of its own, declared   or inherited. The filter is then taken to be that test's. <code class="lang-kotlin">filters = [...]</code> always looks in   enclosing classes.</p>
+        </li>
+        <li>
+          <p class="paragraph">An <code class="lang-kotlin">internal</code> filter is found by the name it's declared with, although its compiled name has the   module name appended. The compiled name works too. Where one class has several functions of that   name, an <code class="lang-kotlin">internal</code> one doesn't displace the function 4.1.0 chose.</p>
         </li>
         <li>
           <p class="paragraph">Parameter types must match the generated parameter. A supertype is fine - <code class="lang-kotlin">Number</code> accepts a   generated <code class="lang-kotlin">Int</code> - but a filter declaring <code class="lang-kotlin">Long</code> against a generated <code class="lang-kotlin">Int</code> is rejected rather than   silently widened by reflection.</p>
         </li>
         <li>
+          <p class="paragraph">A filter parameter must hold the null its parameter generates, from <code class="lang-kotlin">@WithNull</code> or a nullable   type. A primitive is rejected before anything runs. So is a Kotlin type that isn't nullable, such   as <code class="lang-kotlin">String</code> or a value class like <code class="lang-kotlin">Name</code>, where Kotlin's own null check would fail the test once   the null reached it: in a filter that isn't <code class="lang-kotlin">private</code>, unless another filter of the test takes the   same parameter and can hold the null. That one may turn the null away first. Conventional filters   run before the ones in <code class="lang-kotlin">filters = [...]</code>, which run in the order listed, but conventional filters   run among themselves in no fixed order. A <code class="lang-kotlin">private</code> Kotlin filter has no null check, so it takes   the null, as a Java filter's object types do. So does a value class over a nullable type:   <code class="lang-kotlin">Nickname(val value: String?)</code> takes it as <code class="lang-kotlin">Nickname(null)</code>. A filter that throws on the null is   reported as a filter that throws, below.</p>
+        </li>
+        <li>
           <p class="paragraph">A filter must return <code class="lang-kotlin">Boolean</code> and must not return null.</p>
+        </li>
+        <li>
+          <p class="paragraph">A filter that throws fails the test. The message names the filter and the combination it threw   on, as <code class="lang-kotlin">{argumentsWithNames}</code> shows it, and the exception is the cause:</p>
+          <div class="sample-container">
+            <pre><code class="block lang-text" theme="idea">Filter [ordered_filter] on [start=2, end=1] threw IllegalStateException: boom</code></pre>
+<span class="copy-tooltip">
+              <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+          <p class="paragraph">With <code class="lang-kotlin">CARTESIAN</code>, the invocations before that combination have run. <code class="lang-kotlin">PAIRWISE</code> checks every   combination before choosing, so nothing has. An <code class="lang-kotlin">OutOfMemoryError</code> is thrown as it is.</p>
+        </li>
+        <li>
+          <p class="paragraph">A filter's name can be <strong>overloaded</strong>. The overload used is the one that can filter the test:   every parameter binds to a generated parameter (see #parameter-names), with   a type that can hold it, and it returns <code class="lang-kotlin">Boolean</code>. Where several in the nearest class can, a   public one comes before an <code class="lang-kotlin">internal</code> one, then a static or <code class="lang-kotlin">@JvmStatic</code> one before one declared   only in a companion object. If that still leaves more than one, the test fails and lists them.   Which one applied used to depend on the order reflection listed them in, and that can change   between builds. <code class="lang-kotlin">@JvmOverloads</code> makes overloads too:   <code class="lang-kotlin">@JvmOverloads fun upTo(start: Int, end: Int = 2)</code> filters a test that generates only <code class="lang-kotlin">start</code>,   but is ambiguous for one that generates both. An overload that bound by position before, and   whose names now say otherwise but don't all match, fails the test rather than giving way to   another overload.</p>
         </li>
         <li>
           <p class="paragraph">If every combination is rejected, the test fails and the message names the filters responsible.</p>
@@ -344,7 +385,7 @@
           <p class="paragraph">Filtering reduces what <em>runs</em>, not what is <em>generated</em>, so the invocation ceiling still applies to   the full product and <code class="lang-kotlin">generated.invocations</code> still reports it.</p>
         </li>
       </ul>
-      <p class="paragraph">The annotation processor warns about any <code class="lang-kotlin">*_filter</code> method that matches no test in its class, so renaming a test cannot silently leave its rule unused.</p>
+      <p class="paragraph">The annotation processor warns about any <code class="lang-kotlin">*_filter</code> method that matches no test in its class, so renaming a test cannot silently leave its rule unused. It only compares a class's filters with the tests that class declares. So for now, a class that declares generated tests of its own also gets this warning for a filter written for a test it doesn't declare: one it inherits, or one in a <code class="lang-kotlin">@Nested</code> class.</p>
       <h2 class="">Invocation Display Names</h2>
       <p class="paragraph">Each invocation is named the way <code class="lang-kotlin">@ParameterizedTest</code> names its own, so IDEs and test reports read generated invocations the same way:</p>
       <div class="sample-container">
@@ -368,23 +409,23 @@
           </thead>
           <tbody>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@79ab82c2 lang-kotlin">{index}</code></td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@3b56fb7d lang-kotlin">{index}</code></td>
               <td>the 1-based invocation number</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@79ab82c2 lang-kotlin">{arguments}</code></td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@3b56fb7d lang-kotlin">{arguments}</code></td>
               <td>the generated values, comma separated</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@79ab82c2 lang-kotlin">{argumentsWithNames}</code></td>
-              <td>the generated values as <code class="org.jetbrains.dokka.pages.commenttable@79ab82c2 lang-kotlin">name=value</code>, comma separated</td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@3b56fb7d lang-kotlin">{argumentsWithNames}</code></td>
+              <td>the generated values as <code class="org.jetbrains.dokka.pages.commenttable@3b56fb7d lang-kotlin">name=value</code>, comma separated</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@79ab82c2 lang-kotlin">{displayName}</code></td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@3b56fb7d lang-kotlin">{displayName}</code></td>
               <td>the test method's own display name</td>
             </tr>
             <tr>
-              <td><code class="org.jetbrains.dokka.pages.commenttable@79ab82c2 lang-kotlin">{0}</code>, <code class="org.jetbrains.dokka.pages.commenttable@79ab82c2 lang-kotlin">{1}</code>, ...</td>
+              <td><code class="org.jetbrains.dokka.pages.commenttable@3b56fb7d lang-kotlin">{0}</code>, <code class="org.jetbrains.dokka.pages.commenttable@3b56fb7d lang-kotlin">{1}</code>, ...</td>
               <td>a single generated value, by position</td>
             </tr>
           </tbody>
@@ -392,7 +433,42 @@
       </div>
       <p class="paragraph">Only generated parameters are listed. A parameter resolved by another extension - <code class="lang-kotlin">TestInfo</code>, <code class="lang-kotlin">@TempDir</code>, an injected mock - is not named and does not shift the <code class="lang-kotlin">{0}</code>, <code class="lang-kotlin">{1}</code> positions.</p>
       <h3 class="">Parameter Names</h3>
-      <p class="paragraph"><code class="lang-kotlin">{argumentsWithNames}</code> needs the declared parameter names to be present in the compiled class file. Kotlin records them in its own metadata, so Kotlin test sources need nothing. Java test sources must be compiled with <code class="lang-kotlin">-parameters</code>, or the names fall back to <code class="lang-kotlin">arg0</code>, <code class="lang-kotlin">arg1</code>:</p>
+      <p class="paragraph">Filters and <code class="lang-kotlin">{argumentsWithNames}</code> both use the names parameters were declared with, which have to be recorded in the compiled class files.</p>
+      <ul>
+        <li>
+          <p class="paragraph"><strong>Kotlin</strong> records them in its own metadata, so Kotlin sources need nothing.</p>
+        </li>
+        <li>
+          <p class="paragraph"><strong>Java filters</strong> find them either way Java records them: with <code class="lang-kotlin">-parameters</code>, or in the debug   information that <code class="lang-kotlin">-g</code> adds. Gradle and Maven compile with <code class="lang-kotlin">-g</code> by default, so a default build   needs nothing. <code class="lang-kotlin">@ValuesFrom</code> messages use these names too.</p>
+        </li>
+        <li>
+          <p class="paragraph"><strong>Java display names</strong> use <code class="lang-kotlin">-parameters</code> names only. Without them, <code class="lang-kotlin">{argumentsWithNames}</code> and the   <code class="lang-kotlin">generated.parameters</code> report entry show <code class="lang-kotlin">arg0</code>, <code class="lang-kotlin">arg1</code>.</p>
+        </li>
+      </ul>
+      <h4 class="">When a filter binds by position</h4>
+      <p class="paragraph">A Java test compiled without <code class="lang-kotlin">-parameters</code> has names only in its debug information, if at all, and 4.1.0 bound filters to it by position: a filter's first parameter took the test's first, whatever either was called. That applies when the filter has no <code class="lang-kotlin">-parameters</code> names either, which is the case for a Java filter compiled the same way and for a Kotlin filter compiled without <code class="lang-kotlin">javaParameters</code>. Position still decides those, so a filter that repeats the test's parameters in order keeps working, whatever it calls them. That includes a filter shared by tests whose names differ.</p>
+      <p class="paragraph">Names decide instead when one of the filter's names belongs to a generated parameter at another position: <code class="lang-kotlin">endNotOne_filter(int end)</code> on <code class="lang-kotlin">test(int start, int end)</code> filters on <code class="lang-kotlin">end</code>, not <code class="lang-kotlin">start</code>. The filter's names then all have to be the test's, as everywhere else.</p>
+      <p class="paragraph">When position decides and names could have told it otherwise, the filter logs a warning, once for each test that uses it:</p>
+      <ul>
+        <li>
+          <p class="paragraph">One side doesn't record names, as with <code class="lang-kotlin">-g:none</code>:</p>
+          <div class="sample-container">
+            <pre><code class="block lang-text" theme="idea">Filter [ordered_filter] binds to the parameters of [ordered] by position, because the class files don't record their names. Compile with -parameters to bind by name.</code></pre>
+<span class="copy-tooltip">
+              <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+        </li>
+        <li>
+          <p class="paragraph">The filter's names aren't all the test's:</p>
+          <div class="sample-container">
+            <pre><code class="block lang-text" theme="idea">Filter [loBeforeHi] binds to the parameters of [ordered] by position, because the test has no parameter named [lo, hi]. Name the filter's parameters as the test does to bind by name.</code></pre>
+<span class="copy-tooltip">
+              <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
+<span class="copy-icon"></span></span></div>
+        </li>
+      </ul>
+      <p class="paragraph">A filter whose names aren't recorded anywhere, such as one from a jar compiled with <code class="lang-kotlin">-g:none</code>, binds by its <code class="lang-kotlin">arg0</code>, <code class="lang-kotlin">arg1</code>. So with a test whose names are recorded (Kotlin, or Java with <code class="lang-kotlin">-parameters</code>), it fails with <code class="lang-kotlin">declares [arg0], which is not a generated parameter of the test</code>, as it did in 4.1.0. With a Java test compiled without <code class="lang-kotlin">-parameters</code>, it binds by position and logs the first warning.</p>
+      <p class="paragraph">To record the names everywhere, compile Java with <code class="lang-kotlin">-parameters</code>:</p>
       <div class="sample-container">
         <pre><code class="block lang-kotlin" theme="idea">// Gradle<br>tasks.withType&lt;JavaCompile&gt;().configureEach {<br>    options.compilerArgs.add(&quot;-parameters&quot;)<br>}</code></pre>
 <span class="copy-tooltip">
@@ -444,7 +520,7 @@
 <span class="copy-tooltip">
           <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
 <span class="copy-icon"></span></span></div>
-      <p class="paragraph">This works for value classes over primitives, <code class="lang-kotlin">String</code> and object types. A custom provider can also produce the value class directly, for a type no built-in source covers:</p>
+      <p class="paragraph">This works for value classes over primitives, <code class="lang-kotlin">String</code> and object types, and over other value classes: <code class="lang-kotlin">@LongSource</code> generates a <code class="lang-kotlin">Wallet(val money: Money)</code> too. A custom provider can also produce the value class directly, for a type no built-in source covers:</p>
       <div class="sample-container">
         <pre><code class="block lang-kotlin" theme="idea">@JvmInline<br>value class HouseholdId(val value: UUID)<br><br>@Target(AnnotationTarget.VALUE_PARAMETER)<br>@Retention(AnnotationRetention.RUNTIME)<br>@SourceProvider(HouseholdIdSourceDataProvider::class)<br>annotation class HouseholdIdSource<br><br>class HouseholdIdSourceDataProvider : AbstractAnnotatedParameterDataProvider&lt;HouseholdId, HouseholdIdSource&gt;() {<br>    override fun createParameterOptionsData(testParameter: TestParameter): List&lt;HouseholdId&gt; =<br>        listOf(HouseholdId(UUID.fromString(&quot;00000000-0000-0000-0000-000000000001&quot;)))<br>}<br><br>@GeneratedParametersTest<br>fun loadsHousehold(@HouseholdIdSource id: HouseholdId) {<br>}</code></pre>
 <span class="copy-tooltip">
@@ -458,7 +534,7 @@
 <span class="copy-icon"></span></span></div>
       <p class="paragraph">A filter can't skip a rejected value either; the invocation runs and fails.</p>
       <p class="paragraph">Display names and report entries show the value class's <code class="lang-kotlin">toString</code>, such as <code class="lang-kotlin">Money(cents=250)</code>. <code class="lang-kotlin">@WithNull</code> works on a nullable value class (<code class="lang-kotlin">amount: Money?</code>). On a non-null value class over a primitive it is an error, because the compiled method takes a <code class="lang-kotlin">long</code> there.</p>
-      <p class="paragraph">Filters can declare the value-class parameter as itself (<code class="lang-kotlin">fun formatsAmounts_filter(amount: Money)</code>). Declaring the underlying type (<code class="lang-kotlin">amount: Long</code>) is an error: both compile to <code class="lang-kotlin">long</code>, so the Kotlin declaration is the only thing that tells them apart.</p>
+      <p class="paragraph">Filters can declare the value-class parameter as itself (<code class="lang-kotlin">fun formatsAmounts_filter(amount: Money)</code>). Declaring the underlying type (<code class="lang-kotlin">amount: Long</code>) is an error: both compile to <code class="lang-kotlin">long</code>, so the Kotlin declaration is the only thing that tells them apart. For a parameter that generates null, declare it nullable in the filter too (<code class="lang-kotlin">amount: Money?</code>), unless the value class wraps a nullable type. A filter gets the value its Kotlin declaration says, whatever the value class wraps: <code class="lang-kotlin">Any</code>, a type parameter as in <code class="lang-kotlin">Box&lt;T&gt;</code>, an interface it implements, or another value class. That's the value the test method gets too, on every supported JUnit version. A filter with a context parameter is given the box, as a Java filter is: its Kotlin parameters don't line up with its compiled ones. A generated null is read by each declared type its own way for a value class over a nullable type, such as <code class="lang-kotlin">Nickname(val value: String?)</code>: whatever the test declares, a filter's <code class="lang-kotlin">Nickname</code> takes it as <code class="lang-kotlin">Nickname(null)</code>, and a filter's <code class="lang-kotlin">Nickname?</code> as null.</p>
       <p class="paragraph">A value class with no source annotation is left to other parameter resolvers, even when it wraps a type such as <code class="lang-kotlin">Boolean</code> that would otherwise be generated.</p>
       <p class="paragraph">A compiled version of these, checked by the annotation processor, is <code class="lang-kotlin">examples.ValueClasses</code> in the <code class="lang-kotlin">examples</code> module.</p>
       <h2 class="">Values From a Function</h2>
@@ -468,7 +544,7 @@
 <span class="copy-tooltip">
           <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
 <span class="copy-icon"></span></span></div>
-      <p class="paragraph">The function takes no arguments and returns a <code class="lang-kotlin">List</code>, <code class="lang-kotlin">Sequence</code> or array of the parameter's type. It is found by name the way a filter is: static, or in an object or companion object, on the test class or one of its superclasses. <code class="lang-kotlin">@JvmStatic</code> is optional. To share a function between test classes, name its class as well:</p>
+      <p class="paragraph">The function takes no arguments and returns a <code class="lang-kotlin">List</code>, <code class="lang-kotlin">Sequence</code> or array of the parameter's type. It is found by name the way a filter is: static, or in an object or companion object, on the test class, its superclasses or its interfaces, and for a <code class="lang-kotlin">@Nested</code> class on the classes enclosing it. <code class="lang-kotlin">@JvmStatic</code> is optional, and so is <code class="lang-kotlin">public</code>. If the name is overloaded, the overload that takes no arguments is used. To share a function between test classes, name its class as well:</p>
       <div class="sample-container">
         <pre><code class="block lang-kotlin" theme="idea">object Fixtures {<br>    fun ranges(): List&lt;DateRange&gt; = listOf(/* ... */)<br>}<br><br>@GeneratedParametersTest<br>fun overlapsItself(@ValuesFrom(&quot;com.example.Fixtures#ranges&quot;) range: DateRange) {<br>    assertTrue(range.overlaps(range))<br>}</code></pre>
 <span class="copy-tooltip">
@@ -501,6 +577,7 @@
 <span class="copy-tooltip">
           <div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div>
 <span class="copy-icon"></span></span></div>
+      <p class="paragraph">The processor doesn't yet look in the test class's interfaces or enclosing classes, and reports a function there as missing. Name its class, as in <code class="lang-kotlin">@ValuesFrom(&quot;com.example.OuterTest#ranges&quot;)</code>, and both find it.</p>
       <p class="paragraph">A compiled version of these, checked by the annotation processor, is <code class="lang-kotlin">examples.ValuesFrom</code> in the <code class="lang-kotlin">examples</code> module.</p>
       <h2 class="">Generated vs Random Values</h2>
       <ul>
@@ -563,7 +640,7 @@
           <thead>
             <tr>
               <th>Concern</th>
-              <th><code class="org.jetbrains.dokka.pages.commenttable@79ab82c2 lang-kotlin">@MethodSource</code></th>
+              <th><code class="org.jetbrains.dokka.pages.commenttable@3b56fb7d lang-kotlin">@MethodSource</code></th>
               <th>Generated Sources</th>
             </tr>
           </thead>
